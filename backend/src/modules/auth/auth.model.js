@@ -24,6 +24,14 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('lawyer', 'citizen', 'firm', 'admin'),
     allowNull: false,
   },
+  firm_id: {
+  type: DataTypes.UUID,
+  allowNull: true,
+},
+rejection_reason: {
+  type: DataTypes.TEXT,
+  allowNull: true,
+},
   is_verified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
