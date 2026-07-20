@@ -28,6 +28,18 @@ const notificationRoutes = require('./modules/notifications/notification.routes'
 const Message = require('./modules/messages/message.model');
 const messageRoutes = require('./modules/messages/message.routes');
 
+const MarketplaceProfile = require('./modules/marketplace/profile.model');
+const profileRoutes = require('./modules/marketplace/profile.routes');
+
+const Gig = require('./modules/gigs/gig.model');
+const gigRoutes = require('./modules/gigs/gig.routes');
+
+const Review = require('./modules/reviews/review.model');
+const reviewRoutes = require('./modules/reviews/review.routes');
+
+const Subscription = require('./modules/subscriptions/subscription.model');
+const subscriptionRoutes = require('./modules/subscriptions/subscription.routes');
+
 const app = express();
 app.use(express.json());
 
@@ -40,6 +52,10 @@ app.use('/api/v1/fees', feeRoutes);
 app.use('/api/v1/documents', documentRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/messages', messageRoutes);
+app.use('/api/v1/marketplace-profiles', profileRoutes);
+app.use('/api/v1/gigs', gigRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/subscriptions', subscriptionRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
