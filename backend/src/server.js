@@ -40,6 +40,8 @@ const reviewRoutes = require('./modules/reviews/review.routes');
 const Subscription = require('./modules/subscriptions/subscription.model');
 const subscriptionRoutes = require('./modules/subscriptions/subscription.routes');
 
+const adminRoutes = require('./modules/admin/admin.routes');
+
 const app = express();
 app.use(express.json());
 
@@ -56,6 +58,7 @@ app.use('/api/v1/marketplace-profiles', profileRoutes);
 app.use('/api/v1/gigs', gigRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/subscriptions', subscriptionRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
