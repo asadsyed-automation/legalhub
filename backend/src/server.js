@@ -1,5 +1,6 @@
 const express = require('express');
 const sequelize = require('./config/database');
+const cors = require('cors');
 
 const User = require('./modules/auth/auth.model');
 const authRoutes = require('./modules/auth/auth.routes');
@@ -43,6 +44,7 @@ const subscriptionRoutes = require('./modules/subscriptions/subscription.routes'
 const adminRoutes = require('./modules/admin/admin.routes');
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 app.use('/api/v1/auth', authRoutes);
