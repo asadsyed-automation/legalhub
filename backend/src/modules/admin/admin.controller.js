@@ -1,6 +1,6 @@
 const {
   getPendingLawyers, approveLawyer, rejectLawyer,
-  verifyMarketplaceProfile, getAllUsers,
+  verifyMarketplaceProfile, getAllUsers, getAllMarketplaceProfiles,
 } = require('./admin.service');
 
 async function getPending(req, res) {
@@ -48,4 +48,13 @@ async function listAllUsers(req, res) {
   }
 }
 
-module.exports = { getPending, approve, reject, verifyProfile, listAllUsers };
+async function listAllMarketplaceProfiles(req, res) {
+  try {
+    const profiles = await getAllMarketplaceProfiles();
+    res.json(profiles);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+module.exports = { getPending, approve, reject, verifyProfile, listAllUsers, listAllMarketplaceProfiles };

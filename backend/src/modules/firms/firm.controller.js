@@ -1,4 +1,4 @@
-const { createFirm, getFirmById } = require('./firm.service');
+const { createFirm, getFirmById, addLawyerToFirm, getFirmMembers } = require('./firm.service');
 
 async function create(req, res) {
   try {

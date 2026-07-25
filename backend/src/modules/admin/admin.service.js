@@ -35,4 +35,8 @@ async function getAllUsers() {
   return await User.findAll({ attributes: { exclude: ['password_hash'] } });
 }
 
-module.exports = { getPendingLawyers, approveLawyer, rejectLawyer, verifyMarketplaceProfile, getAllUsers };
+async function getAllMarketplaceProfiles() {
+  return await MarketplaceProfile.findAll({ order: [['created_at', 'DESC']] });
+}
+
+module.exports = { getPendingLawyers, approveLawyer, rejectLawyer, verifyMarketplaceProfile, getAllUsers, getAllMarketplaceProfiles };
