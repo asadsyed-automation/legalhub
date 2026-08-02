@@ -1,4 +1,4 @@
-const { createCase, getCasesForUser, getCaseById } = require('./case.service');
+const { createCase, getCasesForUser, getCaseById, updateCaseStatus } = require('./case.service');
 
 async function create(req, res) {
   try {
