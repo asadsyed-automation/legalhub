@@ -18,20 +18,25 @@ const User = sequelize.define('User', {
   },
   password_hash: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true, // Nullable for Google-authenticated users
+  },
+  google_id: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true,
   },
   role: {
     type: DataTypes.ENUM('lawyer', 'citizen', 'firm', 'admin'),
-    allowNull: false,
+    allowNull: true, // Nullable until role selection for new Google users
   },
   firm_id: {
-  type: DataTypes.UUID,
-  allowNull: true,
-},
-rejection_reason: {
-  type: DataTypes.TEXT,
-  allowNull: true,
-},
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
+  rejection_reason: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   is_verified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
