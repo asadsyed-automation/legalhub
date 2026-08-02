@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion';
+
 const VARIANTS = {
   primary: {
     backgroundColor: 'var(--color-primary)',
@@ -19,12 +21,14 @@ const VARIANTS = {
 function Button({ children, onClick, variant = 'primary', type = 'button', disabled = false, style }) {
   const variantStyles = VARIANTS[variant] || VARIANTS.primary;
   return (
-    <button
+    <motion.button
       type={type}
       onClick={onClick}
       disabled={disabled}
+      whileTap={disabled ? {} : { scale: 0.97 }}
+      transition={{ duration: 0.1 }}
       style={{
-        padding: '8px 18px',
+        padding: '9px 18px',
         borderRadius: 'var(--radius-sm)',
         cursor: disabled ? 'not-allowed' : 'pointer',
         fontFamily: 'var(--font-body)',
@@ -32,12 +36,19 @@ function Button({ children, onClick, variant = 'primary', type = 'button', disab
         fontWeight: 600,
         opacity: disabled ? 0.6 : 1,
         marginTop: '8px',
+        transition: 'background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease',
+        lineHeight: 1.4,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '6px',
+        minHeight: '38px',
         ...variantStyles,
         ...style,
       }}
     >
       {children}
-    </button>
+    </motion.button>
   );
 }
 

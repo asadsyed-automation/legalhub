@@ -14,6 +14,12 @@ export async function getProfileById(id) {
   return response.data;
 }
 
+/** GET /api/v1/marketplace-profiles/me  — lawyer only */
+export async function getMyProfile() {
+  const response = await axiosClient.get('/marketplace-profiles/me');
+  return response.data;
+}
+
 /** POST /api/v1/marketplace-profiles  — lawyer only
  *  Body: { bio, specialization, fee_structure }
  */
@@ -38,11 +44,29 @@ export async function getGigsForProfile(profileId) {
   return response.data;
 }
 
+/** GET /api/v1/gigs/my-gigs  — lawyer only */
+export async function getMyGigs() {
+  const response = await axiosClient.get('/gigs/my-gigs');
+  return response.data;
+}
+
 /** POST /api/v1/gigs  — lawyer only
  *  Body: { title, description, price }
  */
 export async function createGig(data) {
   const response = await axiosClient.post('/gigs', data);
+  return response.data;
+}
+
+/** PATCH /api/v1/gigs/:id  — lawyer only */
+export async function updateGig(id, data) {
+  const response = await axiosClient.patch(`/gigs/${id}`, data);
+  return response.data;
+}
+
+/** DELETE /api/v1/gigs/:id  — lawyer only */
+export async function deleteGig(id) {
+  const response = await axiosClient.delete(`/gigs/${id}`);
   return response.data;
 }
 

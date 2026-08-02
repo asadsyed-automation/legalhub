@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
+const User = require('../auth/auth.model');
 
 const MarketplaceProfile = sequelize.define('MarketplaceProfile', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -8,11 +9,17 @@ const MarketplaceProfile = sequelize.define('MarketplaceProfile', {
   specialization: { type: DataTypes.STRING, allowNull: false },
   fee_structure: { type: DataTypes.STRING, allowNull: true },
   cases_won: { type: DataTypes.INTEGER, defaultValue: 0 },
+  avatar_url: { type: DataTypes.STRING, allowNull: true },
+  whatsapp_number: { type: DataTypes.STRING, allowNull: true },
   is_verified: { type: DataTypes.BOOLEAN, defaultValue: false },
 }, {
   tableName: 'marketplace_profiles',
   timestamps: true,
   underscored: true,
 });
+
+if (!MarketplaceProfile.associations || !MarketplaceProfile.associations.lawyer) {
+  MarketplaceProfile.belongsTo(User, { foreignKey: 'lawyer_id', as: 'lawyer' });
+}
 
 module.exports = MarketplaceProfile;

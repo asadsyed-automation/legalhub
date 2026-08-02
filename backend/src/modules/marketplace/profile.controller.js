@@ -1,4 +1,4 @@
-const { createProfile, getAllProfiles, getProfileById, updateProfile } = require('./profile.service');
+const { createProfile, getAllProfiles, getProfileById, getMyProfile, updateProfile } = require('./profile.service');
 
 async function create(req, res) {
   try {
@@ -32,6 +32,15 @@ async function getOne(req, res) {
   }
 }
 
+async function getMine(req, res) {
+  try {
+    const profile = await getMyProfile(req.user.id);
+    res.json(profile || null);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
 async function update(req, res) {
   try {
     const profile = await updateProfile({ lawyerId: req.user.id, updates: req.body });
@@ -41,4 +50,4 @@ async function update(req, res) {
   }
 }
 
-module.exports = { create, getAll, getOne, update };
+module.exports = { create, getAll, getOne, getMine, update };

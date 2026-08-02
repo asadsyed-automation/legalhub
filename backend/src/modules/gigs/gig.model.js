@@ -7,6 +7,7 @@ const Gig = sequelize.define('Gig', {
   title: { type: DataTypes.STRING, allowNull: false },
   description: { type: DataTypes.TEXT, allowNull: true },
   price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+  thumbnail_url: { type: DataTypes.STRING, allowNull: true },
 }, {
   tableName: 'gigs',
   timestamps: true,

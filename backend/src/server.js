@@ -41,6 +41,9 @@ const reviewRoutes = require('./modules/reviews/review.routes');
 const Subscription = require('./modules/subscriptions/subscription.model');
 const subscriptionRoutes = require('./modules/subscriptions/subscription.routes');
 
+const CitizenProfile = require('./modules/citizen/profile.model');
+const citizenProfileRoutes = require('./modules/citizen/profile.routes');
+
 const adminRoutes = require('./modules/admin/admin.routes');
 
 const app = express();
@@ -57,6 +60,7 @@ app.use('/api/v1/documents', documentRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/messages', messageRoutes);
 app.use('/api/v1/marketplace-profiles', profileRoutes);
+app.use('/api/v1/citizen-profiles', citizenProfileRoutes);
 app.use('/api/v1/gigs', gigRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/subscriptions', subscriptionRoutes);
