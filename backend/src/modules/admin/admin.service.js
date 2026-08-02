@@ -36,7 +36,10 @@ async function getAllUsers() {
 }
 
 async function getAllMarketplaceProfiles() {
-  return await MarketplaceProfile.findAll({ order: [['created_at', 'DESC']] });
+  return await MarketplaceProfile.findAll({
+    include: [{ model: User, as: 'lawyer', attributes: ['id', 'name', 'email'] }],
+    order: [['created_at', 'DESC']],
+  });
 }
 
 module.exports = { getPendingLawyers, approveLawyer, rejectLawyer, verifyMarketplaceProfile, getAllUsers, getAllMarketplaceProfiles };

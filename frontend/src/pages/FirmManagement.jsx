@@ -2,17 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createFirm, getFirmById, addFirmMember, getFirmMembers } from '../api/firmApi';
+import { motion } from 'framer-motion';
 import { Card, Button, Input } from '../components/ui';
 
 function FirmManagement() {
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  // Redirect non-lawyers away
-  if (user?.role !== 'lawyer') {
-    navigate('/dashboard', { replace: true });
-    return null;
-  }
 
   const [firm, setFirm] = useState(null);
   const [members, setMembers] = useState([]);
@@ -31,6 +26,13 @@ function FirmManagement() {
   const [memberSuccess, setMemberSuccess] = useState('');
 
   const isOwner = firm && firm.owner_id === user?.id;
+
+  // Redirect non-lawyers away
+  useEffect(() => {
+    if (user && user.role !== 'lawyer') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     loadFirm();
@@ -134,7 +136,7 @@ function FirmManagement() {
 
   // ── Has firm: show details + members ─────────────────────────────────────
   return (
-    <div>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
       <h2 style={{ fontFamily: 'var(--font-heading)', margin: '0 0 var(--spacing-3)', color: 'var(--color-secondary)' }}>
         Firm Management
       </h2>
@@ -229,7 +231,7 @@ function FirmManagement() {
           </div>
         </Card>
       ))}
-    </div>
+    </motion.div>
   );
 }
 

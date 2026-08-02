@@ -1,71 +1,130 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import {
+  getSystemMetrics,
   getPendingLawyers,
   approveLawyer,
   rejectLawyer,
-  verifyMarketplaceProfile,
-  getAllUsers,
+  getSystemLogs,
   getAllMarketplaceProfilesAdmin,
+  verifyMarketplaceProfile,
 } from '../api/adminApi';
-import { Card, Badge, Button, Input } from '../components/ui';
-
-const TABS = ['Pending Lawyers', 'Profile Verification', 'All Users'];
+import { Card, Button, Badge, Input } from '../components/ui';
 
 function AdminPanel() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('metrics'); // 'metrics' | 'lawyers' | 'verification' | 'logs'
+  const [toastMessage, setToastMessage] = useState('');
 
-  // Hard redirect if not admin — do not just hide the link
-  if (user?.role !== 'admin') {
-    navigate('/dashboard', { replace: true });
-    return null;
+  function showToast(msg) {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 4000);
   }
 
-  const [activeTab, setActiveTab] = useState('Pending Lawyers');
-
   return (
-    <div>
-      <h2 style={{ fontFamily: 'var(--font-heading)', margin: '0 0 var(--spacing-3)', color: 'var(--color-secondary)' }}>
-        Admin Panel
-      </h2>
+    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <div style={{ marginBottom: 'var(--spacing-3)' }}>
+        <h1 style={{ margin: '0 0 var(--spacing-1)', fontFamily: 'var(--font-heading)', fontSize: '24px' }}>
+          Admin Panel
+        </h1>
+        <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '14px' }}>
+          System oversight, advocate verification, and administrative audit log.
+        </p>
+      </div>
 
-      {/* Tab navigation */}
-      <div style={{ display: 'flex', borderBottom: '2px solid var(--color-border)', marginBottom: 'var(--spacing-3)' }}>
-        {TABS.map((tab) => (
+      {toastMessage && (
+        <div style={{
+          padding: '12px 18px', marginBottom: 'var(--spacing-3)', borderRadius: 'var(--radius-sm)',
+          backgroundColor: '#ECFDF5', border: '1px solid var(--color-success)', color: '#065F46',
+          fontWeight: 600, fontSize: '14px'
+        }}>
+          {toastMessage}
+        </div>
+      )}
+
+      {/* Tab Navigation Pills */}
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--color-border)', paddingBottom: '12px', marginBottom: 'var(--spacing-3)' }}>
+        {[
+          { id: 'metrics', label: '📊 System Health' },
+          { id: 'verification', label: '🛡️ Profile Verification' },
+          { id: 'lawyers', label: '⚖️ Lawyer Registrations' },
+          { id: 'logs', label: '📜 Audit Logs' },
+        ].map((tab) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
             style={{
-              padding: '10px 18px', border: 'none', background: 'none', cursor: 'pointer',
-              fontWeight: activeTab === tab ? 700 : 400, fontSize: '14px',
-              fontFamily: 'var(--font-body)',
-              color: activeTab === tab ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-              borderBottom: activeTab === tab ? '2px solid var(--color-primary)' : '2px solid transparent',
-              marginBottom: '-2px',
+              padding: '8px 16px', borderRadius: 'var(--radius-sm)', border: 'none',
+              cursor: 'pointer', fontWeight: activeTab === tab.id ? 700 : 500, fontSize: '13.5px',
+              backgroundColor: activeTab === tab.id ? 'var(--color-primary)' : 'transparent',
+              color: activeTab === tab.id ? '#FFFFFF' : 'var(--color-text-secondary)',
+              transition: 'all 0.15s ease'
             }}
           >
-            {tab}
+            {tab.label}
           </button>
         ))}
       </div>
 
-      {activeTab === 'Pending Lawyers'      && <PendingLawyersTab />}
-      {activeTab === 'Profile Verification' && <ProfileVerificationTab />}
-      {activeTab === 'All Users'            && <AllUsersTab />}
+      {activeTab === 'metrics' && <MetricsTab />}
+      {activeTab === 'verification' && <ProfileVerificationTab showToast={showToast} />}
+      {activeTab === 'lawyers' && <PendingLawyersTab showToast={showToast} />}
+      {activeTab === 'logs' && <LogsTab />}
     </div>
   );
 }
 
-// ─── Tab: Pending Lawyer Approvals ───────────────────────────────────────────
-function PendingLawyersTab() {
+// ─── Tab: Metrics ─────────────────────────────────────────────────────────────
+function MetricsTab() {
+  const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await getSystemMetrics();
+        setMetrics(data);
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to load system metrics');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) return <p style={{ color: 'var(--color-text-secondary)' }}>Loading metrics…</p>;
+  if (error) return <p style={{ color: 'var(--color-danger)' }}>{error}</p>;
+  if (!metrics) return null;
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--spacing-2)' }}>
+      {[
+        { label: 'Total Users', value: metrics.total_users },
+        { label: 'Lawyers', value: metrics.total_lawyers },
+        { label: 'Citizens', value: metrics.total_citizens },
+        { label: 'Cases', value: metrics.total_cases },
+        { label: 'Verified Marketplace Profiles', value: metrics.verified_marketplace_profiles },
+        { label: 'Unverified Profiles', value: metrics.unverified_marketplace_profiles },
+      ].map((item) => (
+        <Card key={item.label} style={{ textAlign: 'center' }}>
+          <p style={{ margin: '0 0 var(--spacing-1)', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+            {item.label}
+          </p>
+          <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'var(--color-primary)' }}>
+            {item.value ?? 0}
+          </p>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+// ─── Tab: Pending Lawyer Registrations ────────────────────────────────────────
+function PendingLawyersTab({ showToast }) {
   const [lawyers, setLawyers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionError, setActionError] = useState('');
-
-  // Rejection modal state
   const [rejectingId, setRejectingId] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [rejecting, setRejecting] = useState(false);
@@ -88,10 +147,12 @@ function PendingLawyersTab() {
   async function handleApprove(id) {
     setActionError('');
     try {
-      await approveLawyer(id);
       setLawyers((prev) => prev.filter((l) => l.id !== id));
+      await approveLawyer(id);
+      showToast('✅ Lawyer approved successfully!');
     } catch (err) {
       setActionError(err.response?.data?.error || 'Approval failed');
+      await load();
     }
   }
 
@@ -101,12 +162,14 @@ function PendingLawyersTab() {
     setRejecting(true);
     setActionError('');
     try {
-      await rejectLawyer(rejectingId, rejectReason.trim());
       setLawyers((prev) => prev.filter((l) => l.id !== rejectingId));
+      await rejectLawyer(rejectingId, rejectReason.trim());
+      showToast('⚠️ Lawyer registration rejected.');
       setRejectingId(null);
       setRejectReason('');
     } catch (err) {
       setActionError(err.response?.data?.error || 'Rejection failed');
+      await load();
     } finally {
       setRejecting(false);
     }
@@ -143,7 +206,6 @@ function PendingLawyersTab() {
             </div>
           </div>
 
-          {/* Inline rejection form */}
           {rejectingId === lawyer.id && (
             <form onSubmit={handleRejectSubmit} style={{ marginTop: 'var(--spacing-2)', borderTop: '1px solid var(--color-border)', paddingTop: 'var(--spacing-2)' }}>
               <Input
@@ -169,8 +231,8 @@ function PendingLawyersTab() {
   );
 }
 
-// ─── Tab: Marketplace Profile Verification ───────────────────────────────────
-function ProfileVerificationTab() {
+// ─── Tab: Marketplace Profile Verification (With Direct WhatsApp Link) ───────
+function ProfileVerificationTab({ showToast }) {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -182,7 +244,6 @@ function ProfileVerificationTab() {
     setLoading(true);
     setError('');
     try {
-      // Uses the new admin-only endpoint that returns ALL profiles (verified + unverified)
       const data = await getAllMarketplaceProfilesAdmin();
       setProfiles(data);
     } catch (err) {
@@ -196,10 +257,13 @@ function ProfileVerificationTab() {
     setVerifying(id);
     setError('');
     try {
+      setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, is_verified: true } : p)));
       await verifyMarketplaceProfile(id);
+      showToast('🎉 Marketplace profile verified successfully!');
       await load();
     } catch (err) {
       setError(err.response?.data?.error || 'Verification failed');
+      await load();
     } finally {
       setVerifying(null);
     }
@@ -218,159 +282,122 @@ function ProfileVerificationTab() {
         </div>
       )}
 
-      {loading && <p style={{ color: 'var(--color-text-secondary)' }}>Loading…</p>}
+      {loading && <p style={{ color: 'var(--color-text-secondary)' }}>Loading profiles…</p>}
       {error && <p style={{ color: 'var(--color-danger)' }}>{error}</p>}
 
       {!loading && profiles.length === 0 && (
         <Card><p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>No marketplace profiles found.</p></Card>
       )}
 
-      {profiles.map((profile) => (
-        <Card key={profile.id} style={{ marginBottom: '10px', borderLeft: profile.is_verified ? '4px solid var(--color-success)' : '4px solid var(--color-warning)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-            <div>
-              <p style={{ margin: '0 0 2px', fontWeight: 700 }}>{profile.specialization}</p>
-              <p style={{ margin: '0 0 2px', fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                Bio: {profile.bio ? `${profile.bio.slice(0, 60)}…` : '—'}
-              </p>
-              <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                Cases Won: {profile.cases_won} · ID: {profile.id}
-              </p>
+      {profiles.map((profile) => {
+        const lawyerName = profile.lawyer?.name || 'Advocate';
+        const rawPhone = profile.whatsapp_number ? profile.whatsapp_number.replace(/[^0-9]/g, '') : '';
+        const defaultMsg = `Assalam-o-Alaikum Adv. ${lawyerName}, this is LegalHub Admin Team verifying your lawyer marketplace profile application. Please provide your Bar Council License copy.`;
+        const waLink = rawPhone ? `https://wa.me/${rawPhone}?text=${encodeURIComponent(defaultMsg)}` : null;
+
+        return (
+          <Card key={profile.id} style={{ marginBottom: '14px', borderLeft: profile.is_verified ? '4px solid var(--color-success)' : '4px solid var(--color-warning)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ flex: 1, minWidth: '260px' }}>
+                <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: '16px' }}>{profile.specialization}</p>
+                <p style={{ margin: '0 0 4px', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                  {profile.bio ? `${profile.bio.slice(0, 100)}…` : 'No bio provided'}
+                </p>
+                <p style={{ margin: '0 0 6px', fontSize: '12.5px', color: 'var(--color-text-secondary)' }}>
+                  Fee Structure: <strong>{profile.fee_structure || 'Not specified'}</strong> · Cases Won: <strong>{profile.cases_won}</strong>
+                </p>
+                
+                <div style={{
+                  padding: '8px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: '#F3F4F6',
+                  border: '1px solid var(--color-border)', display: 'inline-flex', alignItems: 'center', gap: '10px', marginTop: '4px'
+                }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-secondary)' }}>
+                    📱 WhatsApp Verification: <strong>{profile.whatsapp_number || 'Not provided'}</strong> ({lawyerName})
+                  </span>
+                  
+                  {waLink && (
+                    <a
+                      href={waLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        backgroundColor: '#25D366', color: '#FFFFFF', textDecoration: 'none',
+                        fontSize: '12px', fontWeight: 700, padding: '4px 10px', borderRadius: '4px',
+                        display: 'inline-flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 6px rgba(37,211,102,0.3)'
+                      }}
+                    >
+                      💬 Send WhatsApp Verification Message
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Badge status={profile.is_verified ? 'Paid' : 'Pending'} />
+                {!profile.is_verified && (
+                  <Button
+                    onClick={() => handleVerify(profile.id)}
+                    disabled={verifying === profile.id}
+                    style={{ marginTop: 0, fontSize: '13px', padding: '6px 14px' }}
+                  >
+                    {verifying === profile.id ? 'Verifying…' : 'Approve Verification'}
+                  </Button>
+                )}
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Badge status={profile.is_verified ? 'Paid' : 'Pending'} />
-              {!profile.is_verified && (
-                <Button
-                  onClick={() => handleVerify(profile.id)}
-                  disabled={verifying === profile.id}
-                  style={{ marginTop: 0, fontSize: '13px', padding: '6px 14px' }}
-                >
-                  {verifying === profile.id ? 'Verifying…' : 'Verify'}
-                </Button>
-              )}
-            </div>
-          </div>
-        </Card>
-      ))}
+          </Card>
+        );
+      })}
     </div>
   );
 }
 
-// ─── Tab: All Users ──────────────────────────────────────────────────────────
-function AllUsersTab() {
-  const [users, setUsers] = useState([]);
+// ─── Tab: Audit Logs ──────────────────────────────────────────────────────────
+function LogsTab() {
+  const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
 
   useEffect(() => {
-    getAllUsers()
-      .then(setUsers)
-      .catch((err) => setError(err.response?.data?.error || 'Failed to load users'))
-      .finally(() => setLoading(false));
+    async function load() {
+      try {
+        const data = await getSystemLogs();
+        setLogs(data);
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to load system logs');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
-  const filtered = users.filter((u) => {
-    const matchSearch =
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase());
-    const matchRole = roleFilter === 'all' || u.role === roleFilter;
-    return matchSearch && matchRole;
-  });
-
-  const ROLE_COLORS = {
-    lawyer:  { bg: '#EFF6FF', text: 'var(--color-info)' },
-    citizen: { bg: '#F0FDF4', text: 'var(--color-success)' },
-    admin:   { bg: '#FEF2F2', text: 'var(--color-danger)' },
-    firm:    { bg: '#FFF7ED', text: 'var(--color-warning)' },
-  };
+  if (loading) return <p style={{ color: 'var(--color-text-secondary)' }}>Loading logs…</p>;
+  if (error) return <p style={{ color: 'var(--color-danger)' }}>{error}</p>;
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: '12px', marginBottom: 'var(--spacing-2)', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: '200px' }}>
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or email…"
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', fontWeight: 600 }}>Filter by Role</label>
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            style={{
-              padding: '9px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)',
-              fontSize: '14px', fontFamily: 'var(--font-body)', backgroundColor: 'var(--color-surface)',
-            }}
-          >
-            <option value="all">All roles</option>
-            <option value="lawyer">Lawyer</option>
-            <option value="citizen">Citizen</option>
-            <option value="admin">Admin</option>
-            <option value="firm">Firm</option>
-          </select>
-        </div>
-      </div>
+      {logs.length === 0 && (
+        <Card><p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>No audit logs recorded yet.</p></Card>
+      )}
 
-      {loading && <p style={{ color: 'var(--color-text-secondary)' }}>Loading…</p>}
-      {error && <p style={{ color: 'var(--color-danger)' }}>{error}</p>}
-
-      <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
-        Showing {filtered.length} of {users.length} users
-      </p>
-
-      {/* Responsive table */}
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
-              {['Name', 'Email', 'Role', 'Verified', 'Joined'].map((h) => (
-                <th key={h} style={{
-                  textAlign: 'left', padding: '8px 12px', fontWeight: 700,
-                  color: 'var(--color-text-secondary)', fontSize: '12px', textTransform: 'uppercase',
-                }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((u) => {
-              const roleStyle = ROLE_COLORS[u.role] || { bg: '#F3F4F6', text: '#6B7280' };
-              return (
-                <tr key={u.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                  <td style={{ padding: '10px 12px', fontWeight: 600 }}>{u.name}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--color-text-secondary)' }}>{u.email}</td>
-                  <td style={{ padding: '10px 12px' }}>
-                    <span style={{
-                      display: 'inline-block', padding: '2px 10px', borderRadius: '9999px',
-                      fontSize: '12px', fontWeight: 600,
-                      backgroundColor: roleStyle.bg, color: roleStyle.text,
-                    }}>
-                      {u.role}
-                    </span>
-                  </td>
-                  <td style={{ padding: '10px 12px' }}>
-                    <span style={{
-                      fontSize: '12px', fontWeight: 600,
-                      color: u.is_verified ? 'var(--color-success)' : 'var(--color-warning)',
-                    }}>
-                      {u.is_verified ? '✓ Yes' : '✗ No'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '10px 12px', color: 'var(--color-text-secondary)', fontSize: '12px' }}>
-                    {new Date(u.created_at).toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' })}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {filtered.length === 0 && !loading && (
-          <p style={{ padding: '20px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>No users match your filters.</p>
-        )}
-      </div>
+      {logs.map((log) => (
+        <Card key={log.id} style={{ marginBottom: '8px', padding: '12px 16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+            <span style={{ fontWeight: 600, color: 'var(--color-secondary)' }}>
+              [{log.action}] {log.details}
+            </span>
+            <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px' }}>
+              {new Date(log.createdAt).toLocaleString()}
+            </span>
+          </div>
+          {log.ip_address && (
+            <p style={{ margin: '2px 0 0', fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+              IP: {log.ip_address}
+            </p>
+          )}
+        </Card>
+      ))}
     </div>
   );
 }

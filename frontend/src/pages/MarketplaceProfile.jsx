@@ -2,366 +2,698 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  getProfileById,
+  getMyProfile,
   createProfile,
   updateProfile,
-  getGigsForProfile,
+  getMyGigs,
   createGig,
+  updateGig,
+  deleteGig,
 } from '../api/marketplaceApi';
 import { Card, Badge, Button, Input } from '../components/ui';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const SPECIALIZATIONS = [
+  'General Practice & Litigation',
+  'Constitutional & High Court Litigation',
+  'Family Law & Khula',
+  'Criminal Defense & Bail',
+  'Corporate, Tax & Commercial Law',
+  'Property, Rent & Real Estate',
+  'Civil Rights & Intellectual Property',
+  'Labor, Employment & Service Law',
+];
+
+const PRESET_AVATARS = [
+  { label: 'Advocate Male 1', url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&auto=format&fit=crop&q=80' },
+  { label: 'Advocate Female 1', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&auto=format&fit=crop&q=80' },
+  { label: 'Advocate Male 2', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80' },
+  { label: 'Advocate Female 2', url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=160&auto=format&fit=crop&q=80' },
+];
+
+const PRESET_THUMBNAILS = [
+  { label: 'High Court / Gavel', url: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&auto=format&fit=crop&q=80' },
+  { label: 'Legal Contract / Agreement', url: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=400&auto=format&fit=crop&q=80' },
+  { label: 'Corporate Office', url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&auto=format&fit=crop&q=80' },
+  { label: 'Consultation & Desk', url: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&auto=format&fit=crop&q=80' },
+];
 
 function MarketplaceProfile() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect non-lawyers away
-  if (user?.role !== 'lawyer') {
-    navigate('/marketplace', { replace: true });
-    return null;
-  }
-
   const [profile, setProfile] = useState(null);
   const [gigs, setGigs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
-  // Create profile form
-  const [specialization, setSpecialization] = useState('');
+  // Profile Edit State
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [spec, setSpec] = useState('General Practice & Litigation');
   const [bio, setBio] = useState('');
-  const [feeStructure, setFeeStructure] = useState('');
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState('');
+  const [fee, setFee] = useState('');
+  const [casesWon, setCasesWon] = useState(0);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
 
-  // Edit mode
-  const [editing, setEditing] = useState(false);
-  const [editSpec, setEditSpec] = useState('');
-  const [editBio, setEditBio] = useState('');
-  const [editFee, setEditFee] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  // Add gig form
+  // Gig Form State (Create / Edit)
+  const [showGigForm, setShowGigForm] = useState(false);
+  const [editingGigId, setEditingGigId] = useState(null);
   const [gigTitle, setGigTitle] = useState('');
   const [gigDesc, setGigDesc] = useState('');
   const [gigPrice, setGigPrice] = useState('');
-  const [addingGig, setAddingGig] = useState(false);
+  const [gigThumbnail, setGigThumbnail] = useState('');
+  const [submittingGig, setSubmittingGig] = useState(false);
   const [gigError, setGigError] = useState('');
-  const [showGigForm, setShowGigForm] = useState(false);
 
-  // We can't fetch "my profile" directly by JWT alone since GET / returns all profiles.
-  // The backend stores lawyer_id on the profile, so we fetch all profiles and filter
-  // by lawyer_id === user.id (profiles are only visible when is_verified=true via public GET /).
-  // For a lawyer's OWN profile management we use the fact that POST returns the new profile
-  // and PATCH works by JWT. We store the profile id after creating it, or we fetch all
-  // unverified + verified profiles. Since GET / only returns verified ones, the only safe
-  // approach is to try GET all, filter, OR try to create and catch "already exists".
-  // Best solution: we keep profile id in state after first load via GET /api/v1/marketplace-profiles
-  // but filter client-side. Note: unverified profiles won't appear in GET / for the lawyer
-  // themselves. We handle this gracefully.
+  // Delete Confirm Modal State
+  const [deletingGigId, setDeletingGigId] = useState(null);
 
   useEffect(() => {
-    loadProfile();
-  }, []);
+    if (user && user.role !== 'lawyer') {
+      navigate('/marketplace', { replace: true });
+      return;
+    }
+    loadData();
+  }, [user, navigate]);
 
-  async function loadProfile() {
+  function showToast(msg) {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((prev) => (prev === msg ? '' : prev));
+    }, 4000);
+  }
+
+  async function loadData() {
     setLoading(true);
     setError('');
     try {
-      // GET /marketplace-profiles returns only is_verified=true profiles.
-      // If the lawyer's profile isn't verified yet, it won't appear here.
-      // We'll detect that case and show appropriate messaging.
-      const all = await getProfileById('check').catch(() => null); // placeholder
-      // The above won't work well, use getAllProfiles and filter — but unverified won't appear.
-      // We'll use a try/create-and-catch approach instead as the cleanest UX.
-      // Actually: we'll use PATCH / to detect if profile exists (PATCH will error "not found" if not)
-      // Better: just show create form, and on attempt catch "Profile already exists".
-      // After create, store locally.
-      setProfile(null);
-    } catch {
-      setProfile(null);
+      let myProf = await getMyProfile().catch(() => null);
+
+      // Auto-ensure profile exists seamlessly
+      if (!myProf) {
+        try {
+          myProf = await createProfile({
+            specialization: 'General Practice & Litigation',
+            bio: 'Verified Advocate on LegalHub Pakistan. Providing legal consultation and court representation.',
+            fee_structure: 'Rs. 10,000 / Consultation',
+          });
+        } catch {
+          myProf = await getMyProfile().catch(() => null);
+        }
+      }
+
+      setProfile(myProf);
+      setSpec(myProf?.specialization || 'General Practice & Litigation');
+      setBio(myProf?.bio || '');
+      setFee(myProf?.fee_structure || '');
+      setCasesWon(myProf?.cases_won || 0);
+      setAvatarUrl(myProf?.avatar_url || '');
+      setWhatsappNumber(myProf?.whatsapp_number || '');
+
+      // Load all lawyer gigs
+      const myGigs = await getMyGigs().catch(() => []);
+      setGigs(myGigs);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to load marketplace module');
     } finally {
       setLoading(false);
     }
   }
 
-  // Better approach: track profile in localStorage keyed by lawyer id so lawyer
-  // always sees their own profile immediately after creating it.
-  useEffect(() => {
-    const stored = localStorage.getItem(`mp_profile_${user?.id}`);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setProfile(parsed);
-        loadGigs(parsed.id);
-      } catch {
-        localStorage.removeItem(`mp_profile_${user?.id}`);
-      }
-    }
-    setLoading(false);
-  }, [user?.id]);
-
-  async function loadGigs(profileId) {
-    try {
-      const data = await getGigsForProfile(profileId);
-      setGigs(data);
-    } catch {
-      // silent
-    }
-  }
-
-  async function handleCreate(e) {
+  async function handleSaveProfile(e) {
     e.preventDefault();
-    if (!specialization.trim()) { setCreateError('Specialization is required'); return; }
-    setCreating(true);
-    setCreateError('');
-    try {
-      const created = await createProfile({
-        specialization: specialization.trim(),
-        bio: bio.trim() || undefined,
-        fee_structure: feeStructure.trim() || undefined,
-      });
-      localStorage.setItem(`mp_profile_${user.id}`, JSON.stringify(created));
-      setProfile(created);
-      setGigs([]);
-    } catch (err) {
-      setCreateError(err.response?.data?.error || 'Failed to create profile');
-    } finally {
-      setCreating(false);
-    }
-  }
-
-  function startEdit() {
-    setEditSpec(profile.specialization);
-    setEditBio(profile.bio || '');
-    setEditFee(profile.fee_structure || '');
-    setEditing(true);
-  }
-
-  async function handleSaveEdit(e) {
-    e.preventDefault();
-    setSaving(true);
+    setSavingProfile(true);
     setError('');
     try {
       const updated = await updateProfile({
-        specialization: editSpec.trim(),
-        bio: editBio.trim() || undefined,
-        fee_structure: editFee.trim() || undefined,
+        specialization: spec,
+        bio: bio.trim() || undefined,
+        fee_structure: fee.trim() || undefined,
+        cases_won: Number(casesWon),
+        avatar_url: avatarUrl.trim() || undefined,
+        whatsapp_number: whatsappNumber.trim() || undefined,
       });
-      const merged = { ...profile, ...updated };
-      localStorage.setItem(`mp_profile_${user.id}`, JSON.stringify(merged));
-      setProfile(merged);
-      setEditing(false);
+      setProfile((prev) => ({ ...prev, ...updated }));
+      setEditingProfile(false);
+      showToast('✅ Profile information updated successfully!');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save changes');
+      setError(err.response?.data?.error || 'Failed to update profile');
     } finally {
-      setSaving(false);
+      setSavingProfile(false);
     }
   }
 
-  async function handleAddGig(e) {
+  function openCreateGigForm() {
+    setEditingGigId(null);
+    setGigTitle('');
+    setGigDesc('');
+    setGigPrice('');
+    setGigThumbnail(PRESET_THUMBNAILS[0].url);
+    setGigError('');
+    setShowGigForm(true);
+  }
+
+  function openEditGigForm(gig) {
+    setEditingGigId(gig.id);
+    setGigTitle(gig.title);
+    setGigDesc(gig.description || '');
+    setGigPrice(String(gig.price));
+    setGigThumbnail(gig.thumbnail_url || PRESET_THUMBNAILS[0].url);
+    setGigError('');
+    setShowGigForm(true);
+  }
+
+  async function handleGigSubmit(e) {
     e.preventDefault();
-    if (!gigTitle.trim() || !gigPrice) { setGigError('Title and price are required'); return; }
-    setAddingGig(true);
+    if (!gigTitle.trim() || !gigPrice) {
+      setGigError('Title and price are required');
+      return;
+    }
+    setSubmittingGig(true);
     setGigError('');
     try {
-      await createGig({
-        title: gigTitle.trim(),
-        description: gigDesc.trim() || undefined,
-        price: Number(gigPrice),
-      });
-      setGigTitle(''); setGigDesc(''); setGigPrice('');
+      if (editingGigId) {
+        // UPDATE GIG
+        const updated = await updateGig(editingGigId, {
+          title: gigTitle.trim(),
+          description: gigDesc.trim() || undefined,
+          price: Number(gigPrice),
+          thumbnail_url: gigThumbnail.trim() || undefined,
+        });
+        setGigs((prev) => prev.map((g) => (g.id === editingGigId ? updated : g)));
+        showToast('✏️ Gig updated successfully!');
+      } else {
+        // CREATE GIG
+        const created = await createGig({
+          title: gigTitle.trim(),
+          description: gigDesc.trim() || undefined,
+          price: Number(gigPrice),
+          thumbnail_url: gigThumbnail.trim() || undefined,
+        });
+        setGigs((prev) => [created, ...prev]);
+        showToast('🚀 New Gig published to Marketplace!');
+      }
       setShowGigForm(false);
-      await loadGigs(profile.id);
+      setEditingGigId(null);
     } catch (err) {
-      setGigError(err.response?.data?.error || 'Failed to add gig');
+      setGigError(err.response?.data?.error || 'Failed to save gig');
     } finally {
-      setAddingGig(false);
+      setSubmittingGig(false);
     }
   }
 
-  if (loading) return <p style={{ color: 'var(--color-text-secondary)' }}>Loading…</p>;
-
-  // ── No profile yet: show create form ─────────────────────────────────────
-  if (!profile) {
-    return (
-      <div>
-        <h2 style={{ fontFamily: 'var(--font-heading)', margin: '0 0 var(--spacing-3)', color: 'var(--color-secondary)' }}>
-          My Marketplace Profile
-        </h2>
-        <Card style={{ maxWidth: '520px' }}>
-          <h3 style={{ fontFamily: 'var(--font-heading)', margin: '0 0 var(--spacing-2)', fontSize: '16px' }}>
-            Create Your Profile
-          </h3>
-          <p style={{ margin: '0 0 var(--spacing-2)', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-            A marketplace profile lets citizens find and contact you. It must be verified by an admin before appearing publicly.
-          </p>
-          <form onSubmit={handleCreate}>
-            <Input
-              label="Specialization *"
-              value={specialization}
-              onChange={(e) => setSpecialization(e.target.value)}
-              placeholder="e.g. Family Law, Criminal Defense"
-              required
-            />
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)' }}>
-                Bio
-              </label>
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="Tell clients about your experience and approach…"
-                rows={4}
-                style={{
-                  display: 'block', width: '100%', padding: '9px 12px',
-                  border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)',
-                  fontSize: '14px', fontFamily: 'var(--font-body)', color: 'var(--color-text)',
-                  backgroundColor: 'var(--color-surface)', boxSizing: 'border-box', resize: 'vertical',
-                }}
-              />
-            </div>
-            <Input
-              label="Fee Structure"
-              value={feeStructure}
-              onChange={(e) => setFeeStructure(e.target.value)}
-              placeholder="e.g. Rs. 5,000/hr or Fixed: Rs. 50,000/case"
-            />
-            {createError && <p style={{ color: 'var(--color-danger)', fontSize: '13px' }}>{createError}</p>}
-            <Button type="submit" disabled={creating}>
-              {creating ? 'Creating…' : 'Create Profile'}
-            </Button>
-          </form>
-        </Card>
-      </div>
-    );
+  async function handleDeleteGig(gigId) {
+    try {
+      await deleteGig(gigId);
+      setGigs((prev) => prev.filter((g) => g.id !== gigId));
+      setDeletingGigId(null);
+      showToast('🗑️ Gig deleted successfully.');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete gig');
+    }
   }
 
-  // ── Has profile: show detail + gigs ─────────────────────────────────────
+  if (loading) return <p style={{ color: 'var(--color-text-secondary)', padding: '20px' }}>Loading Gig Management Module…</p>;
+
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-3)' }}>
-        <h2 style={{ fontFamily: 'var(--font-heading)', margin: 0, color: 'var(--color-secondary)' }}>
-          My Marketplace Profile
-        </h2>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <Badge status={profile.is_verified ? 'Paid' : 'Pending'} />
-          {!editing && <Button variant="secondary" onClick={startEdit} style={{ marginTop: 0 }}>Edit</Button>}
-        </div>
-      </div>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+      {/* Toast Banner */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            style={{
+              padding: '12px 18px', marginBottom: '20px',
+              backgroundColor: '#ECFDF5', border: '1px solid var(--color-success)',
+              color: '#065F46', borderRadius: 'var(--radius-sm)',
+              fontSize: '14px', fontWeight: 600, display: 'flex',
+              justifyContent: 'space-between', alignItems: 'center'
+            }}
+          >
+            <span>{toastMessage}</span>
+            <button onClick={() => setToastMessage('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#065F46' }}>✕</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {!profile.is_verified && (
-        <div style={{
-          padding: '10px 16px', marginBottom: 'var(--spacing-2)', borderRadius: 'var(--radius-sm)',
-          backgroundColor: '#FFF7ED', border: '1px solid var(--color-warning)', fontSize: '13px',
-        }}>
-          ⏳ Your profile is pending admin verification. It won't appear in public search until approved.
-        </div>
-      )}
-
-      {error && <p style={{ color: 'var(--color-danger)', fontSize: '13px', marginBottom: '12px' }}>{error}</p>}
-
-      {editing ? (
-        <Card style={{ marginBottom: 'var(--spacing-3)', maxWidth: '520px' }}>
-          <h3 style={{ fontFamily: 'var(--font-heading)', margin: '0 0 var(--spacing-2)', fontSize: '15px' }}>Edit Profile</h3>
-          <form onSubmit={handleSaveEdit}>
-            <Input label="Specialization" value={editSpec} onChange={(e) => setEditSpec(e.target.value)} required />
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)' }}>Bio</label>
-              <textarea
-                value={editBio}
-                onChange={(e) => setEditBio(e.target.value)}
-                rows={4}
-                style={{
-                  display: 'block', width: '100%', padding: '9px 12px',
-                  border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)',
-                  fontSize: '14px', fontFamily: 'var(--font-body)', backgroundColor: 'var(--color-surface)',
-                  boxSizing: 'border-box', resize: 'vertical',
-                }}
-              />
-            </div>
-            <Input label="Fee Structure" value={editFee} onChange={(e) => setEditFee(e.target.value)} />
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</Button>
-              <Button variant="secondary" onClick={() => setEditing(false)} style={{ marginTop: '8px' }}>Cancel</Button>
-            </div>
-          </form>
-        </Card>
-      ) : (
-        <Card style={{ marginBottom: 'var(--spacing-3)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-2)' }}>
-            <div>
-              <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>Specialization</p>
-              <p style={{ margin: 0 }}>{profile.specialization}</p>
-            </div>
-            {profile.fee_structure && (
-              <div>
-                <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>Fee Structure</p>
-                <p style={{ margin: 0 }}>{profile.fee_structure}</p>
-              </div>
-            )}
-          </div>
-          {profile.bio && (
-            <div style={{ marginTop: 'var(--spacing-2)' }}>
-              <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>Bio</p>
-              <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.6' }}>{profile.bio}</p>
-            </div>
-          )}
-          <p style={{ margin: 'var(--spacing-2) 0 0', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-            Cases Won: <strong>{profile.cases_won}</strong>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h2 style={{ fontFamily: 'var(--font-heading)', margin: 0, color: 'var(--color-secondary)', fontSize: '24px', fontWeight: 800 }}>
+            Lawyer Marketplace & Gig Module
+          </h2>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', margin: '4px 0 0' }}>
+            Manage your advocate profile and publish legal service packages for prospective clients across Pakistan.
           </p>
-        </Card>
-      )}
+        </div>
 
-      {/* Gigs section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
-        <h3 style={{ fontFamily: 'var(--font-heading)', margin: 0, color: 'var(--color-secondary)' }}>My Gigs</h3>
-        <Button onClick={() => setShowGigForm(!showGigForm)} style={{ marginTop: 0 }}>
-          {showGigForm ? 'Cancel' : '+ Add Gig'}
+        <Button onClick={openCreateGigForm} style={{ marginTop: 0, padding: '10px 20px', fontWeight: 700 }}>
+          + Create New Gig
         </Button>
       </div>
 
-      {showGigForm && (
-        <Card style={{ marginBottom: 'var(--spacing-2)', maxWidth: '520px' }}>
-          <form onSubmit={handleAddGig}>
-            <Input label="Title *" value={gigTitle} onChange={(e) => setGigTitle(e.target.value)} placeholder="e.g. Property Dispute Consultation" required />
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)' }}>Description</label>
-              <textarea
-                value={gigDesc}
-                onChange={(e) => setGigDesc(e.target.value)}
-                placeholder="Describe what this gig includes…"
-                rows={3}
-                style={{
-                  display: 'block', width: '100%', padding: '9px 12px',
-                  border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)',
-                  fontSize: '14px', fontFamily: 'var(--font-body)', backgroundColor: 'var(--color-surface)',
-                  boxSizing: 'border-box', resize: 'vertical',
-                }}
+      {error && <p style={{ color: 'var(--color-danger)', fontSize: '14px', marginBottom: '16px' }}>{error}</p>}
+
+      {/* ── INTERACTIVE PROFILE OVERVIEW BANNER (ABOVE GIGS) ──────────────── */}
+      {profile && (
+        <Card style={{
+          marginBottom: '28px',
+          background: 'linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%)',
+          borderLeft: profile.is_verified ? '5px solid var(--color-success)' : '5px solid var(--color-warning)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+          position: 'relative'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px' }}>
+            
+            {/* Left: Avatar & Advocate Info */}
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flex: 1, minWidth: '280px' }}>
+              <img
+                src={profile.avatar_url || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&auto=format&fit=crop&q=80'}
+                alt={profile.lawyer?.name || 'Advocate'}
+                style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--color-primary)', flexShrink: 0 }}
               />
+
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                  <h3 style={{ fontFamily: 'var(--font-heading)', margin: 0, fontSize: '20px', fontWeight: 800, color: 'var(--color-secondary)' }}>
+                    Adv. {profile.lawyer?.name || 'Advocate'}
+                  </h3>
+                  <Badge status={profile.is_verified ? 'Paid' : 'Pending'} label={profile.is_verified ? 'Verified Advocate' : 'Pending Admin Verification'} />
+                </div>
+
+                <p style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                  ⚖️ {profile.specialization}
+                </p>
+
+                {profile.bio && (
+                  <p style={{ margin: '0 0 16px', fontSize: '13.5px', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+                    {profile.bio}
+                  </p>
+                )}
+
+                {/* Interactive Quick Stats Pills */}
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{
+                    backgroundColor: 'rgba(15,92,60,0.08)', color: 'var(--color-primary)',
+                    fontSize: '12.5px', fontWeight: 700, padding: '5px 12px', borderRadius: '9999px'
+                  }}>
+                    🏆 {profile.cases_won || 0} Cases Won
+                  </span>
+
+                  <span style={{
+                    backgroundColor: 'rgba(201,162,39,0.14)', color: 'var(--color-accent)',
+                    fontSize: '12.5px', fontWeight: 700, padding: '5px 12px', borderRadius: '9999px'
+                  }}>
+                    💰 {profile.fee_structure || 'Negotiable'}
+                  </span>
+
+                  <span style={{
+                    backgroundColor: 'rgba(59,130,196,0.1)', color: 'var(--color-info)',
+                    fontSize: '12.5px', fontWeight: 700, padding: '5px 12px', borderRadius: '9999px'
+                  }}>
+                    📦 {gigs.length} Published Service Packages
+                  </span>
+
+                  {/* Private WhatsApp Admin Badge (Only visible to advocate & admin) */}
+                  <span style={{
+                    backgroundColor: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D',
+                    fontSize: '12px', fontWeight: 700, padding: '5px 12px', borderRadius: '9999px'
+                  }} title="Admin verification contact number (not visible to public)">
+                    🔒 WhatsApp (Admin Verification): <strong>{profile.whatsapp_number || 'Not set (Click edit)'}</strong>
+                  </span>
+                </div>
+              </div>
             </div>
-            <Input label="Price (Rs.) *" type="number" value={gigPrice} onChange={(e) => setGigPrice(e.target.value)} placeholder="e.g. 5000" required />
-            {gigError && <p style={{ color: 'var(--color-danger)', fontSize: '13px' }}>{gigError}</p>}
-            <Button type="submit" disabled={addingGig}>{addingGig ? 'Adding…' : 'Add Gig'}</Button>
-          </form>
+
+            {/* Right: Edit Toggle Button */}
+            <Button variant="secondary" onClick={() => setEditingProfile(!editingProfile)} style={{ marginTop: 0, fontWeight: 700 }}>
+              {editingProfile ? 'Close Edit Form' : '✏️ Edit Profile Info'}
+            </Button>
+          </div>
+
+          {/* Edit Profile Form Container */}
+          {editingProfile && (
+            <form onSubmit={handleSaveProfile} style={{ marginTop: '24px', borderTop: '1px solid var(--color-border)', paddingTop: '20px' }}>
+              <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', fontWeight: 700, margin: '0 0 14px', color: 'var(--color-secondary)' }}>
+                Edit Advocate Profile & Verification Info
+              </h4>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '14px', marginBottom: '14px' }}>
+                {/* Specialization Dropdown */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)', marginBottom: '6px' }}>
+                    Specialization *
+                  </label>
+                  <select
+                    value={spec}
+                    onChange={(e) => setSpec(e.target.value)}
+                    required
+                    style={{
+                      width: '100%', minHeight: '42px', padding: '0 12px',
+                      borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)',
+                      fontSize: '14px', fontFamily: 'var(--font-body)', outline: 'none', backgroundColor: '#FFF'
+                    }}
+                  >
+                    {SPECIALIZATIONS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* WhatsApp Contact Number for Admin Verification */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)', marginBottom: '6px' }}>
+                    WhatsApp / Contact Number (Admin Verification) *
+                  </label>
+                  <input
+                    type="text"
+                    value={whatsappNumber}
+                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                    placeholder="e.g. +923001234567"
+                    required
+                    style={{
+                      width: '100%', minHeight: '42px', padding: '0 12px',
+                      borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)',
+                      fontSize: '14px', fontFamily: 'var(--font-body)', outline: 'none', backgroundColor: '#FFF'
+                    }}
+                  />
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', display: 'block', marginTop: '4px' }}>
+                    🔒 Used exclusively by LegalHub Admins for license verification. Never shown to public.
+                  </span>
+                </div>
+
+                {/* Cases Won */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)', marginBottom: '6px' }}>
+                    Cases Won *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={casesWon}
+                    onChange={(e) => setCasesWon(e.target.value)}
+                    required
+                    style={{
+                      width: '100%', minHeight: '42px', padding: '0 12px',
+                      borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)',
+                      fontSize: '14px', fontFamily: 'var(--font-body)', outline: 'none', backgroundColor: '#FFF'
+                    }}
+                  />
+                </div>
+
+                {/* Fee Structure */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)', marginBottom: '6px' }}>
+                    Fee Structure
+                  </label>
+                  <input
+                    type="text"
+                    value={fee}
+                    onChange={(e) => setFee(e.target.value)}
+                    placeholder="e.g. Rs. 15,000 / Hearing"
+                    style={{
+                      width: '100%', minHeight: '42px', padding: '0 12px',
+                      borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)',
+                      fontSize: '14px', fontFamily: 'var(--font-body)', outline: 'none', backgroundColor: '#FFF'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Profile Picture URL & Preset Picker */}
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)', marginBottom: '6px' }}>
+                  Profile Picture URL
+                </label>
+                <input
+                  type="url"
+                  value={avatarUrl}
+                  onChange={(e) => setAvatarUrl(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                  style={{
+                    width: '100%', minHeight: '42px', padding: '0 12px',
+                    borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)',
+                    fontSize: '14px', fontFamily: 'var(--font-body)', outline: 'none', backgroundColor: '#FFF',
+                    marginBottom: '8px'
+                  }}
+                />
+                
+                <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'block', marginBottom: '6px' }}>
+                  Or select a preset profile photo:
+                </span>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {PRESET_AVATARS.map((preset, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setAvatarUrl(preset.url)}
+                      style={{
+                        padding: '4px 10px', borderRadius: 'var(--radius-sm)',
+                        border: avatarUrl === preset.url ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                        backgroundColor: avatarUrl === preset.url ? 'rgba(15,92,60,0.08)' : '#FFF',
+                        fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
+                      }}
+                    >
+                      <img src={preset.url} alt={preset.label} style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+                      <span>{preset.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bio / Experience */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)', marginBottom: '6px' }}>
+                  Bio / Advocate Professional Experience
+                </label>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={3}
+                  placeholder="Describe your legal qualifications, court experience, and track record…"
+                  style={{
+                    width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--color-border)', fontSize: '14px', fontFamily: 'var(--font-body)', outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <Button type="submit" disabled={savingProfile}>
+                  {savingProfile ? 'Saving Changes…' : 'Save Profile Changes'}
+                </Button>
+                <Button variant="secondary" onClick={() => setEditingProfile(false)}>Cancel</Button>
+              </div>
+            </form>
+          )}
         </Card>
       )}
 
-      {gigs.length === 0 && (
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>No gigs yet. Add your first service above.</p>
-      )}
-      {gigs.map((gig) => (
-        <Card key={gig.id} style={{ marginBottom: '10px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <p style={{ margin: '0 0 4px', fontWeight: 700 }}>{gig.title}</p>
-              {gig.description && <p style={{ margin: '0 0 4px', fontSize: '13px', color: 'var(--color-text-secondary)' }}>{gig.description}</p>}
-            </div>
-            <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap' }}>
-              Rs. {Number(gig.price).toLocaleString('en-PK')}
+      {/* ── GIG CREATION / EDIT FORM MODAL ────────────────────────────────── */}
+      <AnimatePresence>
+        {showGigForm && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            style={{ marginBottom: '28px' }}
+          >
+            <Card style={{ backgroundColor: '#F9FAFB', border: '2px solid var(--color-primary)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontFamily: 'var(--font-heading)', margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--color-secondary)' }}>
+                  {editingGigId ? '✏️ Edit Legal Service Package' : '🚀 Publish New Legal Service Package / Gig'}
+                </h3>
+                <button onClick={() => setShowGigForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>✕</button>
+              </div>
+
+              <form onSubmit={handleGigSubmit}>
+                <Input
+                  label="Gig Title *"
+                  value={gigTitle}
+                  onChange={(e) => setGigTitle(e.target.value)}
+                  placeholder="e.g. High Court Appeal Petition & Case Summary"
+                  required
+                />
+                
+                <div style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)' }}>
+                    Gig Description
+                  </label>
+                  <textarea
+                    value={gigDesc}
+                    onChange={(e) => setGigDesc(e.target.value)}
+                    placeholder="Detail what is included in this service (e.g. 1-hour consultation, petition drafting, High Court filing)…"
+                    rows={3}
+                    style={{
+                      display: 'block', width: '100%', padding: '10px 12px',
+                      border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)',
+                      fontSize: '14px', fontFamily: 'var(--font-body)', backgroundColor: 'var(--color-surface)',
+                      boxSizing: 'border-box', outline: 'none'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+                  <Input
+                    label="Package Price (PKR) *"
+                    type="number"
+                    value={gigPrice}
+                    onChange={(e) => setGigPrice(e.target.value)}
+                    placeholder="e.g. 25000"
+                    required
+                  />
+
+                  {/* Gig Thumbnail URL Field */}
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)' }}>
+                      Gig Thumbnail Image URL
+                    </label>
+                    <input
+                      type="url"
+                      value={gigThumbnail}
+                      onChange={(e) => setGigThumbnail(e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      style={{
+                        width: '100%', minHeight: '42px', padding: '0 12px',
+                        borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)',
+                        fontSize: '14px', fontFamily: 'var(--font-body)', outline: 'none', backgroundColor: '#FFF'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Preset Thumbnails Picker */}
+                <div style={{ marginBottom: '16px' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'block', marginBottom: '6px' }}>
+                    Select a preset thumbnail image for your gig:
+                  </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+                    {PRESET_THUMBNAILS.map((thumb, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setGigThumbnail(thumb.url)}
+                        style={{
+                          padding: '6px', borderRadius: 'var(--radius-sm)',
+                          border: gigThumbnail === thumb.url ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                          backgroundColor: '#FFF', cursor: 'pointer', textAlign: 'left'
+                        }}
+                      >
+                        <img src={thumb.url} alt={thumb.label} style={{ width: '100%', height: '65px', borderRadius: '4px', objectFit: 'cover', marginBottom: '4px' }} />
+                        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {thumb.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {gigError && <p style={{ color: 'var(--color-danger)', fontSize: '13px', marginBottom: '12px' }}>{gigError}</p>}
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                  <Button type="submit" disabled={submittingGig}>
+                    {submittingGig ? 'Saving…' : editingGigId ? 'Update Gig' : 'Publish Gig to Marketplace'}
+                  </Button>
+                  <Button variant="secondary" onClick={() => setShowGigForm(false)}>Cancel</Button>
+                </div>
+              </form>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── GIGS LIST (READ, UPDATE, DELETE) ────────────────────────────────── */}
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ fontFamily: 'var(--font-heading)', margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--color-secondary)' }}>
+            Published Service Packages ({gigs.length})
+          </h3>
+        </div>
+
+        {gigs.length === 0 && !showGigForm && (
+          <Card style={{ textAlign: 'center', padding: '40px 24px' }}>
+            <span style={{ fontSize: '36px', display: 'block', marginBottom: '12px' }}>📦</span>
+            <h4 style={{ fontFamily: 'var(--font-heading)', margin: '0 0 8px', fontSize: '16px', color: 'var(--color-secondary)' }}>
+              No Legal Gigs Published Yet
+            </h4>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', maxWidth: '400px', margin: '0 auto 20px' }}>
+              Create your first legal service package to start offering legal assistance to clients on the Marketplace.
             </p>
-          </div>
-        </Card>
-      ))}
-    </div>
+            <Button onClick={openCreateGigForm}>+ Publish Your First Gig</Button>
+          </Card>
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+          {gigs.map((gig) => (
+            <Card key={gig.id} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '0', overflow: 'hidden' }}>
+              {/* Gig Thumbnail */}
+              <div style={{ height: '140px', width: '100%', backgroundColor: '#E5E7EB', overflow: 'hidden', position: 'relative' }}>
+                <img
+                  src={gig.thumbnail_url || PRESET_THUMBNAILS[0].url}
+                  alt={gig.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
+                  <span style={{
+                    backgroundColor: 'rgba(0,0,0,0.75)', color: '#FFF', fontSize: '13px',
+                    fontWeight: 700, padding: '4px 10px', borderRadius: '9999px', backdropFilter: 'blur(4px)'
+                  }}>
+                    Rs. {Number(gig.price).toLocaleString('en-PK')}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 8px', fontWeight: 700, fontSize: '16px', color: 'var(--color-secondary)' }}>{gig.title}</h4>
+                  {gig.description && (
+                    <p style={{ margin: 0, fontSize: '13.5px', color: 'var(--color-text-secondary)', lineHeight: 1.55 }}>
+                      {gig.description}
+                    </p>
+                  )}
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '14px', marginTop: '16px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button variant="secondary" onClick={() => openEditGigForm(gig)} style={{ flex: 1, marginTop: 0, fontSize: '13px', padding: '6px 12px' }}>
+                      ✏️ Edit
+                    </Button>
+                    <Button variant="danger" onClick={() => setDeletingGigId(gig.id)} style={{ marginTop: 0, fontSize: '13px', padding: '6px 12px' }}>
+                      🗑️ Delete
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Confirm Delete Popup Overlay */}
+                {deletingGigId === gig.id && (
+                  <div style={{
+                    marginTop: '14px', paddingTop: '14px', borderTop: '1px solid var(--color-danger)',
+                    backgroundColor: 'rgba(214,69,69,0.06)', padding: '12px', borderRadius: 'var(--radius-sm)'
+                  }}>
+                    <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--color-danger)', fontWeight: 600 }}>
+                      Are you sure you want to delete this Gig?
+                    </p>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Button variant="danger" onClick={() => handleDeleteGig(gig.id)} style={{ marginTop: 0, fontSize: '12px', padding: '4px 10px' }}>
+                        Yes, Delete
+                      </Button>
+                      <Button variant="secondary" onClick={() => setDeletingGigId(null)} style={{ marginTop: 0, fontSize: '12px', padding: '4px 10px' }}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
