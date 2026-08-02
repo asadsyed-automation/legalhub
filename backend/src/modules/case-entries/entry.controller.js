@@ -1,4 +1,4 @@
-const { addEntry, getEntriesForCase } = require('./entry.service');
+const { addEntry, getEntriesForCase, getAISummary } = require('./entry.service');
 
 async function create(req, res) {
   try {
@@ -26,4 +26,17 @@ async function getForCase(req, res) {
   }
 }
 
-module.exports = { create, getForCase };
+async function fetchAISummary(req, res) {
+  try {
+    const result = await getAISummary({
+      caseId: req.params.caseId,
+      userId: req.user.id,
+      role: req.user.role,
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+module.exports = { create, getForCase, fetchAISummary };

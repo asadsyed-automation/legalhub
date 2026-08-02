@@ -3,10 +3,12 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getCaseById, updateCaseStatus } from '../api/caseApi';
 import { getHearings, addHearing } from '../api/hearingApi';
-import { getEntries, addEntry } from '../api/entryApi';
+import { getEntries, addEntry, getAISummary } from '../api/entryApi';
 import { getDocuments, uploadDocument } from '../api/documentApi';
 import { getFees, addFee, updateFeeStatus } from '../api/feeApi';
 import { Card, Badge, Button, Input } from '../components/ui';
+import CitizenProfileModal from '../components/CitizenProfileModal';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const CASE_STATUSES = ['Open', 'In Progress', 'Hearing Scheduled', 'Adjourned', 'Decided', 'Closed', 'Archived'];
 const TABS = ['Overview', 'Entries', 'Hearings', 'Documents', 'Fees'];
@@ -117,31 +119,58 @@ function CaseDetail() {
 
 /* ─── Overview Tab ───────────────────────────────────────────────── */
 function OverviewTab({ caseData }) {
+  const [showClientModal, setShowClientModal] = useState(false);
+
   return (
-    <Card>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-3)' }}>
-        <div>
-          <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>Status</p>
-          <Badge status={caseData.status} />
+    <>
+      <Card>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-3)' }}>
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>Status</p>
+            <Badge status={caseData.status} />
+          </div>
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>Type</p>
+            <p style={{ margin: 0 }}>{caseData.case_type}</p>
+          </div>
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>Court</p>
+            <p style={{ margin: 0 }}>{caseData.court_name}</p>
+          </div>
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>Opened</p>
+            <p style={{ margin: 0 }}>{new Date(caseData.created_at).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          </div>
+
+          {caseData.client_id && (
+            <div style={{ gridColumn: 'span 2', borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
+              <button
+                type="button"
+                onClick={() => setShowClientModal(true)}
+                style={{
+                  backgroundColor: 'rgba(15,92,60,0.1)', color: 'var(--color-primary)',
+                  border: '1px solid var(--color-primary)', borderRadius: 'var(--radius-sm)',
+                  padding: '8px 14px', fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                  display: 'inline-flex', alignItems: 'center', gap: '6px'
+                }}
+              >
+                <span>👤</span> View Client Profile (Fiverr / Freelancer Buyer Card)
+              </button>
+            </div>
+          )}
         </div>
-        <div>
-          <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>Type</p>
-          <p style={{ margin: 0 }}>{caseData.case_type}</p>
-        </div>
-        <div>
-          <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>Court</p>
-          <p style={{ margin: 0 }}>{caseData.court_name}</p>
-        </div>
-        <div>
-          <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>Opened</p>
-          <p style={{ margin: 0 }}>{new Date(caseData.created_at).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-        </div>
-      </div>
-    </Card>
+      </Card>
+
+      <CitizenProfileModal
+        citizenId={caseData.client_id}
+        isOpen={showClientModal}
+        onClose={() => setShowClientModal(false)}
+      />
+    </>
   );
 }
 
-/* ─── Entries Tab ────────────────────────────────────────────────── */
+/* ─── Entries Tab with AI Petition Summarization ─────────────────── */
 function EntriesTab({ caseId, isLawyer }) {
   const [entries, setEntries] = useState([]);
   const [text, setText] = useState('');
@@ -149,22 +178,47 @@ function EntriesTab({ caseId, isLawyer }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // AI Summary State
+  const [aiState, setAiState] = useState({ loading: false, data: null, unavailable: false });
+
   useEffect(() => {
     setLoading(true);
     getEntries(caseId)
-      .then(setEntries)
+      .then((data) => {
+        setEntries(data);
+        if (data && data.length > 0 && isLawyer) {
+          fetchAi(caseId);
+        }
+      })
       .catch((err) => setError(err.response?.data?.error || 'Failed to load entries'))
       .finally(() => setLoading(false));
-  }, [caseId]);
+  }, [caseId, isLawyer]);
+
+  async function fetchAi(id) {
+    setAiState({ loading: true, data: null, unavailable: false });
+    try {
+      const res = await getAISummary(id);
+      if (res && res.available && res.summary) {
+        setAiState({ loading: false, data: res, unavailable: false });
+      } else {
+        setAiState({ loading: false, data: null, unavailable: !res?.isFirstEntry });
+      }
+    } catch {
+      setAiState({ loading: false, data: null, unavailable: true });
+    }
+  }
 
   async function handleAdd() {
     if (!text.trim()) return;
-    setSubmitting(true);
+    setSubmitting(true); setError('');
     try {
-      await addEntry({ case_id: caseId, entry_text: text.trim() });
+      const created = await addEntry(caseId, { entry_text: text.trim() });
+      const updatedEntries = [created, ...entries];
+      setEntries(updatedEntries);
       setText('');
-      const updated = await getEntries(caseId);
-      setEntries(updated);
+      if (updatedEntries.length > 0 && isLawyer) {
+        fetchAi(caseId);
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add entry');
     } finally {
@@ -175,26 +229,122 @@ function EntriesTab({ caseId, isLawyer }) {
   return (
     <div>
       {isLawyer && (
-        <Card style={{ marginBottom: 'var(--spacing-2)' }}>
-          <Input
-            label="New Entry"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="e.g. Filed initial petition today…"
+        <Card style={{ marginBottom: 'var(--spacing-3)' }}>
+          <p style={{ margin: '0 0 12px', fontWeight: 700, fontSize: '15px', color: 'var(--color-secondary)' }}>
+            Add Case Update
+          </p>
+
+          {/* AI Petition Summary Box (Only shown if case has 1+ previous entries) */}
+          {entries.length > 0 && (
+            <AnimatePresence mode="wait">
+              {aiState.loading && (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    backgroundColor: 'rgba(201,162,39,0.1)',
+                    border: '1px solid rgba(201,162,39,0.35)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '12px 16px',
+                    marginBottom: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    fontSize: '13px',
+                    color: 'var(--color-secondary)'
+                  }}
+                >
+                  <span style={{ fontSize: '16px' }}>✨</span>
+                  <span><strong>AI is analyzing previous petition entries...</strong></span>
+                </motion.div>
+              )}
+
+              {!aiState.loading && aiState.data && (
+                <motion.div
+                  key="summary"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    backgroundColor: '#FEFCE8',
+                    border: '1.5px solid #FDE047',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '14px 16px',
+                    marginBottom: '14px',
+                    boxShadow: '0 2px 8px rgba(201,162,39,0.12)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 700, color: '#854D0E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <span>✨</span> Last Hearing Summary (AI Generated)
+                    </div>
+                    <span style={{ fontSize: '11px', color: '#A16207', fontWeight: 600, backgroundColor: '#FEF9C3', padding: '2px 8px', borderRadius: '9999px' }}>
+                      falconsai/summarization
+                    </span>
+                  </div>
+
+                  <p style={{ margin: '0 0 8px', fontSize: '13.5px', color: '#1E293B', lineHeight: 1.55 }}>
+                    {aiState.data.summary}
+                  </p>
+
+                  {aiState.data.keywords && aiState.data.keywords.length > 0 && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                      {aiState.data.keywords.map((kw, i) => (
+                        <span key={i} style={{ fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(201,162,39,0.2)', color: '#854D0E', padding: '2px 7px', borderRadius: '4px' }}>
+                          #{kw}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <p style={{ margin: 0, fontSize: '11px', color: '#A16207', fontStyle: 'italic' }}>
+                    ℹ️ This summary was generated by AI. Please confirm against your own records.
+                  </p>
+                </motion.div>
+              )}
+
+              {!aiState.loading && aiState.unavailable && (
+                <motion.div
+                  key="unavailable"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{
+                    backgroundColor: '#F3F4F6',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '10px 14px',
+                    marginBottom: '14px',
+                    fontSize: '12.5px',
+                    color: 'var(--color-text-secondary)'
+                  }}
+                >
+                  ℹ️ AI summary is not available right now. Please enter manually.
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+
+          <textarea
+            value={text} onChange={(e) => setText(e.target.value)}
+            rows={3} placeholder="Record new progress or court notes..."
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: '14px', fontFamily: 'var(--font-body)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
           />
-          {error && <p style={{ color: 'var(--color-danger)', fontSize: '13px' }}>{error}</p>}
+          {error && <p style={{ color: 'var(--color-danger)', fontSize: '13px', margin: '4px 0' }}>{error}</p>}
           <Button onClick={handleAdd} disabled={submitting || !text.trim()}>
-            {submitting ? 'Adding…' : 'Add Entry'}
+            {submitting ? 'Saving…' : 'Add Entry'}
           </Button>
         </Card>
       )}
-      {loading && <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>Loading entries…</p>}
-      {entries.length === 0 && !loading && <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>No entries yet.</p>}
+
+      {loading && <p style={{ color: 'var(--color-text-secondary)' }}>Loading entries…</p>}
+      {!loading && entries.length === 0 && <Card><p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>No entries recorded yet.</p></Card>}
+
       {entries.map((entry) => (
-        <Card key={entry.id} style={{ marginBottom: '8px' }}>
-          <p style={{ margin: '0 0 6px' }}>{entry.entry_text}</p>
+        <Card key={entry.id} style={{ marginBottom: '10px' }}>
+          <p style={{ margin: '0 0 4px', fontSize: '14px', lineHeight: 1.5 }}>{entry.entry_text}</p>
           <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-            {new Date(entry.created_at).toLocaleString('en-PK')}
+            {new Date(entry.entry_date || entry.createdAt).toLocaleString('en-PK')}
           </p>
         </Card>
       ))}
@@ -221,14 +371,13 @@ function HearingsTab({ caseId, isLawyer }) {
 
   async function handleAdd() {
     if (!date) return;
-    setSubmitting(true);
+    setSubmitting(true); setError('');
     try {
-      await addHearing({ case_id: caseId, hearing_date: date, notes });
+      const created = await addHearing(caseId, { hearing_date: date, notes: notes.trim() });
+      setHearings([created, ...hearings]);
       setDate(''); setNotes('');
-      const updated = await getHearings(caseId);
-      setHearings(updated);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to add hearing');
+      setError(err.response?.data?.error || 'Failed to schedule hearing');
     } finally {
       setSubmitting(false);
     }
@@ -237,23 +386,31 @@ function HearingsTab({ caseId, isLawyer }) {
   return (
     <div>
       {isLawyer && (
-        <Card style={{ marginBottom: 'var(--spacing-2)' }}>
-          <Input label="Hearing Date & Time" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
-          <Input label="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Witness examination scheduled" />
-          {error && <p style={{ color: 'var(--color-danger)', fontSize: '13px' }}>{error}</p>}
+        <Card style={{ marginBottom: 'var(--spacing-3)' }}>
+          <p style={{ margin: '0 0 12px', fontWeight: 600, fontSize: '14px' }}>Schedule New Hearing</p>
+          <Input label="Hearing Date & Time *" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required />
+          <Input label="Notes / Bench Details" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Arguments on stay application" />
+          {error && <p style={{ color: 'var(--color-danger)', fontSize: '13px', margin: '4px 0' }}>{error}</p>}
           <Button onClick={handleAdd} disabled={submitting || !date}>
-            {submitting ? 'Adding…' : 'Add Hearing'}
+            {submitting ? 'Scheduling…' : 'Schedule Hearing'}
           </Button>
         </Card>
       )}
-      {loading && <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>Loading hearings…</p>}
-      {hearings.length === 0 && !loading && <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>No hearings scheduled.</p>}
+
+      {loading && <p style={{ color: 'var(--color-text-secondary)' }}>Loading hearings…</p>}
+      {!loading && hearings.length === 0 && <Card><p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>No hearings scheduled.</p></Card>}
+
       {hearings.map((h) => (
-        <Card key={h.id} style={{ marginBottom: '8px' }}>
-          <p style={{ margin: '0 0 4px', fontWeight: 700 }}>
-            📅 {new Date(h.hearing_date).toLocaleString('en-PK', { dateStyle: 'long', timeStyle: 'short' })}
-          </p>
-          {h.notes && <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '14px' }}>{h.notes}</p>}
+        <Card key={h.id} style={{ marginBottom: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: '14px' }}>
+                📅 {new Date(h.hearing_date).toLocaleString('en-PK')}
+              </p>
+              {h.notes && <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-secondary)' }}>{h.notes}</p>}
+            </div>
+            <Badge status={h.outcome || 'Scheduled'} />
+          </div>
         </Card>
       ))}
     </div>
@@ -262,90 +419,67 @@ function HearingsTab({ caseId, isLawyer }) {
 
 /* ─── Documents Tab ──────────────────────────────────────────────── */
 function DocumentsTab({ caseId, isLawyer }) {
-  const [docs, setDocs] = useState([]);
-  const [file, setFile] = useState(null);
-  const [shared, setShared] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [name, setName] = useState('');
+  const [fileUrl, setFileUrl] = useState('');
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     setLoading(true);
     getDocuments(caseId)
-      .then(setDocs)
+      .then(setDocuments)
       .catch((err) => setError(err.response?.data?.error || 'Failed to load documents'))
       .finally(() => setLoading(false));
   }, [caseId]);
 
   async function handleUpload() {
-    if (!file) return;
-    setUploading(true);
-    setError('');
+    if (!name.trim() || !fileUrl.trim()) return;
+    setSubmitting(true); setError('');
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('case_id', caseId);
-      formData.append('is_shared_with_client', shared);
-      await uploadDocument(formData);
-      setFile(null); setShared(false);
-      const updated = await getDocuments(caseId);
-      setDocs(updated);
+      const created = await uploadDocument(caseId, { document_name: name.trim(), file_url: fileUrl.trim() });
+      setDocuments([created, ...documents]);
+      setName(''); setFileUrl('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Upload failed');
+      setError(err.response?.data?.error || 'Failed to attach document');
     } finally {
-      setUploading(false);
+      setSubmitting(false);
     }
   }
 
   return (
     <div>
       {isLawyer && (
-        <Card style={{ marginBottom: 'var(--spacing-2)' }}>
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text)' }}>
-              Choose File
-            </label>
-            <input
-              type="file"
-              onChange={(e) => setFile(e.target.files[0])}
-              style={{ fontSize: '14px' }}
-            />
-          </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '14px', cursor: 'pointer' }}>
-            <input type="checkbox" checked={shared} onChange={(e) => setShared(e.target.checked)} />
-            Share with client
-          </label>
-          {error && <p style={{ color: 'var(--color-danger)', fontSize: '13px' }}>{error}</p>}
-          <Button onClick={handleUpload} disabled={uploading || !file}>
-            {uploading ? 'Uploading…' : 'Upload Document'}
+        <Card style={{ marginBottom: 'var(--spacing-3)' }}>
+          <p style={{ margin: '0 0 12px', fontWeight: 600, fontSize: '14px' }}>Attach Document</p>
+          <Input label="Document Title *" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Power of Attorney (Vakalatnama)" required />
+          <Input label="File URL / Cloud Link *" value={fileUrl} onChange={(e) => setFileUrl(e.target.value)} placeholder="https://..." required />
+          {error && <p style={{ color: 'var(--color-danger)', fontSize: '13px', margin: '4px 0' }}>{error}</p>}
+          <Button onClick={handleUpload} disabled={submitting || !name.trim() || !fileUrl.trim()}>
+            {submitting ? 'Attaching…' : 'Attach Document'}
           </Button>
         </Card>
       )}
-      {loading && <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>Loading documents…</p>}
-      {docs.length === 0 && !loading && <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>No documents yet.</p>}
-      {docs.map((doc) => (
-        <Card key={doc.id} style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <a
-              href={doc.file_url}
-              target="_blank"
-              rel="noreferrer"
-              style={{ color: 'var(--color-primary)', fontWeight: 600, textDecoration: 'none', fontSize: '14px' }}
-            >
-              📄 View Document
-            </a>
-            <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-              {new Date(doc.created_at).toLocaleDateString('en-PK')}
-            </p>
+
+      {loading && <p style={{ color: 'var(--color-text-secondary)' }}>Loading documents…</p>}
+      {!loading && documents.length === 0 && <Card><p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>No documents attached.</p></Card>}
+
+      {documents.map((doc) => (
+        <Card key={doc.id} style={{ marginBottom: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: '14px' }}>📄 {doc.document_name}</p>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                Uploaded {new Date(doc.uploaded_at || doc.createdAt).toLocaleDateString('en-PK')}
+              </p>
+            </div>
+            {doc.file_url && (
+              <a href={doc.file_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '13px' }}>
+                Open Document →
+              </a>
+            )}
           </div>
-          {doc.is_shared_with_client && (
-            <span style={{
-              fontSize: '11px', fontWeight: 600, color: 'var(--color-success)',
-              border: '1px solid var(--color-success)', borderRadius: '9999px', padding: '2px 8px',
-            }}>
-              Shared
-            </span>
-          )}
         </Card>
       ))}
     </div>
@@ -356,6 +490,7 @@ function DocumentsTab({ caseId, isLawyer }) {
 function FeesTab({ caseId, isLawyer }) {
   const [fees, setFees] = useState([]);
   const [amount, setAmount] = useState('');
+  const [desc, setDesc] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -364,72 +499,72 @@ function FeesTab({ caseId, isLawyer }) {
     setLoading(true);
     getFees(caseId)
       .then(setFees)
-      .catch((err) => setError(err.response?.data?.error || 'Failed to load fees'))
+      .catch((err) => setError(err.response?.data?.error || 'Failed to load fee ledger'))
       .finally(() => setLoading(false));
   }, [caseId]);
 
   async function handleAdd() {
-    if (!amount) return;
-    setSubmitting(true);
+    if (!amount || isNaN(amount)) return;
+    setSubmitting(true); setError('');
     try {
-      await addFee({ case_id: caseId, amount: Number(amount) });
-      setAmount('');
-      const updated = await getFees(caseId);
-      setFees(updated);
+      const created = await addFee(caseId, { amount: Number(amount), description: desc.trim() });
+      setFees([created, ...fees]);
+      setAmount(''); setDesc('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to add fee');
+      setError(err.response?.data?.error || 'Failed to add fee record');
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleMarkPaid(feeId) {
+  async function handleToggleStatus(fee) {
+    const nextStatus = fee.status === 'Paid' ? 'Pending' : 'Paid';
     try {
-      await updateFeeStatus(feeId, 'Paid');
-      const updated = await getFees(caseId);
-      setFees(updated);
+      const updated = await updateFeeStatus(fee.id, nextStatus);
+      setFees(fees.map((f) => (f.id === fee.id ? updated : f)));
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to mark paid');
+      alert(err.response?.data?.error || 'Failed to update fee status');
     }
   }
-
-  const totalUnpaid = fees.filter((f) => f.status !== 'Paid').reduce((sum, f) => sum + Number(f.amount), 0);
 
   return (
     <div>
       {isLawyer && (
-        <Card style={{ marginBottom: 'var(--spacing-2)' }}>
-          <Input label="Amount (Rs.)" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 5000" />
-          {error && <p style={{ color: 'var(--color-danger)', fontSize: '13px' }}>{error}</p>}
+        <Card style={{ marginBottom: 'var(--spacing-3)' }}>
+          <p style={{ margin: '0 0 12px', fontWeight: 600, fontSize: '14px' }}>Add Fee / Cost Entry</p>
+          <Input label="Amount (PKR) *" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="50000" required />
+          <Input label="Fee Description" value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="e.g. High Court Retainer Fee" />
+          {error && <p style={{ color: 'var(--color-danger)', fontSize: '13px', margin: '4px 0' }}>{error}</p>}
           <Button onClick={handleAdd} disabled={submitting || !amount}>
-            {submitting ? 'Adding…' : 'Add Fee'}
+            {submitting ? 'Adding…' : 'Add Fee Entry'}
           </Button>
         </Card>
       )}
 
-      {totalUnpaid > 0 && (
-        <div style={{
-          padding: '10px 16px', marginBottom: '12px', borderRadius: 'var(--radius-sm)',
-          backgroundColor: '#FFF7ED', border: '1px solid var(--color-warning)', fontSize: '14px',
-        }}>
-          Outstanding balance: <strong>Rs. {totalUnpaid.toLocaleString('en-PK')}</strong>
-        </div>
-      )}
+      {loading && <p style={{ color: 'var(--color-text-secondary)' }}>Loading fee ledger…</p>}
+      {!loading && fees.length === 0 && <Card><p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>No fee entries recorded.</p></Card>}
 
-      {loading && <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>Loading fees…</p>}
-      {fees.length === 0 && !loading && <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>No fees recorded.</p>}
       {fees.map((fee) => (
-        <Card key={fee.id} style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <span style={{ fontWeight: 700 }}>Rs. {Number(fee.amount).toLocaleString('en-PK')}</span>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <Badge status={fee.status} />
-            {isLawyer && fee.status !== 'Paid' && (
-              <Button variant="secondary" onClick={() => handleMarkPaid(fee.id)} style={{ marginTop: 0, fontSize: '12px', padding: '4px 10px' }}>
-                Mark Paid
-              </Button>
-            )}
+        <Card key={fee.id} style={{ marginBottom: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: '15px', color: 'var(--color-primary)' }}>
+                PKR {Number(fee.amount).toLocaleString('en-PK')}
+              </p>
+              {fee.description && <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-secondary)' }}>{fee.description}</p>}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Badge status={fee.status} />
+              {isLawyer && (
+                <Button
+                  variant="secondary"
+                  onClick={() => handleToggleStatus(fee)}
+                  style={{ marginTop: 0, fontSize: '12px', padding: '4px 10px' }}
+                >
+                  Mark as {fee.status === 'Paid' ? 'Pending' : 'Paid'}
+                </Button>
+              )}
+            </div>
           </div>
         </Card>
       ))}
