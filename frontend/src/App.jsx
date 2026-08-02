@@ -6,6 +6,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import Home from './pages/Home';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import PricingPage from './pages/PricingPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import SearchResults from './pages/SearchResults';
@@ -45,6 +46,7 @@ function App() {
           <Route path="/home"        element={<Home />} />
           <Route path="/about"       element={<About />} />
           <Route path="/contact"     element={<Contact />} />
+          <Route path="/pricing"     element={<PricingPage />} />
           <Route path="/privacy"     element={<PrivacyPolicy />} />
           <Route path="/terms"       element={<TermsOfService />} />
           <Route path="/search"      element={<SearchResults />} />

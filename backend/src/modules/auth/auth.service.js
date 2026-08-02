@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('./auth.model');
+const OtpCode = require('./otp.model');
+const { sendOtpEmail } = require('../../utils/mailer');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -85,11 +87,8 @@ async function googleAuthUser({ idToken }) {
   const email = payload.email;
   const name = payload.name || payload.given_name || email.split('@')[0];
 
-  // Priority Matching:
-  // 1. Existing user with matching google_id
   let user = await User.findOne({ where: { google_id: googleId } });
 
-  // 2. Existing user with matching email (link Google ID)
   if (!user) {
     user = await User.findOne({ where: { email } });
     if (user) {
@@ -98,7 +97,6 @@ async function googleAuthUser({ idToken }) {
     }
   }
 
-  // 3. Create new user
   if (!user) {
     user = await User.create({
       name,
@@ -109,7 +107,6 @@ async function googleAuthUser({ idToken }) {
     });
   }
 
-  // If role is null/missing (brand new account), prompt for role selection
   if (!user.role) {
     const tempToken = jwt.sign(
       { id: user.id, role: null, pendingRole: true },
@@ -162,4 +159,112 @@ async function setUserRole({ userId, role }) {
   return { user, accessToken, refreshToken };
 }
 
-module.exports = { registerUser, loginUser, googleAuthUser, setUserRole };
+/* ── OTP Password Reset Functions ──────────────────────────────────── */
+
+async function requestPasswordResetOtp({ email }) {
+  const user = await User.findOne({ where: { email } });
+  if (!user) throw new Error('No registered account found with this email address.');
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  await OtpCode.update({ used: true }, { where: { email, used: false } });
+
+  await OtpCode.create({
+    email,
+    code,
+    expires_at: expiresAt,
+    used: false,
+  });
+
+  const sendResult = await sendOtpEmail({ email, code });
+  return {
+    message: 'Verification code sent to email',
+    email,
+    devMode: sendResult.devMode,
+    devCode: sendResult.devMode ? code : undefined
+  };
+}
+
+async function verifyResetOtp({ email, code }) {
+  const record = await OtpCode.findOne({
+    where: {
+      email,
+      code,
+      used: false,
+    },
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!record) {
+    throw new Error('Invalid verification code.');
+  }
+
+  if (new Date() > new Date(record.expires_at)) {
+    throw new Error('Verification code has expired. Please request a new one.');
+  }
+
+  record.used = true;
+  await record.save();
+
+  const resetToken = jwt.sign(
+    { email, type: 'password_reset' },
+    process.env.JWT_SECRET || 'secret_key',
+    { expiresIn: '15m' }
+  );
+
+  return { message: 'Verification code verified successfully', resetToken, email };
+}
+
+async function resetPasswordWithOtpToken({ email, resetToken, newPassword }) {
+  if (!resetToken || !newPassword) throw new Error('Reset token and new password are required');
+  if (newPassword.length < 6) throw new Error('Password must be at least 6 characters long');
+
+  let decoded;
+  try {
+    decoded = jwt.verify(resetToken, process.env.JWT_SECRET || 'secret_key');
+  } catch {
+    throw new Error('Invalid or expired reset session. Please request a new code.');
+  }
+
+  if (decoded.type !== 'password_reset' || decoded.email !== email) {
+    throw new Error('Reset token mismatch');
+  }
+
+  const user = await User.findOne({ where: { email } });
+  if (!user) throw new Error('User account not found');
+
+  user.password_hash = await bcrypt.hash(newPassword, 10);
+  user.failed_login_attempts = 0;
+  user.locked_until = null;
+  await user.save();
+
+  return { message: 'Password updated successfully' };
+}
+
+async function changePasswordLoggedIn({ userId, currentPassword, newPassword }) {
+  const user = await User.findByPk(userId);
+  if (!user) throw new Error('User not found');
+  if (!user.password_hash) throw new Error('Google Sign-In accounts cannot change password here.');
+
+  const isValid = await bcrypt.compare(currentPassword, user.password_hash);
+  if (!isValid) throw new Error('Current password is incorrect.');
+
+  if (newPassword.length < 6) throw new Error('New password must be at least 6 characters long.');
+
+  user.password_hash = await bcrypt.hash(newPassword, 10);
+  await user.save();
+
+  return { message: 'Password changed successfully' };
+}
+
+module.exports = {
+  registerUser,
+  loginUser,
+  googleAuthUser,
+  setUserRole,
+  requestPasswordResetOtp,
+  verifyResetOtp,
+  resetPasswordWithOtpToken,
+  changePasswordLoggedIn,
+};

@@ -14,6 +14,7 @@ function PublicNavbar() {
     { label: 'Home', path: '/home' },
     { label: 'About', path: '/about' },
     { label: 'Marketplace', path: '/marketplace' },
+    { label: 'Pricing', path: '/pricing' },
     { label: 'Contact', path: '/contact' },
   ];
 

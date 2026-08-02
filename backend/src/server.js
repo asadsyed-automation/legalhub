@@ -3,6 +3,7 @@ const sequelize = require('./config/database');
 const cors = require('cors');
 
 const User = require('./modules/auth/auth.model');
+const OtpCode = require('./modules/auth/otp.model');
 const authRoutes = require('./modules/auth/auth.routes');
 
 const Firm = require('./modules/firms/firm.model');

@@ -144,6 +144,7 @@ function PublicFooter() {
               <li><Link to="/home" className="footer-link">Home Page</Link></li>
               <li><Link to="/about" className="footer-link">About & Vision</Link></li>
               <li><Link to="/marketplace" className="footer-link">Lawyer Marketplace</Link></li>
+              <li><Link to="/pricing" className="footer-link">Pricing Plans</Link></li>
               <li><Link to="/search" className="footer-link">Global Case Search</Link></li>
               <li><Link to="/login" className="footer-link">Advocate Sign In</Link></li>
             </ul>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getMySubscription } from '../api/subscriptionApi';
+import { changePasswordApi } from '../api/authApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -68,15 +69,27 @@ function AccountTab({ user }) {
   const [showPassword, setShowPassword] = useState(false);
   const [notice, setNotice] = useState('');
 
-  function handleChangePassword(e) {
+  async function handleChangePassword(e) {
     e.preventDefault();
     setNotice('');
     if (newPassword !== confirmPassword) {
       setNotice('⚠️ New passwords do not match.');
       return;
     }
-    // Flagged backend gap per requirements: No change-password endpoint exists yet on backend
-    setNotice('ℹ️ Backend Notice: Logged-in password change endpoint (PATCH /auth/change-password) is pending backend implementation.');
+    if (newPassword.length < 6) {
+      setNotice('⚠️ New password must be at least 6 characters long.');
+      return;
+    }
+
+    try {
+      const res = await changePasswordApi({ currentPassword, newPassword });
+      setNotice('✅ ' + (res.message || 'Password updated successfully!'));
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setNotice('❌ ' + (err.response?.data?.error || 'Failed to update password.'));
+    }
   }
 
   return (

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AuthLayout from '../components/AuthLayout';
+import { resetPasswordApi } from '../api/authApi';
 
 const LockIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -34,7 +35,11 @@ const CheckCircleIcon = () => (
 );
 
 function ResetPassword() {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const email = searchParams.get('email') || '';
+  const resetToken = searchParams.get('resetToken') || '';
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -51,7 +56,7 @@ function ResetPassword() {
 
   const pwdStrength = getPasswordStrength(password);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError('');
 
@@ -65,10 +70,14 @@ function ResetPassword() {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await resetPasswordApi({ email, resetToken, newPassword: password });
       setSuccess(true);
-    }, 1200);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to reset password. Session may have expired.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
