@@ -220,7 +220,7 @@ function Home() {
     };
 
     const handleMouseLeave = () => {
-      if (glowEl) glowEl.style.opacity = '0';
+      if (glowEl) glowEl.style.opacity = '1';
     };
 
     heroEl.addEventListener('mousemove', handleMouseMove);
@@ -260,7 +260,7 @@ function Home() {
           aria-hidden="true"
           style={{
             position: 'absolute', left: 0, top: 0, width: '350px', height: '350px',
-            borderRadius: '50%',
+            borderRadius: '0%',
             background: 'radial-gradient(circle, rgba(201,162,39,0.35) 0%, rgba(201,162,39,0) 70%)',
             filter: 'blur(45px)', pointerEvents: 'none', zIndex: 1, opacity: 0,
             transition: 'opacity 0.3s ease', willChange: 'transform'
@@ -403,7 +403,7 @@ function Home() {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                I'm a Lawyer — Start Free →
+                I'm a Lawyer – Start Free →
               </Link>
               <Link to="/marketplace" style={{
                 backgroundColor: 'rgba(255,255,255,0.12)',
@@ -582,7 +582,7 @@ function Home() {
         </div>
       </section>
 
-      {/* ── 4. FEATURES SECTION (With Primary Emerald Hover Outline) ───── */}
+      {/* ── 4. FEATURES SECTION ──────────────────────────────────────── */}
       <section style={{ padding: '80px 24px', backgroundColor: '#F9FAFB', borderTop: '1px solid var(--color-border)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '56px' }}>
@@ -615,7 +615,7 @@ function Home() {
                 whileHover={{
                   y: -4,
                   borderColor: 'var(--color-primary)',
-                  boxShadow: '0 0 0 2px var(--color-primary), 0 8px 24px rgba(15, 92, 60, 0.12)'
+                  boxShadow: '0 0 0 0.5px var(--color-primary), 0 8px 24px rgba(15, 92, 60, 0.12)'
                 }}
                 style={{
                   backgroundColor: '#FFFFFF',
