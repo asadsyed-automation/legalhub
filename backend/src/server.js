@@ -67,6 +67,14 @@ app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/subscriptions', subscriptionRoutes);
 app.use('/api/v1/admin', adminRoutes);
 
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'LegalHub Pakistan Backend Server Running' });
+});
+
+app.get('/api/v1', (req, res) => {
+  res.json({ status: 'ok', message: 'LegalHub API v1 Operational' });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
