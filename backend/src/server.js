@@ -79,12 +79,38 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+const bcrypt = require('bcrypt');
+
+async function seedDefaultAdmin() {
+  try {
+    const existingAdmin = await User.findOne({ where: { role: 'admin' } });
+    if (!existingAdmin) {
+      const password_hash = await bcrypt.hash('Admin@123456', 10);
+      await User.create({
+        name: 'System Administrator',
+        email: 'admin@legalhub.pk',
+        password_hash,
+        role: 'admin',
+        is_verified: true,
+      });
+      console.log('👑 Default Admin User created: admin@legalhub.pk / Admin@123456');
+    } else {
+      console.log('👑 Admin user ready in database:', existingAdmin.email);
+    }
+  } catch (err) {
+    console.error('Failed to seed default admin:', err.message);
+  }
+}
+
 sequelize.authenticate()
   .then(() => console.log('Database connected successfully'))
   .catch(err => console.error('Database connection failed:', err));
 
 sequelize.sync({ alter: true })
-  .then(() => console.log('Models synced'))
+  .then(async () => {
+    console.log('Models synced');
+    await seedDefaultAdmin();
+  })
   .catch(err => console.error('Sync failed:', err));
 
 const http = require('http');
