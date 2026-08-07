@@ -11,6 +11,12 @@ const MarketplaceProfile = sequelize.define('MarketplaceProfile', {
   cases_won: { type: DataTypes.INTEGER, defaultValue: 0 },
   avatar_url: { type: DataTypes.STRING, allowNull: true },
   whatsapp_number: { type: DataTypes.STRING, allowNull: true },
+  linkedin_url: { type: DataTypes.STRING, allowNull: true },
+  twitter_url: { type: DataTypes.STRING, allowNull: true },
+  website_url: { type: DataTypes.STRING, allowNull: true },
+  city: { type: DataTypes.STRING, defaultValue: 'Lahore' },
+  court_level: { type: DataTypes.STRING, defaultValue: 'High Court Advocate' },
+  rating: { type: DataTypes.FLOAT, defaultValue: 5.0 },
   is_verified: { type: DataTypes.BOOLEAN, defaultValue: false },
 }, {
   tableName: 'marketplace_profiles',

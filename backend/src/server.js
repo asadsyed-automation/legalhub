@@ -102,6 +102,131 @@ async function seedDefaultAdmin() {
   }
 }
 
+async function seedMarketplaceDummyData() {
+  try {
+    const existingLawyer = await User.findOne({ where: { email: 'malik.law@legalhub.pk' } });
+    if (existingLawyer) {
+      console.log('⚖️ Marketplace dummy advocates already seeded.');
+      return;
+    }
+
+    const defaultPasswordHash = await bcrypt.hash('Advocate@123', 10);
+
+    // Advocate 1: Malik Ahmad Khan (Lahore)
+    const lawyer1 = await User.create({
+      name: 'Malik Ahmad Khan',
+      email: 'malik.law@legalhub.pk',
+      password_hash: defaultPasswordHash,
+      role: 'lawyer',
+      is_verified: true,
+    });
+    const profile1 = await MarketplaceProfile.create({
+      lawyer_id: lawyer1.id,
+      specialization: 'Constitutional Law & Criminal Defense',
+      city: 'Lahore',
+      court_level: 'Senior Advocate High Court',
+      cases_won: 142,
+      fee_structure: 'PKR 45,000 Retainer',
+      bio: 'Senior High Court Advocate with 18+ years of expertise in Constitutional Writ Petitions, NAB Defense, and High Court Appellate Practice.',
+      avatar_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&auto=format&fit=crop&q=80',
+      whatsapp_number: '923001234567',
+      linkedin_url: 'https://linkedin.com/in/malik-ahmad-khan-advocate',
+      twitter_url: 'https://twitter.com/malik_law_pk',
+      is_verified: true,
+      rating: 4.9,
+    });
+    const gig1 = await Gig.create({
+      lawyer_id: lawyer1.id,
+      title: 'High Court Writ Petition Drafting & Representation',
+      description: 'Comprehensive drafting, filing, and oral arguments for Article 199 Constitutional Writ Petitions in Lahore High Court.',
+      category: 'Constitutional Law',
+      price: 45000.00,
+    });
+    await Review.create({
+      gig_id: gig1.id,
+      client_name: 'Chaudhry Usman Nawaz',
+      rating: 5,
+      comment: 'Outstanding advocate! Adv. Malik secured an interim stay order for our property case within 24 hours of filing.',
+    });
+
+    // Advocate 2: Syeda Fatima Zaidi (Karachi)
+    const lawyer2 = await User.create({
+      name: 'Syeda Fatima Zaidi',
+      email: 'fatima.law@legalhub.pk',
+      password_hash: defaultPasswordHash,
+      role: 'lawyer',
+      is_verified: true,
+    });
+    const profile2 = await MarketplaceProfile.create({
+      lawyer_id: lawyer2.id,
+      specialization: 'Corporate Contracts & Commercial Dispute',
+      city: 'Karachi',
+      court_level: 'High Court & Commercial Court Advocate',
+      cases_won: 89,
+      fee_structure: 'PKR 25,000 / Contract',
+      bio: 'Commercial Counsel representing fintech startups, corporate groups, and international joint ventures across Sindh High Court.',
+      avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+      whatsapp_number: '923219876543',
+      linkedin_url: 'https://linkedin.com/in/fatima-zaidi-legal',
+      is_verified: true,
+      rating: 5.0,
+    });
+    const gig2 = await Gig.create({
+      lawyer_id: lawyer2.id,
+      title: 'Corporate Shareholder Agreement & Commercial Contract Review',
+      description: 'Watertight legal drafting for partnership deeds, shareholder agreements, NDAs, and corporate compliance in Pakistan.',
+      category: 'Corporate Law',
+      price: 25000.00,
+    });
+    await Review.create({
+      gig_id: gig2.id,
+      client_name: 'Tariq Tech Ventures',
+      rating: 5,
+      comment: 'Flawless contract drafting. Fatima revised our investment agreement with extreme attention to detail.',
+    });
+
+    // Advocate 3: Chaudhry Tariq Mehmood (Islamabad)
+    const lawyer3 = await User.create({
+      name: 'Chaudhry Tariq Mehmood',
+      email: 'tariq.law@legalhub.pk',
+      password_hash: defaultPasswordHash,
+      role: 'lawyer',
+      is_verified: true,
+    });
+    const profile3 = await MarketplaceProfile.create({
+      lawyer_id: lawyer3.id,
+      specialization: 'Civil Litigation & Property Land Disputes',
+      city: 'Islamabad',
+      court_level: 'Supreme Court Advocate (ASC)',
+      cases_won: 215,
+      fee_structure: 'PKR 60,000 Case Retainer',
+      bio: 'Supreme Court Advocate specializing in CDA land acquisitions, revenue court appeals, and complex real estate title disputes.',
+      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+      whatsapp_number: '923335557788',
+      linkedin_url: 'https://linkedin.com/in/tariq-mehmood-asc',
+      is_verified: true,
+      rating: 4.8,
+    });
+    const gig3 = await Gig.create({
+      lawyer_id: lawyer3.id,
+      title: 'Property Title Verification & Land Dispute Litigation',
+      description: 'Thorough revenue record audit (Fard, Aks Shajra, Registry) and High Court representation for land title recovery.',
+      category: 'Property Law',
+      price: 35000.00,
+    });
+    await Review.create({
+      gig_id: gig3.id,
+      client_name: 'Dr. Bilal Qureshi',
+      rating: 5,
+      comment: 'Very authoritative advocate in Islamabad revenue courts. Resolved our CDA plot dispute efficiently.',
+    });
+
+    console.log('✅ Marketplace dummy advocates & Fiverr gigs successfully seeded!');
+  } catch (err) {
+    console.error('Failed to seed marketplace dummy data:', err.message);
+  }
+}
+
 sequelize.authenticate()
   .then(() => console.log('Database connected successfully'))
   .catch(err => console.error('Database connection failed:', err));
@@ -110,6 +235,7 @@ sequelize.sync({ alter: true })
   .then(async () => {
     console.log('Models synced');
     await seedDefaultAdmin();
+    await seedMarketplaceDummyData();
   })
   .catch(err => console.error('Sync failed:', err));
 

@@ -5,7 +5,7 @@ import { getCaseById, updateCaseStatus } from '../api/caseApi';
 import { getHearings, addHearing } from '../api/hearingApi';
 import { getEntries, addEntry, getAISummary } from '../api/entryApi';
 import { getDocuments, uploadDocument } from '../api/documentApi';
-import { getFees, addFee, updateFeeStatus } from '../api/feeApi';
+import { getFees, addFee, updateFeeStatus, submitPaymentReceiptApi, verifyPaymentReceiptApi } from '../api/feeApi';
 import { Card, Badge, Button, Input } from '../components/ui';
 import CitizenProfileModal from '../components/CitizenProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -495,19 +495,33 @@ function FeesTab({ caseId, isLawyer }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Receipt Modal State for Client
+  const [selectedFeeForReceipt, setSelectedFeeForReceipt] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('JazzCash');
+  const [transactionId, setTransactionId] = useState('');
+  const [receiptUrl, setReceiptUrl] = useState('');
+  const [receiptSubmitting, setReceiptSubmitting] = useState(false);
+
+  // Lawyer Verification Action
+  const [verifyingFeeId, setVerifyingFeeId] = useState(null);
+
   useEffect(() => {
+    loadFees();
+  }, [caseId]);
+
+  function loadFees() {
     setLoading(true);
     getFees(caseId)
       .then(setFees)
       .catch((err) => setError(err.response?.data?.error || 'Failed to load fee ledger'))
       .finally(() => setLoading(false));
-  }, [caseId]);
+  }
 
   async function handleAdd() {
     if (!amount || isNaN(amount)) return;
     setSubmitting(true); setError('');
     try {
-      const created = await addFee(caseId, { amount: Number(amount), description: desc.trim() });
+      const created = await addFee({ case_id: caseId, amount: Number(amount), description: desc.trim() });
       setFees([created, ...fees]);
       setAmount(''); setDesc('');
     } catch (err) {
@@ -517,13 +531,35 @@ function FeesTab({ caseId, isLawyer }) {
     }
   }
 
-  async function handleToggleStatus(fee) {
-    const nextStatus = fee.status === 'Paid' ? 'Pending' : 'Paid';
+  async function handleSubmitReceipt(e) {
+    e.preventDefault();
+    if (!selectedFeeForReceipt || !receiptUrl.trim()) return;
+    setReceiptSubmitting(true);
     try {
-      const updated = await updateFeeStatus(fee.id, nextStatus);
-      setFees(fees.map((f) => (f.id === fee.id ? updated : f)));
+      const updated = await submitPaymentReceiptApi(selectedFeeForReceipt.id, {
+        receipt_url: receiptUrl.trim(),
+        payment_method: paymentMethod,
+        transaction_id: transactionId.trim() || 'TID-' + Math.floor(100000 + Math.random() * 900000),
+      });
+      setFees(fees.map((f) => (f.id === selectedFeeForReceipt.id ? updated : f)));
+      setSelectedFeeForReceipt(null);
+      setReceiptUrl(''); setTransactionId('');
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to update fee status');
+      alert(err.response?.data?.error || 'Failed to submit payment receipt');
+    } finally {
+      setReceiptSubmitting(false);
+    }
+  }
+
+  async function handleVerifyReceipt(feeId, approved, rejectionReason = '') {
+    setVerifyingFeeId(feeId);
+    try {
+      const updated = await verifyPaymentReceiptApi(feeId, { approved, rejection_reason: rejectionReason });
+      setFees(fees.map((f) => (f.id === feeId ? updated : f)));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to verify payment receipt');
+    } finally {
+      setVerifyingFeeId(null);
     }
   }
 
@@ -531,43 +567,145 @@ function FeesTab({ caseId, isLawyer }) {
     <div>
       {isLawyer && (
         <Card style={{ marginBottom: 'var(--spacing-3)' }}>
-          <p style={{ margin: '0 0 12px', fontWeight: 600, fontSize: '14px' }}>Add Fee / Cost Entry</p>
+          <p style={{ margin: '0 0 12px', fontWeight: 600, fontSize: '14px' }}>Add Fee / Retainer Invoice</p>
           <Input label="Amount (PKR) *" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="50000" required />
-          <Input label="Fee Description" value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="e.g. High Court Retainer Fee" />
+          <Input label="Fee Description" value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="e.g. High Court Writ Petition Retainer Fee" />
           {error && <p style={{ color: 'var(--color-danger)', fontSize: '13px', margin: '4px 0' }}>{error}</p>}
           <Button onClick={handleAdd} disabled={submitting || !amount}>
-            {submitting ? 'Adding…' : 'Add Fee Entry'}
+            {submitting ? 'Adding…' : 'Issue Fee Invoice'}
           </Button>
         </Card>
       )}
 
       {loading && <p style={{ color: 'var(--color-text-secondary)' }}>Loading fee ledger…</p>}
-      {!loading && fees.length === 0 && <Card><p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>No fee entries recorded.</p></Card>}
+      {!loading && fees.length === 0 && <Card><p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>No fee entries recorded for this case.</p></Card>}
 
-      {fees.map((fee) => (
-        <Card key={fee.id} style={{ marginBottom: '10px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: '15px', color: 'var(--color-primary)' }}>
-                PKR {Number(fee.amount).toLocaleString('en-PK')}
-              </p>
-              {fee.description && <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-secondary)' }}>{fee.description}</p>}
+      {fees.map((fee) => {
+        const isPendingVerification = fee.status === 'Pending_Verification';
+        const isPaid = fee.status === 'Paid';
+        const isRejected = fee.status === 'Rejected';
+
+        return (
+          <Card key={fee.id} style={{ marginBottom: '12px', borderLeft: isPaid ? '4px solid #10B981' : isPendingVerification ? '4px solid #F59E0B' : isRejected ? '4px solid #EF4444' : '4px solid #3B82F6' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+              <div>
+                <p style={{ margin: '0 0 4px', fontWeight: 800, fontSize: '16px', color: 'var(--color-primary)' }}>
+                  PKR {Number(fee.amount).toLocaleString('en-PK')}
+                </p>
+                {fee.description && <p style={{ margin: '0 0 6px', fontSize: '13px', color: 'var(--color-text-secondary)' }}>{fee.description}</p>}
+                
+                {fee.payment_method && (
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                    💳 Method: <strong>{fee.payment_method}</strong> {fee.transaction_id && `(TID: ${fee.transaction_id})`}
+                  </p>
+                )}
+
+                {fee.receipt_url && (
+                  <div style={{ marginTop: '8px' }}>
+                    <a href={fee.receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--color-primary)', fontWeight: 700, textDecoration: 'underline' }}>
+                      📄 View Uploaded Payment Receipt Proof ↗
+                    </a>
+                  </div>
+                )}
+
+                {isRejected && fee.rejection_reason && (
+                  <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#DC2626', backgroundColor: '#FEF2F2', padding: '6px 10px', borderRadius: '4px' }}>
+                    ⚠️ Rejection Reason: {fee.rejection_reason}
+                  </p>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                <Badge status={isPendingVerification ? 'Pending Verification' : fee.status} />
+
+                {/* Client Receipt Upload Action */}
+                {!isLawyer && (fee.status === 'Pending' || isRejected) && (
+                  <Button
+                    onClick={() => setSelectedFeeForReceipt(fee)}
+                    style={{ fontSize: '12px', padding: '6px 12px', backgroundColor: 'var(--color-primary)' }}
+                  >
+                    💳 Upload Payment Receipt
+                  </Button>
+                )}
+
+                {/* Lawyer Verification Actions */}
+                {isLawyer && isPendingVerification && (
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                    <Button
+                      onClick={() => handleVerifyReceipt(fee.id, true)}
+                      disabled={verifyingFeeId === fee.id}
+                      style={{ fontSize: '12px', padding: '5px 10px', backgroundColor: '#10B981' }}
+                    >
+                      ✓ Approve Payment
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        const reason = prompt('Enter rejection reason for client:', 'Receipt image unreadable or invalid transaction ID.');
+                        if (reason) handleVerifyReceipt(fee.id, false, reason);
+                      }}
+                      disabled={verifyingFeeId === fee.id}
+                      style={{ fontSize: '12px', padding: '5px 10px', color: '#DC2626', borderColor: '#FCA5A5' }}
+                    >
+                      ✕ Reject
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Badge status={fee.status} />
-              {isLawyer && (
-                <Button
-                  variant="secondary"
-                  onClick={() => handleToggleStatus(fee)}
-                  style={{ marginTop: 0, fontSize: '12px', padding: '4px 10px' }}
+          </Card>
+        );
+      })}
+
+      {/* Client Receipt Upload Modal */}
+      {selectedFeeForReceipt && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <Card style={{ width: '100%', maxWidth: '480px', backgroundColor: '#FFFFFF' }}>
+            <h3 style={{ margin: '0 0 12px', color: 'var(--color-primary)', fontSize: '16px' }}>Upload Payment Receipt</h3>
+            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '16px' }}>
+              Invoice Amount: <strong>PKR {Number(selectedFeeForReceipt.amount).toLocaleString('en-PK')}</strong>
+            </p>
+
+            <form onSubmit={handleSubmitReceipt} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, marginBottom: '4px' }}>Payment Method *</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}
                 >
-                  Mark as {fee.status === 'Paid' ? 'Pending' : 'Paid'}
+                  <option value="JazzCash">JazzCash Mobile Transfer</option>
+                  <option value="EasyPaisa">EasyPaisa Account</option>
+                  <option value="Bank Transfer">Online Bank Transfer / Raast</option>
+                </select>
+              </div>
+
+              <Input
+                label="Transaction ID / Reference Number *"
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+                placeholder="e.g. TID-984210394"
+                required
+              />
+
+              <Input
+                label="Receipt Image URL / File Link *"
+                value={receiptUrl}
+                onChange={(e) => setReceiptUrl(e.target.value)}
+                placeholder="https://example.com/receipt.jpg"
+                required
+              />
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '12px' }}>
+                <Button variant="secondary" type="button" onClick={() => setSelectedFeeForReceipt(null)}>Cancel</Button>
+                <Button type="submit" disabled={receiptSubmitting}>
+                  {receiptSubmitting ? 'Submitting…' : 'Submit Receipt for Verification'}
                 </Button>
-              )}
-            </div>
-          </div>
-        </Card>
-      ))}
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

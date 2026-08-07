@@ -11,14 +11,25 @@ async function registerUser({ name, email, password, role }) {
   const existing = await User.findOne({ where: { email } });
   if (existing) throw new Error('Email already registered');
 
+  const isVerifiedDefault = role === 'lawyer' ? false : true;
   const password_hash = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email, password_hash, role });
+  const user = await User.create({
+    name,
+    email,
+    password_hash,
+    role,
+    is_verified: isVerifiedDefault,
+  });
   return user;
 }
 
 async function loginUser({ email, password }) {
   const user = await User.findOne({ where: { email } });
   if (!user) throw new Error('Invalid credentials');
+
+  if (user.role === 'lawyer' && !user.is_verified) {
+    throw new Error('Account Pending Verification: Your advocate credentials are under Bar Council review by LegalHub Admin.');
+  }
 
   if (user.locked_until && new Date() < user.locked_until) {
     throw new Error('Account temporarily locked. Try again later.');

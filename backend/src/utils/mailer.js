@@ -1,27 +1,21 @@
 const nodemailer = require('nodemailer');
 
 /**
- * Sends a 6-digit OTP verification code via Gmail SMTP if configured,
- * or logs prominently to console in Development Mode.
+ * Sends a 6-digit OTP verification code via Gmail SMTP.
+ * Fallbacks to configured default app password if env variables are not present.
  */
 async function sendOtpEmail({ email, code }) {
-  const rawUser = process.env.SMTP_USER || process.env.GMAIL_USER;
-  const rawPass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
+  const rawUser = process.env.SMTP_USER || process.env.GMAIL_USER || 'asadsyed.automation@gmail.com';
+  const rawPass = process.env.SMTP_PASS || process.env.GMAIL_PASS || 'qqrtdtnkusxwyroq';
 
-  // Always log to terminal console for seamless FYP testing & defense
   console.log(`\n==========================================================`);
-  console.log(`🔑 [LEGALHUB OTP CODE] Target Email: ${email}`);
-  console.log(`🔑 [LEGALHUB OTP CODE] 6-Digit OTP Code: ${code}`);
-  console.log(`🔑 [LEGALHUB OTP CODE] Expires In: 10 Minutes`);
+  console.log(`🔑 [LEGALHUB OTP EMAIL DISPATCH] Target Email: ${email}`);
+  console.log(`🔑 [LEGALHUB OTP EMAIL DISPATCH] Sender Email: ${rawUser}`);
+  console.log(`🔑 [LEGALHUB OTP EMAIL DISPATCH] 6-Digit OTP Code: ${code}`);
   console.log(`==========================================================\n`);
 
-  if (!rawUser || !rawPass) {
-    console.log(`ℹ️ [DEV MODE] Real email delivery skipped because SMTP_USER or SMTP_PASS environment variable is missing on server.`);
-    return { success: true, devMode: true, code };
-  }
-
   const cleanUser = rawUser.trim();
-  const cleanPass = rawPass.trim().replace(/\s+/g, ''); // strip spaces from App Password if pasted with spaces
+  const cleanPass = rawPass.trim().replace(/\s+/g, ''); // strip spaces from App Password
 
   try {
     const transporter = nodemailer.createTransport({
@@ -50,7 +44,6 @@ async function sendOtpEmail({ email, code }) {
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #F3F4F6; padding: 40px 10px;">
             <tr>
               <td align="center">
-                <!-- Main Container Card -->
                 <table role="presentation" width="100%" style="max-width: 580px; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #E5E7EB;" cellspacing="0" cellpadding="0">
                   
                   <!-- Executive Emerald Header -->
@@ -62,7 +55,7 @@ async function sendOtpEmail({ email, code }) {
                             <div style="display: inline-block; background: rgba(201, 162, 39, 0.15); border: 1px solid rgba(201, 162, 39, 0.4); padding: 6px 14px; border-radius: 20px; color: #F3E08A; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;">
                               OFFICIAL SECURITY NOTICE
                             </div>
-                            <h1 style="margin: 0; color: #FFFFFF; font-size: 26px; font-weight: 800; tracking: -0.5px;">LegalHub Pakistan</h1>
+                            <h1 style="margin: 0; color: #FFFFFF; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">LegalHub Pakistan</h1>
                             <p style="margin: 6px 0 0; color: #E5E7EB; font-size: 13px; opacity: 0.9;">Digital Legal Workspace & Verified Advocate Directory</p>
                           </td>
                         </tr>
@@ -73,13 +66,13 @@ async function sendOtpEmail({ email, code }) {
                   <!-- Main Content Area -->
                   <tr>
                     <td style="padding: 36px 32px; background-color: #FFFFFF;">
-                      <h2 style="margin: 0 0 12px; color: #072E1E; font-size: 20px; font-weight: 700;">Account Password Reset</h2>
+                      <h2 style="margin: 0 0 12px; color: #072E1E; font-size: 20px; font-weight: 700;">Account Password Reset & Verification</h2>
                       <p style="margin: 0 0 24px; color: #4B5563; font-size: 14.5px; line-height: 1.6;">
-                        You requested a password reset for your account (<strong>${email}</strong>). Use the secure 6-digit verification code below to proceed:
+                        You requested a verification code for your LegalHub account (<strong>${email}</strong>). Use the 6-digit code below:
                       </p>
 
                       <!-- Premium OTP Code Display Box -->
-                      <div style="background-color: #F0FDF4; border: 2px stroke #0F5C3C; border-radius: 12px; padding: 24px; text-align: center; margin: 28px 0; border: 2px dashed #0F5C3C;">
+                      <div style="background-color: #F0FDF4; border: 2px dashed #0F5C3C; border-radius: 12px; padding: 24px; text-align: center; margin: 28px 0;">
                         <span style="display: block; font-size: 11px; font-weight: 700; color: #0F5C3C; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Your 6-Digit Code</span>
                         <span style="font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 800; letter-spacing: 10px; color: #0F5C3C; display: inline-block;">${code}</span>
                       </div>
@@ -91,7 +84,7 @@ async function sendOtpEmail({ email, code }) {
                       </div>
 
                       <p style="margin: 0; color: #6B7280; font-size: 13px; line-height: 1.5;">
-                        If you did not request a password reset, you can safely ignore this email. Your LegalHub account remains secure.
+                        If you did not request this, please ignore this email. Your LegalHub account remains protected.
                       </p>
                     </td>
                   </tr>
@@ -118,8 +111,8 @@ async function sendOtpEmail({ email, code }) {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ [EMAIL SENT] Verification code delivered to ${email}. Message ID: ${info.messageId}`);
-    return { success: true, devMode: false };
+    console.log(`✅ [GMAIL DELIVERED] Verification code successfully sent to ${email}! Message ID: ${info.messageId}`);
+    return { success: true, devMode: false, messageId: info.messageId };
   } catch (err) {
     console.error(`❌ [GMAIL SMTP ERROR] Failed to send email via Gmail SMTP:`, err.message);
     return { success: true, devMode: true, error: err.message, code };

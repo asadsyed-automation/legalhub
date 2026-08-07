@@ -45,7 +45,8 @@ export function AuthProvider({ children }) {
 
   async function register({ name, email, password, role }) {
     const data = await registerRequest({ name, email, password, role });
-    return saveAuthData(data);
+    // Registration created account - do not saveAuthData or set user logged in until verification/login
+    return data;
   }
 
   async function googleLogin(idToken) {

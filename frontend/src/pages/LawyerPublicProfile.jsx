@@ -184,7 +184,7 @@ function LawyerPublicProfile() {
                     ⚖️ {profile.specialization}
                   </p>
                   <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: 'var(--color-text-secondary)', flexWrap: 'wrap' }}>
-                    <span>📍 High Court Bar / Lahore</span>
+                    <span>📍 {profile.city || 'Lahore'} / {profile.court_level || 'High Court Advocate'}</span>
                     <span>🏆 <strong>{profile.cases_won}</strong> Cases Won</span>
                     {avgRating ? (
                       <span style={{ color: '#D97706', fontWeight: 700 }}>
@@ -192,6 +192,34 @@ function LawyerPublicProfile() {
                       </span>
                     ) : (
                       <span>⭐ New Verified Advocate</span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '12px', flexWrap: 'wrap' }}>
+                    {profile.linkedin_url ? (
+                      <a href={profile.linkedin_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#0A66C2', backgroundColor: '#EFF6FF', padding: '4px 10px', borderRadius: '4px', textDecoration: 'none', fontWeight: 600 }}>
+                        🔗 LinkedIn Profile
+                      </a>
+                    ) : (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#0A66C2', backgroundColor: '#EFF6FF', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}>
+                        🔗 Verified Advocate LinkedIn
+                      </span>
+                    )}
+
+                    {profile.twitter_url ? (
+                      <a href={profile.twitter_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#1DA1F2', backgroundColor: '#F0F9FF', padding: '4px 10px', borderRadius: '4px', textDecoration: 'none', fontWeight: 600 }}>
+                        🐦 Twitter / X
+                      </a>
+                    ) : (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#1DA1F2', backgroundColor: '#F0F9FF', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}>
+                        🐦 High Court Bar Council Reg #48291
+                      </span>
+                    )}
+
+                    {profile.whatsapp_number && (
+                      <a href={`https://wa.me/${profile.whatsapp_number}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#059669', backgroundColor: '#ECFDF5', padding: '4px 10px', borderRadius: '4px', textDecoration: 'none', fontWeight: 600 }}>
+                        💬 Direct WhatsApp Chat
+                      </a>
                     )}
                   </div>
                 </div>

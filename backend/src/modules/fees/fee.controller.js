@@ -1,4 +1,4 @@
-const { addFee, updateFeeStatus, getFeesForCase } = require('./fee.service');
+const { addFee, updateFeeStatus, submitPaymentReceipt, verifyPaymentReceipt, getFeesForCase } = require('./fee.service');
 
 async function create(req, res) {
   try {
@@ -18,6 +18,35 @@ async function updateStatus(req, res) {
   }
 }
 
+async function submitReceipt(req, res) {
+  try {
+    const fee = await submitPaymentReceipt({
+      feeId: req.params.id,
+      clientId: req.user.id,
+      receiptUrl: req.body.receipt_url,
+      paymentMethod: req.body.payment_method,
+      transactionId: req.body.transaction_id,
+    });
+    res.json(fee);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+async function verifyReceipt(req, res) {
+  try {
+    const fee = await verifyPaymentReceipt({
+      feeId: req.params.id,
+      lawyerId: req.user.id,
+      approved: req.body.approved,
+      rejectionReason: req.body.rejection_reason,
+    });
+    res.json(fee);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
 async function getForCase(req, res) {
   try {
     const fees = await getFeesForCase({ caseId: req.params.caseId, userId: req.user.id, role: req.user.role });
@@ -27,4 +56,4 @@ async function getForCase(req, res) {
   }
 }
 
-module.exports = { create, updateStatus, getForCase };
+module.exports = { create, updateStatus, submitReceipt, verifyReceipt, getForCase };
