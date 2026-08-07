@@ -5,33 +5,38 @@ const nodemailer = require('nodemailer');
  * or logs prominently to console in Development Mode.
  */
 async function sendOtpEmail({ email, code }) {
-  const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER;
-  const smtpPass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
+  const rawUser = process.env.SMTP_USER || process.env.GMAIL_USER;
+  const rawPass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
 
   // Always log to terminal console for seamless FYP testing & defense
   console.log(`\n==========================================================`);
-  console.log(`🔑 [LEGALHUB OTP CODE] Email: ${email}`);
+  console.log(`🔑 [LEGALHUB OTP CODE] Target Email: ${email}`);
   console.log(`🔑 [LEGALHUB OTP CODE] 6-Digit OTP Code: ${code}`);
   console.log(`🔑 [LEGALHUB OTP CODE] Expires In: 10 Minutes`);
   console.log(`==========================================================\n`);
 
-  if (!smtpUser || !smtpPass) {
-    console.log(`ℹ️ [DEV MODE] Real email delivery skipped because SMTP_USER / SMTP_PASS is not set in backend .env.`);
+  if (!rawUser || !rawPass) {
+    console.log(`ℹ️ [DEV MODE] Real email delivery skipped because SMTP_USER or SMTP_PASS environment variable is missing on server.`);
     return { success: true, devMode: true, code };
   }
 
+  const cleanUser = rawUser.trim();
+  const cleanPass = rawPass.trim().replace(/\s+/g, ''); // strip spaces from App Password if pasted with spaces
+
   try {
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // SSL
       auth: {
-        user: smtpUser,
-        pass: smtpPass,
+        user: cleanUser,
+        pass: cleanPass,
       },
     });
 
     const mailOptions = {
-      from: `"LegalHub Pakistan Security" <${smtpUser}>`,
-      to: email,
+      from: `"LegalHub Pakistan Security" <${cleanUser}>`,
+      to: email.trim(),
       subject: `🔐 ${code} is your LegalHub Verification Code`,
       html: `
         <!DOCTYPE html>
@@ -112,11 +117,11 @@ async function sendOtpEmail({ email, code }) {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ [EMAIL SENT] Verification code successfully delivered to ${email}`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ [EMAIL SENT] Verification code delivered to ${email}. Message ID: ${info.messageId}`);
     return { success: true, devMode: false };
   } catch (err) {
-    console.error(`❌ [EMAIL ERROR] Failed to send email via Gmail SMTP:`, err.message);
+    console.error(`❌ [GMAIL SMTP ERROR] Failed to send email via Gmail SMTP:`, err.message);
     return { success: true, devMode: true, error: err.message, code };
   }
 }
