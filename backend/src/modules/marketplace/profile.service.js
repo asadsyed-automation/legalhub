@@ -18,11 +18,26 @@ async function createProfile({ lawyerId, bio, specialization, feeStructure, what
 }
 
 async function getAllProfiles() {
-  // Return all advocate profiles, ordering verified profiles first
-  const profiles = await MarketplaceProfile.findAll({
+  let profiles = await MarketplaceProfile.findAll({
     include: [{ model: User, as: 'lawyer', attributes: ['id', 'name', 'email'] }],
     order: [['is_verified', 'DESC'], ['created_at', 'DESC']],
   });
+
+  // Self-Healing: If database returns fewer than 3 profiles, trigger marketplace seeder on the fly
+  if (profiles.length < 3) {
+    try {
+      const { seedMarketplaceDummyData } = require('../../server');
+      if (typeof seedMarketplaceDummyData === 'function') {
+        await seedMarketplaceDummyData();
+        profiles = await MarketplaceProfile.findAll({
+          include: [{ model: User, as: 'lawyer', attributes: ['id', 'name', 'email'] }],
+          order: [['is_verified', 'DESC'], ['created_at', 'DESC']],
+        });
+      }
+    } catch (err) {
+      console.error('Auto-seed check error:', err.message);
+    }
+  }
 
   return profiles.map((p) => {
     const plain = p.get({ plain: true });

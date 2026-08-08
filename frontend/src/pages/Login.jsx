@@ -48,7 +48,13 @@ function Login() {
       await login(email, password);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.error || 'Invalid email or password. Please try again.');
+      const errMsg = err.response?.data?.error || 'Invalid email or password. Please try again.';
+      setError(errMsg);
+      if (errMsg.includes('OTP Verification Required') || err.response?.data?.unverified) {
+        setTimeout(() => {
+          navigate(`/verify-otp?email=${encodeURIComponent(email)}`);
+        }, 1200);
+      }
     } finally {
       setLoading(false);
     }

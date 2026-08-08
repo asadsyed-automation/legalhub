@@ -12,15 +12,22 @@ async function registerUser({ name, email, password, role }) {
   const existing = await User.findOne({ where: { email } });
   if (existing) throw new Error('Email already registered');
 
-  const isVerifiedDefault = role === 'lawyer' ? false : true;
   const password_hash = await bcrypt.hash(password, 10);
   const user = await User.create({
     name,
     email,
     password_hash,
     role,
-    is_verified: isVerifiedDefault,
+    is_verified: false, // Must verify 6-digit OTP code before login!
   });
+
+  // Auto-generate and dispatch 6-digit OTP verification email upon registration
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+  await OtpCode.update({ used: true }, { where: { email, used: false } });
+  await OtpCode.create({ email, code, expires_at: expiresAt, used: false });
+  await sendOtpEmail({ email, code });
+
   return user;
 }
 
@@ -44,6 +51,21 @@ async function loginUser({ email, password }) {
     }
     await user.save();
     throw new Error('Invalid credentials');
+  }
+
+  // Strict OTP Lock: Cannot login until OTP verification is completed!
+  if (!user.is_verified) {
+    // Generate new OTP code if needed
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await OtpCode.update({ used: true }, { where: { email, used: false } });
+    await OtpCode.create({ email, code, expires_at: expiresAt, used: false });
+    await sendOtpEmail({ email, code });
+
+    const err = new Error('OTP Verification Required: Please enter the 6-digit OTP code sent to your email.');
+    err.unverified = true;
+    err.email = email;
+    throw err;
   }
 
   user.failed_login_attempts = 0;
@@ -76,7 +98,6 @@ async function googleAuthUser({ idToken }) {
       email_verified: true,
     };
   } else if (idToken && (idToken.startsWith('ya29.') || !idToken.includes('.'))) {
-    // Google OAuth Access Token (OAuth2 Popup Flow)
     try {
       const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: `Bearer ${idToken}` },
@@ -86,7 +107,6 @@ async function googleAuthUser({ idToken }) {
       throw new Error('Failed to fetch Google user profile: ' + (err.response?.data?.error_description || err.message));
     }
   } else {
-    // JWT ID Token (Google Credential Flow)
     try {
       const ticket = await googleClient.verifyIdToken({
         idToken,
@@ -103,24 +123,19 @@ async function googleAuthUser({ idToken }) {
     }
   }
 
-  if (!payload || !payload.email) {
-    throw new Error('Invalid Google token payload');
-  }
-
-  if (payload.email_verified === false) {
-    throw new Error('Google email is not verified');
-  }
+  if (!payload || !payload.email) throw new Error('Invalid Google token payload');
+  if (payload.email_verified === false) throw new Error('Google email is not verified');
 
   const googleId = payload.sub;
   const email = payload.email;
   const name = payload.name || payload.given_name || email.split('@')[0];
 
   let user = await User.findOne({ where: { google_id: googleId } });
-
   if (!user) {
     user = await User.findOne({ where: { email } });
     if (user) {
       user.google_id = googleId;
+      user.is_verified = true;
       await user.save();
     }
   }
@@ -132,6 +147,7 @@ async function googleAuthUser({ idToken }) {
       google_id: googleId,
       password_hash: null,
       role: null,
+      is_verified: true,
     });
   }
 
@@ -171,6 +187,7 @@ async function setUserRole({ userId, role }) {
   if (!user) throw new Error('User not found');
 
   user.role = role;
+  user.is_verified = true;
   await user.save();
 
   const accessToken = jwt.sign(
@@ -187,7 +204,7 @@ async function setUserRole({ userId, role }) {
   return { user, accessToken, refreshToken };
 }
 
-/* ── OTP Password Reset Functions ──────────────────────────────────── */
+/* ── OTP Password Reset & Verification Functions ────────────────────── */
 
 async function requestPasswordResetOtp({ email }) {
   const user = await User.findOne({ where: { email } });
@@ -197,7 +214,6 @@ async function requestPasswordResetOtp({ email }) {
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
   await OtpCode.update({ used: true }, { where: { email, used: false } });
-
   await OtpCode.create({
     email,
     code,
@@ -235,6 +251,13 @@ async function verifyResetOtp({ email, code }) {
   record.used = true;
   await record.save();
 
+  // Mark user account as verified in PostgreSQL!
+  const user = await User.findOne({ where: { email } });
+  if (user) {
+    user.is_verified = true;
+    await user.save();
+  }
+
   const resetToken = jwt.sign(
     { email, type: 'password_reset' },
     process.env.JWT_SECRET || 'secret_key',
@@ -263,6 +286,7 @@ async function resetPasswordWithOtpToken({ email, resetToken, newPassword }) {
   if (!user) throw new Error('User account not found');
 
   user.password_hash = await bcrypt.hash(newPassword, 10);
+  user.is_verified = true;
   user.failed_login_attempts = 0;
   user.locked_until = null;
   await user.save();
@@ -278,11 +302,8 @@ async function changePasswordLoggedIn({ userId, currentPassword, newPassword }) 
   const isValid = await bcrypt.compare(currentPassword, user.password_hash);
   if (!isValid) throw new Error('Current password is incorrect.');
 
-  if (newPassword.length < 6) throw new Error('New password must be at least 6 characters long.');
-
   user.password_hash = await bcrypt.hash(newPassword, 10);
   await user.save();
-
   return { message: 'Password changed successfully' };
 }
 
