@@ -11,16 +11,17 @@ async function createProfile({ lawyerId, bio, specialization, feeStructure, what
     specialization,
     fee_structure: feeStructure,
     whatsapp_number,
+    is_verified: true,
   });
 
   return await getMyProfile(lawyerId);
 }
 
 async function getAllProfiles() {
-  // Only show verified profiles publicly — strip private whatsapp_number from public listing
+  // Return all advocate profiles, ordering verified profiles first
   const profiles = await MarketplaceProfile.findAll({
-    where: { is_verified: true },
     include: [{ model: User, as: 'lawyer', attributes: ['id', 'name', 'email'] }],
+    order: [['is_verified', 'DESC'], ['created_at', 'DESC']],
   });
 
   return profiles.map((p) => {
@@ -41,7 +42,6 @@ async function getProfileById(id) {
 }
 
 async function getMyProfile(lawyerId) {
-  // Returns full profile including whatsapp_number to the lawyer owner
   return await MarketplaceProfile.findOne({
     where: { lawyer_id: lawyerId },
     include: [{ model: User, as: 'lawyer', attributes: ['id', 'name', 'email'] }],
