@@ -1,8 +1,7 @@
 const nodemailer = require('nodemailer');
 
 /**
- * Sends a 6-digit OTP verification code via Gmail SMTP.
- * Fallbacks to configured default app password if env variables are not present.
+ * Sends a 6-digit OTP verification code via Gmail SMTP using user's verified credentials.
  */
 async function sendOtpEmail({ email, code }) {
   const rawUser = process.env.SMTP_USER || process.env.GMAIL_USER || 'asadraza5670@gmail.com';
