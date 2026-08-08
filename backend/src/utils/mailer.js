@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer');
  * Fallbacks to configured default app password if env variables are not present.
  */
 async function sendOtpEmail({ email, code }) {
-  const rawUser = process.env.SMTP_USER || process.env.GMAIL_USER || 'asadsyed.automation@gmail.com';
+  const rawUser = process.env.SMTP_USER || process.env.GMAIL_USER || 'asadraza5670@gmail.com';
   const rawPass = process.env.SMTP_PASS || process.env.GMAIL_PASS || 'qqrtdtnkusxwyroq';
 
   console.log(`\n==========================================================`);
