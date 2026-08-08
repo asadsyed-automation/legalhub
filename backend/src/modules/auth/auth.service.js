@@ -1,3 +1,4 @@
+const axios = require('axios');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
@@ -74,7 +75,18 @@ async function googleAuthUser({ idToken }) {
       name: 'Adv. Mohammad Google User',
       email_verified: true,
     };
+  } else if (idToken && (idToken.startsWith('ya29.') || !idToken.includes('.'))) {
+    // Google OAuth Access Token (OAuth2 Popup Flow)
+    try {
+      const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      payload = response.data;
+    } catch (err) {
+      throw new Error('Failed to fetch Google user profile: ' + (err.response?.data?.error_description || err.message));
+    }
   } else {
+    // JWT ID Token (Google Credential Flow)
     try {
       const ticket = await googleClient.verifyIdToken({
         idToken,
