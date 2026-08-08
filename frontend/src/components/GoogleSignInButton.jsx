@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { GoogleOAuthProvider, GoogleLogin, useGoogleLogin } from '@react-oauth/google';
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1048293049281-placeholder.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '834073121598-kbakkovmr12556sgekb05d2a6qk0uncr.apps.googleusercontent.com';
 
 function GooglePopupButton({ onSuccess, onError }) {
   const [loading, setLoading] = useState(false);
