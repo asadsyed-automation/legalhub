@@ -1,22 +1,31 @@
 const Gig = require('./gig.model');
 const MarketplaceProfile = require('../marketplace/profile.model');
+const User = require('../auth/auth.model');
 
 async function getOrCreateProfile(lawyerId) {
   let profile = await MarketplaceProfile.findOne({ where: { lawyer_id: lawyerId } });
   if (!profile) {
+    const user = await User.findByPk(lawyerId);
     profile = await MarketplaceProfile.create({
       lawyer_id: lawyerId,
       specialization: 'General Practice & Litigation',
-      bio: 'Verified Advocate on LegalHub Pakistan.',
+      bio: 'Advocate on LegalHub Pakistan.',
       fee_structure: 'Standard Consultation',
-      is_verified: true,
+      is_verified: user ? user.is_verified : false,
     });
   }
   return profile;
 }
 
 async function createGig({ lawyerId, title, description, price, thumbnail_url }) {
+  const user = await User.findByPk(lawyerId);
   const profile = await getOrCreateProfile(lawyerId);
+
+  const isVerified = (user && user.is_verified) || (profile && profile.is_verified);
+  if (!isVerified) {
+    throw new Error('Advocate Verification Required: You can publish marketplace service gigs once LegalHub Admin approves your advocate verification.');
+  }
+
   return await Gig.create({ profile_id: profile.id, title, description, price, thumbnail_url });
 }
 

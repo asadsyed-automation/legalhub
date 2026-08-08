@@ -369,57 +369,58 @@ function MarketplaceBrowse() {
               Search top Pakistani lawyers by specialization, city, and fee structure. Compare legal service packages, inspect verified client ratings, and book direct legal consultations.
             </p>
 
-            {/* Fiverr-Style Hero Search Bar */}
+            {/* Fiverr-Style Hero Search Bar (Single Row Layout with Right Circular Search Icon Button) */}
             <div style={{ maxWidth: '680px', margin: '0 auto 20px', position: 'relative' }}>
               <div style={{
                 display: 'flex',
-                flexDirection: isSmallMobile ? 'column' : 'row',
-                alignItems: 'stretch',
+                flexDirection: 'row',
+                alignItems: 'center',
                 backgroundColor: '#FFFFFF',
-                borderRadius: isSmallMobile ? 'var(--radius-md)' : 'var(--radius-lg)',
-                padding: isSmallMobile ? '10px' : '6px 8px 6px 18px',
+                borderRadius: '9999px',
+                padding: '5px 6px 5px 20px',
                 boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
-                gap: isSmallMobile ? '8px' : '0'
+                gap: '8px'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                  <span style={{ fontSize: '18px', marginRight: '10px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center' }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-                    </svg>
-                  </span>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={isSmallMobile ? "Search lawyers or legal areas..." : "Search by lawyer name, specialization (e.g. Family Law, Corporate)..."}
-                    style={{
-                      width: '100%', border: 'none', outline: 'none', fontSize: '14px',
-                      fontFamily: 'var(--font-body)', color: 'var(--color-secondary)',
-                      backgroundColor: 'transparent'
-                    }}
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', padding: '0 8px', fontSize: '13px' }}
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-                
-                <Button
-                  onClick={() => {}}
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search advocates by name, corporate, criminal, property..."
                   style={{
-                    marginTop: 0,
-                    padding: isSmallMobile ? '10px 16px' : '12px 24px',
+                    flex: 1,
+                    minWidth: 0,
+                    border: 'none',
+                    outline: 'none',
                     fontSize: '14px',
-                    borderRadius: 'var(--radius-md)',
-                    width: isSmallMobile ? '100%' : 'auto'
+                    fontFamily: 'var(--font-body)',
+                    color: 'var(--color-secondary)',
+                    backgroundColor: 'transparent',
+                    padding: '8px 0'
+                  }}
+                />
+                <button
+                  type="button"
+                  aria-label="Search"
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--color-primary)',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: '0 2px 8px rgba(15,92,60,0.3)',
+                    transition: 'transform 0.15s ease'
                   }}
                 >
-                  Search
-                </Button>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                  </svg>
+                </button>
               </div>
             </div>
 

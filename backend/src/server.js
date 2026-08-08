@@ -137,10 +137,17 @@ async function seedMarketplaceDummyData() {
     });
     const gig1 = await Gig.create({
       lawyer_id: lawyer1.id,
-      title: 'High Court Writ Petition Drafting & Representation',
+      title: 'High Court Writ Petition Drafting & Oral Representation',
       description: 'Comprehensive drafting, filing, and oral arguments for Article 199 Constitutional Writ Petitions in Lahore High Court.',
       category: 'Constitutional Law',
       price: 45000.00,
+    });
+    await Gig.create({
+      lawyer_id: lawyer1.id,
+      title: 'Bail & High Court Criminal Appellate Defense',
+      description: 'Pre-arrest and post-arrest bail petitions, NAB investigation defense, and High Court criminal appeals.',
+      category: 'Criminal Law',
+      price: 30000.00,
     });
     await Review.create({
       gig_id: gig1.id,
@@ -178,6 +185,13 @@ async function seedMarketplaceDummyData() {
       category: 'Corporate Law',
       price: 25000.00,
     });
+    await Gig.create({
+      lawyer_id: lawyer2.id,
+      title: 'FBR Tax Audit & Corporate Regulatory Legal Advisory',
+      description: 'Expert legal consultation and reply drafting for FBR tax notices, SECP compliance, and corporate regulatory audits.',
+      category: 'Corporate Law',
+      price: 50000.00,
+    });
     await Review.create({
       gig_id: gig2.id,
       client_name: 'Tariq Tech Ventures',
@@ -213,6 +227,13 @@ async function seedMarketplaceDummyData() {
       description: 'Thorough revenue record audit (Fard, Aks Shajra, Registry) and High Court representation for land title recovery.',
       category: 'Property Law',
       price: 35000.00,
+    });
+    await Gig.create({
+      lawyer_id: lawyer3.id,
+      title: 'CDA Plot Transfer & Inheritance Title Legal Clearance',
+      description: 'Legal representation for CDA Islamabad plot transfers, family settlement deeds, and succession certificate filings.',
+      category: 'Property Law',
+      price: 20000.00,
     });
     await Review.create({
       gig_id: gig3.id,

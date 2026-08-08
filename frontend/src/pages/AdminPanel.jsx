@@ -11,13 +11,24 @@ import {
 import { Card, Button, Badge, Input } from '../components/ui';
 
 function AdminPanel() {
-  const [activeTab, setActiveTab] = useState('metrics'); // 'metrics' | 'lawyers' | 'verification' | 'logs'
-  const [toastMessage, setToastMessage] = useState('');
+  const [pendingLawyersCount, setPendingLawyersCount] = useState(0);
+  const [unverifiedProfilesCount, setUnverifiedProfilesCount] = useState(0);
 
-  function showToast(msg) {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 4000);
-  }
+  useEffect(() => {
+    async function loadCounts() {
+      try {
+        const lawyers = await getPendingLawyers();
+        setPendingLawyersCount(Array.isArray(lawyers) ? lawyers.length : 0);
+
+        const profiles = await getAllMarketplaceProfilesAdmin();
+        const unverified = Array.isArray(profiles) ? profiles.filter(p => !p.is_verified).length : 0;
+        setUnverifiedProfilesCount(unverified);
+      } catch {
+        // silent fallback for counts
+      }
+    }
+    loadCounts();
+  }, [activeTab]);
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
@@ -40,12 +51,12 @@ function AdminPanel() {
         </div>
       )}
 
-      {/* Tab Navigation Pills */}
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--color-border)', paddingBottom: '12px', marginBottom: 'var(--spacing-3)' }}>
+      {/* Tab Navigation Pills with WhatsApp-style Red Notification Badges */}
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--color-border)', paddingBottom: '12px', marginBottom: 'var(--spacing-3)', flexWrap: 'wrap' }}>
         {[
           { id: 'metrics', label: '📊 System Health' },
-          { id: 'verification', label: '🛡️ Profile Verification' },
-          { id: 'lawyers', label: '⚖️ Lawyer Registrations' },
+          { id: 'verification', label: '🛡️ Profile Verification', count: unverifiedProfilesCount },
+          { id: 'lawyers', label: '⚖️ Lawyer Registrations', count: pendingLawyersCount },
           { id: 'logs', label: '📜 Audit Logs' },
         ].map((tab) => (
           <button
@@ -56,10 +67,25 @@ function AdminPanel() {
               cursor: 'pointer', fontWeight: activeTab === tab.id ? 700 : 500, fontSize: '13.5px',
               backgroundColor: activeTab === tab.id ? 'var(--color-primary)' : 'transparent',
               color: activeTab === tab.id ? '#FFFFFF' : 'var(--color-text-secondary)',
-              transition: 'all 0.15s ease'
+              transition: 'all 0.15s ease',
+              display: 'inline-flex', alignItems: 'center', gap: '6px'
             }}
           >
-            {tab.label}
+            <span>{tab.label}</span>
+            {tab.count > 0 && (
+              <span style={{
+                backgroundColor: activeTab === tab.id ? '#FFFFFF' : '#EF4444',
+                color: activeTab === tab.id ? '#EF4444' : '#FFFFFF',
+                borderRadius: '10px',
+                padding: '2px 7px',
+                fontSize: '11px',
+                fontWeight: 800,
+                lineHeight: 1,
+                boxShadow: '0 2px 4px rgba(239, 68, 68, 0.4)'
+              }}>
+                {tab.count}
+              </span>
+            )}
           </button>
         ))}
       </div>

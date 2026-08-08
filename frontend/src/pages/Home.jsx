@@ -318,72 +318,57 @@ function Home() {
               LegalHub empowers Pakistani advocates and law firms to track court cause lists, manage case files, coordinate with clients, and list verified services on the Marketplace.
             </p>
 
-            {/* Search Bar */}
+            {/* Search Bar (Single-Row Layout with Right-Side Circular Search Icon Button) */}
             <form onSubmit={handleSearchSubmit} style={{ maxWidth: '640px', margin: '0 auto 28px', position: 'relative', zIndex: 3 }}>
               <div style={{
                 display: 'flex',
-                flexDirection: isSmallMobile ? 'column' : 'row',
-                alignItems: 'stretch',
+                flexDirection: 'row',
+                alignItems: 'center',
                 backgroundColor: '#FFFFFF',
-                borderRadius: isSmallMobile ? 'var(--radius-md)' : '9999px',
-                padding: isSmallMobile ? '10px' : '6px 8px 6px 20px',
+                borderRadius: '9999px',
+                padding: '5px 6px 5px 20px',
                 boxShadow: '0 12px 32px rgba(0, 0, 0, 0.28)',
                 border: '2px solid rgba(255, 255, 255, 0.4)',
-                gap: isSmallMobile ? '8px' : '0',
+                gap: '8px',
                 transition: 'all 0.2s ease'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '18px', marginRight: '10px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                    <SearchIcon />
-                  </span>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={animatedPlaceholder}
-                    style={{
-                      width: '100%',
-                      border: 'none',
-                      outline: 'none',
-                      fontSize: isSmallMobile ? '13.5px' : '14.5px',
-                      fontFamily: 'var(--font-body)',
-                      color: 'var(--color-secondary)',
-                      backgroundColor: 'transparent',
-                      padding: isSmallMobile ? '6px 0' : '8px 0'
-                    }}
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', padding: '0 8px', fontSize: '13px' }}
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={animatedPlaceholder}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    border: 'none',
+                    outline: 'none',
+                    fontSize: '14px',
+                    fontFamily: 'var(--font-body)',
+                    color: 'var(--color-secondary)',
+                    backgroundColor: 'transparent',
+                    padding: '8px 0'
+                  }}
+                />
                 <button
                   type="submit"
+                  aria-label="Search"
                   style={{
-                    backgroundColor: 'var(--color-accent)',
-                    color: '#1A1A1A',
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--color-primary)',
+                    color: '#FFFFFF',
                     border: 'none',
-                    borderRadius: isSmallMobile ? 'var(--radius-sm)' : '9999px',
-                    padding: isSmallMobile ? '11px 16px' : '12px 24px',
-                    fontSize: '14px',
-                    fontWeight: 700,
                     cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(201,162,39,0.35)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '6px',
                     flexShrink: 0,
-                    width: isSmallMobile ? '100%' : 'auto'
+                    boxShadow: '0 2px 8px rgba(15,92,60,0.3)',
+                    transition: 'transform 0.15s ease'
                   }}
                 >
-                  Search
+                  <SearchIcon />
                 </button>
               </div>
             </form>
