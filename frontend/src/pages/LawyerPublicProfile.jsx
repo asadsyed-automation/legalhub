@@ -10,6 +10,7 @@ import {
   getReviewsForGig,
   createReview,
 } from '../api/marketplaceApi';
+import { createCase } from '../api/caseApi';
 import { Card, Badge, Button, Input } from '../components/ui';
 
 function Stars({ rating }) {
@@ -108,12 +109,46 @@ function LawyerPublicProfile() {
     }
   }
 
-  function handleConsultationRequest(gigTitle) {
+  const [showHireModal, setShowHireModal] = useState(false);
+  const [selectedGigForHire, setSelectedGigForHire] = useState(null);
+  const [caseType, setCaseType] = useState('Civil');
+  const [caseTitle, setCaseTitle] = useState('');
+  const [hiring, setHiring] = useState(false);
+
+  function handleConsultationRequest(gig) {
     if (!user) {
       navigate(`/login?redirect=/marketplace/${profileId}`);
       return;
     }
-    showToast(`📩 Consultation request submitted for "${gigTitle}". Adv. ${profile?.lawyer?.name || 'the advocate'} will respond shortly.`);
+    const gigObj = typeof gig === 'object' ? gig : { title: gig };
+    setSelectedGigForHire(gigObj);
+    if (gigObj?.category && ['Civil', 'Criminal', 'Family', 'Corporate', 'Property', 'Constitutional'].includes(gigObj.category)) {
+      setCaseType(gigObj.category);
+    }
+    setShowHireModal(true);
+  }
+
+  async function handleConfirmHire(e) {
+    e.preventDefault();
+    if (!profile?.lawyer_id) return;
+    setHiring(true);
+    try {
+      const created = await createCase({
+        lawyer_id: profile.lawyer_id,
+        case_number: 'LH-' + Math.floor(100000 + Math.random() * 900000),
+        court_name: profile.court_level || 'High Court',
+        case_type: caseType,
+      });
+      setShowHireModal(false);
+      showToast('🎉 Advocate hired successfully! Opening case workspace...');
+      setTimeout(() => {
+        navigate(`/cases/${created.id}`);
+      }, 1000);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to complete hiring request.');
+    } finally {
+      setHiring(false);
+    }
   }
 
   const isCitizen = user && user.role === 'citizen';
@@ -440,6 +475,57 @@ function LawyerPublicProfile() {
             )}
           </div>
         </motion.div>
+      )}
+
+      {/* Interactive Hire Advocate Modal */}
+      {showHireModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <Card style={{ width: '100%', maxWidth: '520px', backgroundColor: '#FFFFFF', padding: '24px' }}>
+            <h3 style={{ margin: '0 0 8px', color: 'var(--color-primary)', fontSize: '18px', fontWeight: 800 }}>
+              Hire Adv. {profile?.lawyer?.name || 'Advocate'}
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '18px' }}>
+              Selected Package: <strong>{selectedGigForHire?.title || 'Direct Legal Representation'}</strong>
+            </p>
+
+            <form onSubmit={handleConfirmHire} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>Legal Category *</label>
+                <select
+                  value={caseType}
+                  onChange={(e) => setCaseType(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', outline: 'none' }}
+                >
+                  <option value="Civil">Civil Litigation</option>
+                  <option value="Criminal">Criminal Defense & Bail</option>
+                  <option value="Family">Family & Child Custody</option>
+                  <option value="Corporate">Corporate & Contracts</option>
+                  <option value="Property">Property & Land Disputes</option>
+                  <option value="Constitutional">Constitutional Writ Petition</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>Case Summary / Legal Need *</label>
+                <textarea
+                  value={caseTitle}
+                  onChange={(e) => setCaseTitle(e.target.value)}
+                  placeholder="Describe your legal matter, court jurisdiction, or specific help needed..."
+                  rows={3}
+                  required
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', outline: 'none', fontFamily: 'inherit', fontSize: '13.5px' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <Button variant="secondary" type="button" onClick={() => setShowHireModal(false)}>Cancel</Button>
+                <Button type="submit" disabled={hiring || !caseTitle.trim()}>
+                  {hiring ? 'Initiating Hiring Request…' : 'Confirm & Hire Advocate ⚖️'}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
       )}
     </div>
   );

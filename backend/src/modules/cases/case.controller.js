@@ -2,12 +2,18 @@ const { createCase, getCasesForUser, getCaseById, updateCaseStatus } = require('
 
 async function create(req, res) {
   try {
+    const isCitizen = req.user.role === 'citizen';
+    const lawyerId = isCitizen ? req.body.lawyer_id : req.user.id;
+    const clientId = isCitizen ? req.user.id : req.body.client_id;
+
+    if (!lawyerId) throw new Error('Target lawyer ID is required');
+
     const newCase = await createCase({
-      lawyerId: req.user.id,
-      clientId: req.body.client_id,
-      caseNumber: req.body.case_number,
-      courtName: req.body.court_name,
-      caseType: req.body.case_type,
+      lawyerId,
+      clientId,
+      caseNumber: req.body.case_number || ('LH-' + Math.floor(100000 + Math.random() * 900000)),
+      courtName: req.body.court_name || 'High Court / District Court',
+      caseType: req.body.case_type || 'Civil',
     });
     res.status(201).json(newCase);
   } catch (err) {
