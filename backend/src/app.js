@@ -9,6 +9,9 @@ const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
 
 const authRoutes = require('./modules/auth/auth.routes');
+const lawyerRoutes = require('./modules/lawyer/lawyer.routes');
+const adminRoutes = require('./modules/admin/admin.routes');
+const directoryRoutes = require('./modules/directory/directory.routes');
 const { healthCheck } = require('./modules/auth/auth.controller');
 
 const app = express();
@@ -42,8 +45,11 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 // 5. Base & Health Endpoints under /api/v1
 app.get('/api/v1/health', healthCheck);
 
-// 6. Modular API Routes
+// 6. Modular API Routes under /api/v1
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/lawyer', lawyerRoutes);
+app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/lawyers', directoryRoutes);
 
 // 7. Catch-all for unhandled routes
 app.use(notFound);

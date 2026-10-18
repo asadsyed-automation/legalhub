@@ -1,5 +1,11 @@
 const { ROLES, ALLOWED_REGISTRATION_ROLES } = require('./roles');
 
+const APPLICATION_STATUS = Object.freeze({
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected'
+});
+
 const BAR_COUNCILS = Object.freeze([
   'Punjab Bar Council',
   'Sindh Bar Council',
@@ -48,6 +54,7 @@ const PRACTICE_AREAS = Object.freeze([
 module.exports = {
   ROLES,
   ALLOWED_REGISTRATION_ROLES,
+  APPLICATION_STATUS,
   BAR_COUNCILS,
   COURT_LEVELS,
   CITIES,
