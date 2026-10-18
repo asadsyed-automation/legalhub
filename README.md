@@ -1,59 +1,128 @@
-# LegalHub - Legal Marketplace for Pakistan 🇵🇰
+# LegalHub - Verified Legal Marketplace for Pakistan 🇵🇰
 
-A modern, secure, and production-grade backend API core for **LegalHub**, a digital legal services marketplace connecting citizens and corporate clients with verified Pakistani advocates across all provincial Bar Councils and Court Levels.
-
-Built with **Node 20+**, **Express**, **PostgreSQL** (via Supabase), and **Sequelize ORM**, following strict separation of concerns (**Route $\rightarrow$ Controller $\rightarrow$ Service $\rightarrow$ Model**).
+A modern, production-grade, full-stack digital legal marketplace built for Pakistan. **LegalHub** connects citizens, businesses, and corporate clients with verified Pakistani advocates licensed across all provincial Bar Councils (Punjab, Sindh, Khyber Pakhtunkhwa, Balochistan, Islamabad) and Court Levels (Lower Courts, High Court, Supreme Court).
 
 ---
 
-## 🚀 Technology Stack
+## 🏛️ System Architecture
+
+```text
+                                       +-----------------------------------+
+                                       |      Browser / Client Device      |
+                                       +-----------------+-----------------+
+                                                         |
+                                                         | HTTP / REST (JSON)
+                                                         v
+                                       +-----------------------------------+
+                                       |    React 18 + Vite (Port 3000)    |
+                                       |  - CSS Tokens & Custom Styling    |
+                                       |  - React Router DOM (RBAC UX)     |
+                                       |  - Axios (Auto-JWT Interceptor)   |
+                                       +-----------------+-----------------+
+                                                         |
+                                                         | Authorization: Bearer <token>
+                                                         v
+                                       +-----------------------------------+
+                                       |     Express.js API (Port 4000)    |
+                                       |  - 4-Tier Layered Architecture    |
+                                       |  - Zod Fail-Fast Validation       |
+                                       |  - Timing Attack & Lockout Guards |
+                                       |  - Privacy Shielding Projections  |
+                                       +-----------------+-----------------+
+                                                         |
+                                                         | SSL Connection Pooler (PgBouncer)
+                                                         v
+                                       +-----------------------------------+
+                                       |  PostgreSQL Database (Supabase)   |
+                                       |  - Composite Unique Licensing     |
+                                       |  - Native Array Containment (@>)  |
+                                       |  - Cascading Integrity            |
+                                       +-----------------------------------+
+```
+
+---
+
+## 🚀 Full-Stack Technology Stack
+
+### Backend Core (`/backend`)
 * **Runtime:** Node.js 20+ (LTS)
 * **Framework:** Express.js
-* **Database & ORM:** PostgreSQL (via Supabase) with Sequelize ORM & CLI Migrations
-* **Validation:** Zod (strict schema validation on all inputs)
-* **Security & Auth:** JWT (JSON Web Tokens), Bcryptjs (12 salt rounds), Helmet, CORS, Express-Rate-Limit
-* **Testing:** Jest + Supertest (46 integration tests across 4 test suites)
+* **Database & ORM:** PostgreSQL on Supabase managed via Sequelize ORM & CLI Migrations
+* **Schema Validation:** Zod (fail-fast parameter, body, and query validation)
+* **Authentication & Cryptography:** JWT (JSON Web Tokens), Bcryptjs (12 salt rounds with timing-attack prevention)
+* **Security Middleware:** Helmet, CORS whitelist, Express-Rate-Limit, 5-attempt account lockout
+* **Automated Testing:** Jest + Supertest (**46 integration tests passing across 4 suites**)
+
+### Frontend Web Portal (`/frontend`)
+* **Framework:** React 18 + Vite
+* **Routing & Guards:** React Router DOM v6 with role-guarded `ProtectedRoute` components
+* **HTTP Client:** Axios with automated request interceptors (JWT injection) and error normalizers
+* **Design System:** Pure CSS tokens (`#0F5C3C` Pakistan Green, `#101512` Text, `#F9FAFB` Background, `#D64545` Danger) with zero external UI or animation libraries
+* **State Management:** React Context API (`AuthContext`) with persistent `localStorage` session verification
 
 ---
 
-## 🏛️ Architecture & Clean Layering
+## 📂 Project Repository Structure
+
 ```text
-Route  -->  Controller (HTTP Only)  -->  Service (Business Rules)  -->  Model (Sequelize/PostgreSQL)
+legalhub/
+├── README.md                          <- Master full-stack project documentation
+├── backend/                           <- Express & PostgreSQL backend service
+│   ├── src/
+│   │   ├── config/                    <- Fail-Fast env validator & Sequelize connection
+│   │   ├── constants/                 <- Bar Councils, Court Levels, Cities, Practice Areas
+│   │   ├── middleware/                <- JWT auth, requireRole RBAC, Zod validate, errorHandler
+│   │   ├── models/                    <- User & LawyerApplication Sequelize models
+│   │   └── modules/
+│   │       ├── auth/                  <- Register, Login, Me (/api/v1/auth)
+│   │       ├── lawyer/                <- Application submission (/api/v1/lawyer)
+│   │       ├── admin/                 <- Scrutiny queue, approvals, rejections (/api/v1/admin)
+│   │       └── directory/             <- Public directory & profile search (/api/v1/lawyers)
+│   ├── migrations/                    <- Atomic database migrations (users, lawyer_applications)
+│   ├── tests/                         <- 46 Jest integration tests (auth, lawyer, role, health)
+│   └── docs/                          <- API Contract, DB Design ERD, 11 ADRs, Render guide
+│
+└── frontend/                          <- React 18 + Vite client application
+    ├── src/
+    │   ├── api/                       <- Axios client & modular API service functions
+    │   ├── components/                <- Navbar, ProtectedRoute, FormField, StatusBadge
+    │   ├── constants/                 <- Frontend constants matching backend contracts
+    │   ├── context/                   <- AuthContext global session manager
+    │   ├── pages/                     <- Home, Login, Register, Dashboard, LawyerApplication,
+    │   │                                 AdminQueue, LawyersList, LawyerProfile, NotFound
+    │   └── styles/                    <- tokens.css (brand colors) and index.css (utilities)
+    └── docs/learn/                    <- Student learning guides for Part 1 & Part 2
 ```
-* **No business logic in routes or controllers.**
-* **Fail-Fast Configuration:** `src/config/env.js` validates all environment variables at startup and halts boot if any are missing or invalid.
-* **Defense in Depth:**
-  * Password hashes permanently stripped via `User.prototype.toJSON()`.
-  * Dummy bcrypt comparison on invalid emails to prevent timing attacks.
-  * 5 consecutive failed logins trigger a 15-minute account lockout.
-  * Admin accounts can never be created via public APIs (seed script only).
-  * Strict data projection on public directory endpoints to prevent PII leakage (email, chamber address, enrolment number).
 
 ---
 
 ## 💻 Windows Local Setup & Execution Guide
 
-Follow these exact steps in Windows PowerShell:
+Follow these exact steps in Windows PowerShell to run the complete system locally:
 
-### 1. Clone & Enter Project Directory
+### 1. Clone the Repository
 ```powershell
 git clone https://github.com/asadsyed-automation/legalhub.git
-cd legalhub\backend
+cd legalhub
 ```
 
-### 2. Install Dependencies
+---
+
+### 2. Backend Setup & Startup (Port 4000)
+
 ```powershell
+cd backend
+
+# Install dependencies
 npm.cmd install
-```
 
-### 3. Configure Environment Variables
-Create `.env` from the template:
-```powershell
+# Create local environment file
 Copy-Item .env.example .env
 ```
-Open `.env` and configure your Supabase connection string:
+
+Open `backend/.env` and configure your credentials:
 ```dotenv
-DATABASE_URL=postgresql://postgres.<project_ref>:<encoded_password>@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql://postgres.<project_ref>:<password>@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
 DB_SSL=true
 PORT=4000
 JWT_SECRET=your_super_secret_jwt_key_that_is_at_least_32_characters_long_min
@@ -61,61 +130,99 @@ FRONTEND_URLS=http://localhost:3000,http://localhost:5173
 ADMIN_EMAIL=admin@legalhub.pk
 ADMIN_PASSWORD=AdminSecurePassword123!
 ```
-*(Note: If your password contains `@` or `#`, encode them as `%40` and `%23`)*.
+*(Note: If your database password contains `@` or `#`, encode them as `%40` and `%23`)*.
 
-### 4. Run Migrations & Seed Initial Admin
 ```powershell
-# Run migrations on session pooler (port 5432) or standard connection
+# Run database migrations
 npm.cmd run migrate
 
-# Seed the initial system administrator
+# Seed the initial Court Administrator account
 npm.cmd run seed:admin
-```
 
-### 5. Start Development Server
-```powershell
+# Run all 46 automated integration tests
+npm.cmd test
+
+# Start backend development server
 npm.cmd run dev
 ```
-The server will boot and listen on `http://localhost:4000`. Test the health check:
-```powershell
-curl http://localhost:4000/api/v1/health
-```
-
-### 6. Run Automated Test Suite
-```powershell
-npm.cmd test
-```
-Executes all 46 integration tests across health, auth, role, and lawyer suites.
+Backend API will listen on: **`http://localhost:4000`**
 
 ---
 
-## 📜 Available NPM Scripts
+### 3. Frontend Setup & Startup (Port 3000)
 
-| Script | Command | Purpose |
+Open a **new PowerShell window** and run:
+
+```powershell
+cd legalhub\frontend
+
+# Install dependencies
+npm.cmd install
+
+# Create frontend environment file
+Copy-Item .env.example .env
+
+# Verify linter and production bundle
+npm.cmd run lint
+npm.cmd run build
+
+# Start frontend development server
+npm.cmd run dev
+```
+Frontend Web Portal will open on: **`http://localhost:3000`**
+
+---
+
+## 📋 API Endpoints Inventory
+
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/health` | Public | System uptime and health check |
+| `POST` | `/api/v1/auth/register` | Public | Register citizen (`client`) or advocate (`lawyer`) |
+| `POST` | `/api/v1/auth/login` | Public | Authenticate user, check 15-min lockout, return JWT |
+| `GET` | `/api/v1/auth/me` | Authenticated | Retrieve profile of authenticated user |
+| `POST` | `/api/v1/lawyer/application` | Lawyer Only | Submit initial Bar Council verification petition |
+| `GET` | `/api/v1/lawyer/application` | Lawyer Only | Fetch advocate's own application status |
+| `PUT` | `/api/v1/lawyer/application` | Lawyer Only | Re-submit corrected credentials after rejection |
+| `GET` | `/api/v1/admin/applications` | Admin Only | List applications filtered by status (`pending`, `approved`, `rejected`) |
+| `PATCH`| `/api/v1/admin/applications/:id/approve` | Admin Only | Approve advocate and publish to directory |
+| `PATCH`| `/api/v1/admin/applications/:id/reject`  | Admin Only | Reject application with mandatory $\ge 10$ char reason |
+| `GET` | `/api/v1/lawyers` | Public | Search verified lawyers by city, practice area, and page |
+| `GET` | `/api/v1/lawyers/:id` | Public | View verified advocate profile with privacy shielding |
+
+---
+
+## 🖥️ Frontend Routes Inventory
+
+| Route | Guard | Description |
 | :--- | :--- | :--- |
-| `npm run dev` | `nodemon src/server.js` | Starts server with live reload for development |
-| `npm run start` | `node src/server.js` | Starts production server |
-| `npm test` | `jest --runInBand --detectOpenHandles --forceExit` | Runs the full integration test suite |
-| `npm run migrate` | `sequelize-cli db:migrate` | Applies pending database migrations |
-| `npm run migrate:undo` | `sequelize-cli db:migrate:undo` | Rolls back the most recent migration |
-| `npm run seed:admin` | `node scripts/seedAdmin.js` | Safely seeds the initial administrator |
+| `/` | Public | Home landing page with Pakistani legal trust pillars |
+| `/login` | Public | Authentication page with lockout alerts |
+| `/register` | Public | Registration page with role selector (`client` / `lawyer`) |
+| `/lawyers` | Public | Verified directory search with city and practice filters |
+| `/lawyers/:id` | Public | Public advocate profile with data shielding |
+| `/dashboard` | Authenticated | Dynamic dashboard morphing to Client, Lawyer, or Admin view |
+| `/lawyer/application` | Lawyer Only | Advocate licensing petition form and status tracking |
+| `/admin/queue` | Admin Only | Court Administrator audit table and rejection modal |
+| `*` | Public | 404 Not Found page |
 
 ---
 
-## 📚 Documentation Index
+## 📚 Complete Learning Guides Index
 
-| Document | Purpose |
-| :--- | :--- |
-| [`docs/API_CONTRACT.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/API_CONTRACT.md) | **Frontend Source of Truth:** Complete endpoint specifications, headers, payloads, and response shapes. |
-| [`docs/DB_DESIGN.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/DB_DESIGN.md) | **Database Architecture:** Visual Mermaid Entity-Relationship Diagram (ERD), table definitions, and indexes. |
-| [`docs/DECISIONS.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/DECISIONS.md) | **Architecture Decision Records (ADRs):** Rationale behind all 11 core technical choices. |
-| [`docs/DEPLOY_RENDER.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/DEPLOY_RENDER.md) | **Production Deployment Blueprint:** Step-by-step PaaS deployment guide for Render. |
-| [`docs/postman_collection.json`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/postman_collection.json) | **Postman v2.1 Collection:** Ready-to-import requests with dynamic `{{token}}` variable capture. |
-| [`docs/learn/PART_A.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/learn/PART_A.md) | **Learning Guide A:** Foundations, JWT, Bcrypt, lockout, request trace, viva Q&A. |
-| [`docs/learn/PART_B.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/learn/PART_B.md) | **Learning Guide B:** Lawyer onboarding, Bar Council verification, admin review, and directory. |
-| [`docs/learn/PART_C.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/learn/PART_C.md) | **Learning Guide C:** Complete handover checklist, 10 master viva questions, and error guide. |
+For students, evaluators, and viva examination preparation:
+
+* [`backend/docs/API_CONTRACT.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/API_CONTRACT.md) — Frontend team source of truth.
+* [`backend/docs/DB_DESIGN.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/DB_DESIGN.md) — Visual Mermaid ER diagram & database architecture.
+* [`backend/docs/DECISIONS.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/DECISIONS.md) — 11 formal Architecture Decision Records (ADRs).
+* [`backend/docs/DEPLOY_RENDER.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/DEPLOY_RENDER.md) — Cloud deployment manual for Render PaaS.
+* [`backend/docs/learn/PART_A.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/learn/PART_A.md) — Auth, cryptography, lockout, and timing attack defenses.
+* [`backend/docs/learn/PART_B.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/learn/PART_B.md) — Bar Council licensing, composite unique constraints, admin review.
+* [`backend/docs/learn/PART_C.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/learn/PART_C.md) — Master handover checklist and 10 comprehensive viva questions.
+* [`frontend/docs/learn/FRONT_PART_1.md`](file:///d:/BS%20CS/FYP/legalhub/frontend/docs/learn/FRONT_PART_1.md) — Frontend architecture, High Court Gate analogy, AuthContext.
+* [`frontend/docs/learn/FRONT_PART_2.md`](file:///d:/BS%20CS/FYP/legalhub/frontend/docs/learn/FRONT_PART_2.md) — Marketplace lifecycle, URL parameter sync, privacy shielding.
 
 ---
 
-## 👨‍💻 Author
-**Asad Syed** - Final Year Project (BS Computer Science)
+## 👨‍💻 Project Developer
+**Asad Syed** — Final Year Project (BS Computer Science)
