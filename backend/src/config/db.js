@@ -6,7 +6,8 @@ const dialectOptions = config.dbSsl
       ssl: {
         require: true,
         rejectUnauthorized: false
-      }
+      },
+      keepAlive: true
     }
   : {};
 
@@ -18,7 +19,8 @@ const sequelize = new Sequelize(config.databaseUrl, {
     max: 10,
     min: 0,
     acquire: 30000,
-    idle: 10000
+    idle: 10000,
+    evict: 5000
   }
 });
 

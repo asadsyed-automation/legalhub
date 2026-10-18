@@ -1,0 +1,439 @@
+{
+  "info": {
+    "_postman_id": "b3e944f2-9cb7-4a52-b8ec-8f0a0d0e1234",
+    "name": "LegalHub Backend API (v1)",
+    "description": "Complete Postman v2.1 Collection for LegalHub (Pakistan Legal Marketplace). Compatible with Postman and Thunder Client.\n\n### Usage:\n1. Execute 'POST /auth/login' to authenticate.\n2. The test script automatically captures the returned JWT and updates the {{token}} collection variable.\n3. All subsequent protected requests use Bearer {{token}} automatically.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "applicationId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Public health check endpoint returning server operational status."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"status\": \"ok\",\n  \"timestamp\": \"2026-10-18T08:00:00.000Z\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Authentication",
+      "item": [
+        {
+          "name": "Register Client",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Zahid Mehmood\",\n  \"email\": \"zahid.client@legalhub.pk\",\n  \"password\": \"ClientSecurePass123!\",\n  \"role\": \"client\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Registers a new citizen client account."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": \"d5f488f2-8c10-413d-82d2-8b438d821234\",\n    \"name\": \"Zahid Mehmood\",\n    \"email\": \"zahid.client@legalhub.pk\",\n    \"role\": \"client\",\n    \"failedLoginAttempts\": 0,\n    \"lockedUntil\": null,\n    \"createdAt\": \"2026-10-18T08:00:00.000Z\",\n    \"updatedAt\": \"2026-10-18T08:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Register Lawyer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Advocate Haris Rauf\",\n  \"email\": \"haris.lawyer@legalhub.pk\",\n  \"password\": \"LawyerSecurePass123!\",\n  \"role\": \"lawyer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Registers a new advocate account."
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Auto-Saves Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.token) {",
+                  "        pm.collectionVariables.set('token', json.token);",
+                  "        console.log('Token saved to collection variable: ' + json.token.substring(0, 15) + '...');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@legalhub.pk\",\n  \"password\": \"AdminSecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticates user credentials and automatically populates {{token}} variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current Profile (Me)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Retrieves the authenticated user profile using Bearer token."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Lawyer Application",
+      "item": [
+        {
+          "name": "Submit Application",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.application && json.application.id) {",
+                  "        pm.collectionVariables.set('applicationId', json.application.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"barCouncil\": \"Punjab Bar Council\",\n  \"enrolmentNo\": \"PBC-2026-9941\",\n  \"courtLevel\": \"Advocate High Court\",\n  \"city\": \"Lahore\",\n  \"practiceAreas\": [\"Corporate\", \"Civil\", \"Tax\"],\n  \"experienceYears\": 7,\n  \"chamberAddress\": \"Suite 12, High Court Chamber Complex, Lahore\",\n  \"bio\": \"Senior legal counsel specializing in corporate governance, taxation, and appellate litigation.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/application",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "application"]
+            },
+            "description": "Submits initial lawyer onboarding application (Lawyer only, status pending)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Application",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/application",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "application"]
+            },
+            "description": "Fetches current lawyer's application status."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Rejected Application",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"barCouncil\": \"Punjab Bar Council\",\n  \"enrolmentNo\": \"PBC-2026-9941-VERIFIED\",\n  \"courtLevel\": \"Advocate High Court\",\n  \"city\": \"Lahore\",\n  \"practiceAreas\": [\"Corporate\", \"Banking\"],\n  \"experienceYears\": 8,\n  \"chamberAddress\": \"Suite 12, High Court Chamber Complex, Lahore\",\n  \"bio\": \"Updated bio with verified Bar Council credential details.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/application",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "application"]
+            },
+            "description": "Allows updating application ONLY when rejected, returning status to pending."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Admin Review",
+      "item": [
+        {
+          "name": "List Pending Applications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/applications?status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "applications"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            },
+            "description": "Lists applications pending admin review."
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Application",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/applications/{{applicationId}}/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "applications", "{{applicationId}}", "approve"]
+            },
+            "description": "Approves a pending application (stamps reviewedBy & reviewedAt)."
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Application",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Enrolment number could not be verified in the Punjab Bar Council active gazette.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/applications/{{applicationId}}/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "applications", "{{applicationId}}", "reject"]
+            },
+            "description": "Rejects a pending application with min 10-char reason."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Public Directory",
+      "item": [
+        {
+          "name": "Search Approved Lawyers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lawyers?city=Lahore&practiceArea=Corporate&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyers"],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "Lahore"
+                },
+                {
+                  "key": "practiceArea",
+                  "value": "Corporate"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Public search for approved lawyers (never leaks email, enrolmentNo, or chamberAddress)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lawyer By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lawyers/{{applicationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyers", "{{applicationId}}"]
+            },
+            "description": "Public view of a single approved lawyer profile."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
