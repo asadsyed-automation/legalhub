@@ -14,8 +14,9 @@ export const LawyerProfile = () => {
     setErrorMessage(null);
     try {
       const response = await directoryApi.getLawyerById(id);
-      if (response && response.data && response.data.lawyer) {
-        setLawyer(response.data.lawyer);
+      const lawyerData = response?.lawyer || response?.data?.lawyer;
+      if (lawyerData) {
+        setLawyer(lawyerData);
       } else {
         throw new Error('Lawyer profile not found');
       }

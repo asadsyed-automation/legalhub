@@ -29,11 +29,15 @@ export const LawyersList = () => {
       if (currentPracticeArea) params.practiceArea = currentPracticeArea;
 
       const response = await directoryApi.getLawyers(params);
-      if (response && response.data) {
-        setLawyers(response.data.lawyers || []);
-        setPagination(
-          response.data.pagination || { total: 0, page: 1, limit: 9, totalPages: 1 }
-        );
+      if (response) {
+        const items = response.items || response.lawyers || response.data?.items || response.data?.lawyers || [];
+        const total = response.total ?? response.pagination?.total ?? items.length;
+        const page = response.page ?? response.pagination?.page ?? currentPage;
+        const limit = response.limit ?? response.pagination?.limit ?? 9;
+        const totalPages = response.totalPages ?? response.pagination?.totalPages ?? Math.max(1, Math.ceil(total / limit));
+
+        setLawyers(items);
+        setPagination({ total, page, limit, totalPages });
       }
     } catch (error) {
       setErrorMessage(error.message || 'Failed to load public lawyer directory');
