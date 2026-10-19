@@ -19,8 +19,9 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const response = await authApi.getMe();
-      if (response && response.data && response.data.user) {
-        setUser(response.data.user);
+      const userData = response?.user || response?.data?.user;
+      if (userData) {
+        setUser(userData);
         setToken(existingToken);
       } else {
         throw new Error('Invalid user payload');
@@ -43,21 +44,33 @@ export const AuthProvider = ({ children }) => {
   // Log in user and persist token
   const login = async (credentials) => {
     const response = await authApi.login(credentials);
-    const { user: loggedInUser, token: authToken } = response.data;
+    const loggedInUser = response?.user || response?.data?.user;
+    const authToken = response?.token || response?.data?.token;
+
+    if (!authToken || !loggedInUser) {
+      throw new Error('Invalid authentication response from server');
+    }
+
     localStorage.setItem(STORAGE_KEYS.TOKEN, authToken);
     setUser(loggedInUser);
     setToken(authToken);
-    return response.data;
+    return response;
   };
 
   // Register user and persist token
   const register = async (payload) => {
     const response = await authApi.register(payload);
-    const { user: registeredUser, token: authToken } = response.data;
+    const registeredUser = response?.user || response?.data?.user;
+    const authToken = response?.token || response?.data?.token;
+
+    if (!authToken || !registeredUser) {
+      throw new Error('Invalid registration response from server');
+    }
+
     localStorage.setItem(STORAGE_KEYS.TOKEN, authToken);
     setUser(registeredUser);
     setToken(authToken);
-    return response.data;
+    return response;
   };
 
   // Log out user and wipe local token
@@ -71,8 +84,9 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = async () => {
     try {
       const response = await authApi.getMe();
-      if (response && response.data && response.data.user) {
-        setUser(response.data.user);
+      const userData = response?.user || response?.data?.user;
+      if (userData) {
+        setUser(userData);
       }
     } catch (error) {
       console.error('Failed to refresh user profile:', error);

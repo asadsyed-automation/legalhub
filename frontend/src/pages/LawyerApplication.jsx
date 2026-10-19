@@ -38,8 +38,8 @@ export const LawyerApplication = () => {
     setGeneralError(null);
     try {
       const response = await lawyerApi.getApplication();
-      if (response && response.data && response.data.application) {
-        const app = response.data.application;
+      const app = response?.application || response?.data?.application;
+      if (app) {
         setApplication(app);
         // Pre-populate form in case of re-submission
         setFormData({
@@ -133,7 +133,10 @@ export const LawyerApplication = () => {
         setSuccessMessage('Application submitted successfully! Your credentials are now under review.');
       }
 
-      setApplication(response.data.application);
+      const updatedApp = response?.application || response?.data?.application;
+      if (updatedApp) {
+        setApplication(updatedApp);
+      }
       setIsEditing(false);
     } catch (error) {
       setGeneralError(error.message || 'Failed to submit application');

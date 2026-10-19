@@ -23,11 +23,8 @@ export const AdminQueue = () => {
       const response = await adminApi.getApplications(
         activeTab === 'all' ? undefined : activeTab
       );
-      if (response && response.data && response.data.applications) {
-        setApplications(response.data.applications);
-      } else {
-        setApplications([]);
-      }
+      const apps = response?.applications || response?.data?.applications || [];
+      setApplications(apps);
     } catch (error) {
       setFeedback({ type: 'danger', message: error.message || 'Failed to load applications' });
       setApplications([]);
