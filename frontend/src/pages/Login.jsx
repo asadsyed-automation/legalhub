@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FormField from '../components/FormField';
+import logo from '../assets/logo.png';
 
 export const Login = () => {
   const [formData, setFormData] = useState({
@@ -55,7 +56,17 @@ export const Login = () => {
     <div className="auth-container">
       <div className="card">
         <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-6)' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: 'var(--spacing-2)' }}>⚖️</div>
+          <img
+            src={logo}
+            alt="LegalHub"
+            style={{
+              height: '42px',
+              width: 'auto',
+              margin: '0 auto var(--spacing-3) auto',
+              display: 'block',
+              objectFit: 'contain',
+            }}
+          />
           <h2>Welcome Back to LegalHub</h2>
           <p>Sign in to your account</p>
         </div>
@@ -65,7 +76,7 @@ export const Login = () => {
             className={`alert ${isLocked ? 'alert-warning' : 'alert-danger'}`}
             role="alert"
           >
-            <strong>{isLocked ? '⚠️ Security Lockout:' : 'Authentication Error:'}</strong>
+            <strong>{isLocked ? 'Security Lockout:' : 'Authentication Error:'}</strong>
             <span>{errorMessage}</span>
             {isLocked && (
               <span style={{ fontSize: 'var(--font-size-xs)', marginTop: 'var(--spacing-1)' }}>

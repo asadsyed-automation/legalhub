@@ -12,7 +12,8 @@
     "migrate": "sequelize-cli db:migrate",
     "migrate:undo": "sequelize-cli db:migrate:undo",
     "seed:admin": "node scripts/seedAdmin.js",
-    "test": "jest --runInBand --detectOpenHandles --forceExit"
+    "test": "jest --runInBand --detectOpenHandles --forceExit",
+    "test:coverage": "jest --runInBand --detectOpenHandles --forceExit --coverage"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

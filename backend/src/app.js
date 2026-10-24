@@ -12,6 +12,10 @@ const authRoutes = require('./modules/auth/auth.routes');
 const lawyerRoutes = require('./modules/lawyer/lawyer.routes');
 const adminRoutes = require('./modules/admin/admin.routes');
 const directoryRoutes = require('./modules/directory/directory.routes');
+const bookingRoutes = require('./modules/booking/booking.routes');
+const enquiryRoutes = require('./modules/enquiry/enquiry.routes');
+const matchingRoutes = require('./modules/matching/matching.routes');
+const engagementRoutes = require('./modules/engagement/engagement.routes');
 const { healthCheck } = require('./modules/auth/auth.controller');
 
 const app = express();
@@ -50,6 +54,10 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/lawyer', lawyerRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/lawyers', directoryRoutes);
+app.use('/api/v1/bookings', bookingRoutes);
+app.use('/api/v1/enquiries', enquiryRoutes);
+app.use('/api/v1/match', matchingRoutes);
+app.use('/api/v1/engagements', engagementRoutes);
 
 // 7. Catch-all for unhandled routes
 app.use(notFound);

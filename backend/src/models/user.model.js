@@ -49,7 +49,7 @@ const initUserModel = (sequelize) => {
         allowNull: false
       },
       role: {
-        type: DataTypes.ENUM(ROLES.CLIENT, ROLES.LAWYER, ROLES.ADMIN),
+        type: DataTypes.ENUM(ROLES.CLIENT, ROLES.LAWYER, ROLES.ADMIN, ROLES.LAW_FIRM),
         allowNull: false,
         defaultValue: ROLES.CLIENT
       },

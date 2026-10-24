@@ -1,0 +1,373 @@
+/* ==========================================================================
+   BookingDetail.css - Dossier and Audit Timeline for LegalHub Pakistan
+   ========================================================================== */
+
+.bd-container {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--spacing-6) var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.bd-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+}
+
+.bd-breadcrumbs a {
+  color: var(--color-primary);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-weight: var(--font-weight-medium);
+}
+
+.bd-breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+/* Header Card */
+.bd-header-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.bd-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-4);
+}
+
+.bd-header-title-block h1 {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-1) 0;
+}
+
+.bd-ref-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+  font-family: monospace;
+}
+
+.bd-header-badges {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}
+
+.bd-expiry-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.bd-expiry-pill--urgent {
+  background-color: rgba(220, 38, 38, 0.12);
+  color: #b91c1c;
+  border-color: rgba(220, 38, 38, 0.3);
+  animation: bd-pulse 2s infinite ease-in-out;
+}
+
+@keyframes bd-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Actions Ribbon */
+.bd-actions-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-3);
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+/* Grid Layout */
+.bd-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--spacing-6);
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .bd-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bd-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.bd-sidebar-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+/* Information Cards */
+.bd-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.bd-card-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-4) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+/* Session Info Box (Confirmed) */
+.bd-session-box {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4);
+  margin-bottom: var(--spacing-5);
+}
+
+.bd-session-box--pending {
+  background: #fefce8;
+  border-color: #fde047;
+}
+
+.bd-session-box__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  color: #166534;
+  margin-bottom: var(--spacing-2);
+}
+
+.bd-session-box--pending .bd-session-box__header {
+  color: #854d0e;
+}
+
+.bd-session-box__content {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  background: #ffffff;
+  padding: var(--spacing-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+/* Reason Box */
+.bd-reason-box {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4);
+  margin-bottom: var(--spacing-5);
+}
+
+.bd-reason-box__title {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: var(--font-weight-bold);
+  color: #991b1b;
+  margin-bottom: var(--spacing-1);
+}
+
+.bd-reason-box__text {
+  font-size: var(--font-size-sm);
+  color: #7f1d1d;
+  margin: 0;
+}
+
+/* Key-Value Details Table */
+.bd-kv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-4);
+}
+
+.bd-kv-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bd-kv-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.bd-kv-val {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Parties Capsule */
+.bd-party-capsule {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg);
+}
+
+.bd-party-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.bd-party-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.bd-party-sub {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* Notes Textbox */
+.bd-notes-content {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   EVENT AUDIT TIMELINE
+   ========================================================================== */
+.bd-timeline {
+  position: relative;
+  padding-left: var(--spacing-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.bd-timeline::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 9px;
+  width: 2px;
+  background-color: var(--color-border);
+}
+
+.bd-timeline-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.bd-timeline-dot {
+  position: absolute;
+  left: -24px;
+  top: 4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  border: 2px solid var(--color-surface);
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.bd-timeline-dot--completed {
+  background-color: #10b981;
+  box-shadow: 0 0 0 2px #10b981;
+}
+
+.bd-timeline-dot--cancelled,
+.bd-timeline-dot--declined {
+  background-color: #ef4444;
+  box-shadow: 0 0 0 2px #ef4444;
+}
+
+.bd-timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.bd-timeline-step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.bd-timeline-time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+}
+
+.bd-timeline-actor {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.bd-timeline-note {
+  font-size: var(--font-size-xs);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-primary);
+  margin-top: 4px;
+}

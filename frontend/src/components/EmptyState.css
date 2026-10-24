@@ -1,0 +1,51 @@
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-12, 3rem) var(--spacing-6, 1.5rem);
+  background-color: var(--color-surface, #ffffff);
+  border: 1px dashed var(--color-border, #e2e8f0);
+  border-radius: var(--radius-lg, 0.75rem);
+  margin: var(--spacing-4, 1rem) 0;
+  max-width: 100%;
+}
+
+.empty-state__icon-box {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  background-color: var(--color-bg, #f9fafb);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-xl, 1rem);
+  margin-bottom: var(--spacing-4, 1rem);
+  color: var(--color-text-subtle, #7a8b82);
+}
+
+.empty-state__title {
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text, #101512);
+  margin: 0 0 var(--spacing-2, 0.5rem) 0;
+  letter-spacing: -0.015em;
+}
+
+.empty-state__description {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-muted, #526058);
+  max-width: 440px;
+  line-height: 1.5;
+  margin: 0 0 var(--spacing-6, 1.5rem) 0;
+}
+
+.empty-state__action {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3, 0.75rem);
+  flex-wrap: wrap;
+  justify-content: center;
+}

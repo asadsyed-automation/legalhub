@@ -1,6 +1,52 @@
-# LegalHub - Verified Legal Marketplace for Pakistan 🇵🇰
+# LegalHub — Connected Legal Case & Lawyer Directory System 🇵🇰
 
-A modern, production-grade, full-stack digital legal marketplace built for Pakistan. **LegalHub** connects citizens, businesses, and corporate clients with verified Pakistani advocates licensed across all provincial Bar Councils (Punjab, Sindh, Khyber Pakhtunkhwa, Balochistan, Islamabad) and Court Levels (Lower Courts, High Court, Supreme Court).
+**Academic Institution:** Department of Computer Science, Emerson University Multan  
+**Degree Program:** BS Computer Science — Final Year Project (FYP)  
+**Working Title:** LegalHub *(Working title; subject to final academic approval)*  
+
+---
+
+## 👥 Project Team
+
+* **Syed Asad** — Lead Developer (System Architecture, Backend Services & Frontend Development)
+* **Muhammad Aqeel** — Documentation, Quality Assurance, and Legal Data Acquisition
+* **Mubashir Mehmood** — Testing & QA Support
+
+---
+
+## 📖 Project Overview
+
+In Pakistan, finding legal counsel and managing ongoing legal disputes is fragmented. Initial lawyer search relies on word-of-mouth, while post-engagement case records—such as hearing dates, case diary entries, private versus shared documents, fee records, and messages—are scattered across paper files, unrecorded phone calls, and WhatsApp messages.
+
+**LegalHub** is designed around a **"connected journey"**:
+1. **Discovery:** Citizens can search for advocates by city, practice area, and court jurisdiction whose submitted licensing credentials have been audited by a system administrator.
+2. **Initial Engagement:** Citizens submit a problem enquiry and book an appointment with **simulated payment** (mock transaction for academic demonstration).
+3. **Case Management:** Once engaged, the advocate maintains a chronological case timeline, logs court hearings with automated email reminders, uploads private and shared documents, and tracks fee milestones.
+4. **Client Portal:** Clients receive a transparent, read-only portal to view upcoming court appearances, case diary updates, and invoice receipts.
+5. **AI Petition History Tracker:** A planned microservice to summarize prior case history entries to assist counsel when preparing fresh court submissions.
+
+> [!NOTE]
+> **Regulatory Disclosure (Rule 135):** Under Rule 135 of the Pakistan Legal Practitioners and Bar Councils Rules 1976, advocates are prohibited from commercial solicitation and advertising. The platform is designed to avoid advertising language; to be confirmed with our supervisor. LegalHub does **not** rank lawyers by fees, does **not** offer paid promotional positioning, and avoids subjective terminology such as "best" or "top". Any advocate labeled as "Admin-Reviewed" reflects administrative manual review of uploaded credentials, not an official endorsement from any statutory Bar Council.
+
+---
+
+## 🚦 Project Status & Milestone Roadmap
+
+### Completed Milestones
+* **Backend Part A (Authentication & Security):** Express 4-tier architecture, Zod validation, Bcrypt (12 salt rounds), timing-attack mitigation, 5-attempt brute-force account lockout (15-minute window), stateless JWT issuance.
+* **Backend Part B (Advocate Onboarding & Directory):** Application state machine (`pending` $\rightarrow$ `approved`/`rejected`), composite unique constraint on `(barCouncil, enrolmentNo)`, admin scrutiny queue with mandatory $\ge 10$ character rejection reasons, and public directory with native PostgreSQL array containment (`@>`) and privacy shielding (no email or chamber leaks).
+* **Backend Part C (Architecture Records & Quality):** 11 Architecture Decision Records (ADRs), Mermaid ER Diagram, frontend API Contract, Render deployment blueprint, and integration testing baseline.
+* **Backend Part D (Profiles & Service Catalog):** Extended profiles (`lawyer_profiles`), service offerings catalog (`lawyer_services`) across 4 modes (`chat`, `phone`, `video`, `in_chamber`), durations (15–60 mins), PKR fee limits (up to 200,000 PKR), and rich directory filters (`language`, `mode`, `courtLevel`, `minFee`, `maxFee`).
+* **Backend Part E (Pure Functional Slot Engine):** Weekly recurring availability rules (`availability_rules`), ad-hoc date blocking (`blocked_dates`), and a pure functional slot engine in `availability.service.js` that computes discrete intervals dynamically in UTC and `Asia/Karachi` time with `MIN_LEAD_MINUTES = 120`.
+* **Backend Part F (Rule-Based Matching Engine):** Keyword-based legal problem classifier across 10 practice areas with regex whole-word boundary matching (`\b`), confidence levels (`high`, `low`, `none`), and multi-factor scoring algorithm evaluating candidates across practice area (40%), city (20%), mode (15%), budget (10%), language (10%), and experience (5%).
+* **Backend Part G (Booking Lifecycle & Simulated Payments):** Finite State Machine (`requested -> accepted -> paid -> confirmed -> completed`), PostgreSQL partial unique index (`bookings_lawyer_open_slot_idx`) for zero-collision double-booking prevention, simulated sandbox checkout (`payments` table with `SBX-` reference), reactive lazy expiry, client open bookings cap of 3, and immutable event audit logs (`booking_events`).
+* **Backend Part H (Consultation Notes, Engagements & Reviews):** Privileged advocate work product notes (`consultation_notes`) with strict confidentiality, case representation tracking (`engagements` / *Vakalatnama*) with automatic closure timestamps, and Bar Council Rule 135 compliant verified client reviews (`reviews`) restricted to completed consultations.
+* **Backend Part I (Quality, Mermaid ERD & Viva Defense Guide):** 18 comprehensive Architecture Decision Records (`DECISIONS.md`), complete interactive Mermaid ERD (`MERMAID_ERD.md`), updated API contract (`API_CONTRACT.md`), Postman v2.1 collection (`postman_collection.json`), and 12 in-depth Viva Defense Questions (`VIVA_QUESTIONS.md`).
+* **Testing Milestone:** Over **130 automated integration tests** passing with 100% pass rate across 11 test suites.
+
+### Upcoming Roadmap
+* **Part J (Case Management):** Case diary timeline, court hearing calendar with email reminders, document repository, and client portal.
+* **Part K:** Python FastAPI AI microservice for petition history summarization.
 
 ---
 
@@ -30,75 +76,42 @@ A modern, production-grade, full-stack digital legal marketplace built for Pakis
                                        |  - Privacy Shielding Projections  |
                                        +-----------------+-----------------+
                                                          |
-                                                         | SSL Connection Pooler (PgBouncer)
+                                                         | SSL Connection (PgBouncer)
                                                          v
                                        +-----------------------------------+
                                        |  PostgreSQL Database (Supabase)   |
                                        |  - Composite Unique Licensing     |
                                        |  - Native Array Containment (@>)  |
-                                       |  - Cascading Integrity            |
-                                       +-----------------------------------+
+                                       |  - Cascading Foreign Keys         |
+                                       +-----------------+-----------------+
 ```
 
 ---
 
-## 🚀 Full-Stack Technology Stack
+## 🔒 Security & Database Connection Notes
 
-### Backend Core (`/backend`)
-* **Runtime:** Node.js 20+ (LTS)
-* **Framework:** Express.js
-* **Database & ORM:** PostgreSQL on Supabase managed via Sequelize ORM & CLI Migrations
-* **Schema Validation:** Zod (fail-fast parameter, body, and query validation)
-* **Authentication & Cryptography:** JWT (JSON Web Tokens), Bcryptjs (12 salt rounds with timing-attack prevention)
-* **Security Middleware:** Helmet, CORS whitelist, Express-Rate-Limit, 5-attempt account lockout
-* **Automated Testing:** Jest + Supertest (**46 integration tests passing across 4 suites**)
+### Database Connection Ports (Supabase Architecture)
+Supabase provides two distinct connection ports. It is critical to use the appropriate port depending on the operational context:
+* **Port 5432 (Session Mode Pooler):** Keeps persistent client connections open. **Must be used for running migrations** (`npm run migrate`) and persistent local development servers to prevent premature socket timeouts.
+* **Port 6543 (Transaction Mode Pooler):** Uses PgBouncer in transaction mode. Designed for short-lived, stateless queries and serverless deployments.
 
-### Frontend Web Portal (`/frontend`)
-* **Framework:** React 18 + Vite
-* **Routing & Guards:** React Router DOM v6 with role-guarded `ProtectedRoute` components
-* **HTTP Client:** Axios with automated request interceptors (JWT injection) and error normalizers
-* **Design System:** Pure CSS tokens (`#0F5C3C` Pakistan Green, `#101512` Text, `#F9FAFB` Background, `#D64545` Danger) with zero external UI or animation libraries
-* **State Management:** React Context API (`AuthContext`) with persistent `localStorage` session verification
+### Environment Variable Security
+Never commit real credentials or use predictable passwords in `.env`. Generate strong, 256-bit cryptographically secure secrets via your terminal:
 
----
-
-## 📂 Project Repository Structure
-
-```text
-legalhub/
-├── README.md                          <- Master full-stack project documentation
-├── backend/                           <- Express & PostgreSQL backend service
-│   ├── src/
-│   │   ├── config/                    <- Fail-Fast env validator & Sequelize connection
-│   │   ├── constants/                 <- Bar Councils, Court Levels, Cities, Practice Areas
-│   │   ├── middleware/                <- JWT auth, requireRole RBAC, Zod validate, errorHandler
-│   │   ├── models/                    <- User & LawyerApplication Sequelize models
-│   │   └── modules/
-│   │       ├── auth/                  <- Register, Login, Me (/api/v1/auth)
-│   │       ├── lawyer/                <- Application submission (/api/v1/lawyer)
-│   │       ├── admin/                 <- Scrutiny queue, approvals, rejections (/api/v1/admin)
-│   │       └── directory/             <- Public directory & profile search (/api/v1/lawyers)
-│   ├── migrations/                    <- Atomic database migrations (users, lawyer_applications)
-│   ├── tests/                         <- 46 Jest integration tests (auth, lawyer, role, health)
-│   └── docs/                          <- API Contract, DB Design ERD, 11 ADRs, Render guide
-│
-└── frontend/                          <- React 18 + Vite client application
-    ├── src/
-    │   ├── api/                       <- Axios client & modular API service functions
-    │   ├── components/                <- Navbar, ProtectedRoute, FormField, StatusBadge
-    │   ├── constants/                 <- Frontend constants matching backend contracts
-    │   ├── context/                   <- AuthContext global session manager
-    │   ├── pages/                     <- Home, Login, Register, Dashboard, LawyerApplication,
-    │   │                                 AdminQueue, LawyersList, LawyerProfile, NotFound
-    │   └── styles/                    <- tokens.css (brand colors) and index.css (utilities)
-    └── docs/learn/                    <- Student learning guides for Part 1 & Part 2
+```powershell
+# Generate a secure 32+ character JWT secret:
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
+
+> [!WARNING]
+> **Live Database Warning during Automated Testing:**  
+> The automated test suite (`npm test` in `/backend`) runs against a live PostgreSQL database on Supabase. Test cases create temporary records suffixed with `@test.legalhub.local` and clean them up automatically during the `afterAll` teardown hook. Never execute tests against a live production environment.
 
 ---
 
 ## 💻 Windows Local Setup & Execution Guide
 
-Follow these exact steps in Windows PowerShell to run the complete system locally:
+Follow these exact steps in Windows PowerShell:
 
 ### 1. Clone the Repository
 ```powershell
@@ -106,123 +119,74 @@ git clone https://github.com/asadsyed-automation/legalhub.git
 cd legalhub
 ```
 
----
-
 ### 2. Backend Setup & Startup (Port 4000)
-
 ```powershell
 cd backend
 
 # Install dependencies
 npm.cmd install
 
-# Create local environment file
+# Create environment configuration
 Copy-Item .env.example .env
 ```
 
-Open `backend/.env` and configure your credentials:
+Configure `backend/.env` using secure values generated as shown above:
 ```dotenv
-DATABASE_URL=postgresql://postgres.<project_ref>:<password>@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql://<username>:<encoded_password>@<supabase-host>:5432/postgres
 DB_SSL=true
 PORT=4000
-JWT_SECRET=your_super_secret_jwt_key_that_is_at_least_32_characters_long_min
+JWT_SECRET=<generated_32_character_secret>
+JWT_EXPIRES_IN=2h
 FRONTEND_URLS=http://localhost:3000,http://localhost:5173
 ADMIN_EMAIL=admin@legalhub.pk
-ADMIN_PASSWORD=AdminSecurePassword123!
+ADMIN_PASSWORD=<generated_admin_password>
 ```
-*(Note: If your database password contains `@` or `#`, encode them as `%40` and `%23`)*.
 
 ```powershell
 # Run database migrations
 npm.cmd run migrate
 
-# Seed the initial Court Administrator account
+# Seed the initial system administrator
 npm.cmd run seed:admin
 
-# Run all 46 automated integration tests
+# Run integration tests (46 passing tests)
 npm.cmd test
 
-# Start backend development server
+# Start backend server
 npm.cmd run dev
 ```
-Backend API will listen on: **`http://localhost:4000`**
-
----
 
 ### 3. Frontend Setup & Startup (Port 3000)
-
-Open a **new PowerShell window** and run:
-
+Open a new PowerShell window:
 ```powershell
 cd legalhub\frontend
 
 # Install dependencies
 npm.cmd install
 
-# Create frontend environment file
+# Create environment configuration
 Copy-Item .env.example .env
 
-# Verify linter and production bundle
+# Verify linter and production build
 npm.cmd run lint
 npm.cmd run build
 
 # Start frontend development server
 npm.cmd run dev
 ```
-Frontend Web Portal will open on: **`http://localhost:3000`**
 
 ---
 
-## 📋 API Endpoints Inventory
+## 📚 Project Documentation Index
 
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/health` | Public | System uptime and health check |
-| `POST` | `/api/v1/auth/register` | Public | Register citizen (`client`) or advocate (`lawyer`) |
-| `POST` | `/api/v1/auth/login` | Public | Authenticate user, check 15-min lockout, return JWT |
-| `GET` | `/api/v1/auth/me` | Authenticated | Retrieve profile of authenticated user |
-| `POST` | `/api/v1/lawyer/application` | Lawyer Only | Submit initial Bar Council verification petition |
-| `GET` | `/api/v1/lawyer/application` | Lawyer Only | Fetch advocate's own application status |
-| `PUT` | `/api/v1/lawyer/application` | Lawyer Only | Re-submit corrected credentials after rejection |
-| `GET` | `/api/v1/admin/applications` | Admin Only | List applications filtered by status (`pending`, `approved`, `rejected`) |
-| `PATCH`| `/api/v1/admin/applications/:id/approve` | Admin Only | Approve advocate and publish to directory |
-| `PATCH`| `/api/v1/admin/applications/:id/reject`  | Admin Only | Reject application with mandatory $\ge 10$ char reason |
-| `GET` | `/api/v1/lawyers` | Public | Search verified lawyers by city, practice area, and page |
-| `GET` | `/api/v1/lawyers/:id` | Public | View verified advocate profile with privacy shielding |
-
----
-
-## 🖥️ Frontend Routes Inventory
-
-| Route | Guard | Description |
-| :--- | :--- | :--- |
-| `/` | Public | Home landing page with Pakistani legal trust pillars |
-| `/login` | Public | Authentication page with lockout alerts |
-| `/register` | Public | Registration page with role selector (`client` / `lawyer`) |
-| `/lawyers` | Public | Verified directory search with city and practice filters |
-| `/lawyers/:id` | Public | Public advocate profile with data shielding |
-| `/dashboard` | Authenticated | Dynamic dashboard morphing to Client, Lawyer, or Admin view |
-| `/lawyer/application` | Lawyer Only | Advocate licensing petition form and status tracking |
-| `/admin/queue` | Admin Only | Court Administrator audit table and rejection modal |
-| `*` | Public | 404 Not Found page |
-
----
-
-## 📚 Complete Learning Guides Index
-
-For students, evaluators, and viva examination preparation:
-
-* [`backend/docs/API_CONTRACT.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/API_CONTRACT.md) — Frontend team source of truth.
-* [`backend/docs/DB_DESIGN.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/DB_DESIGN.md) — Visual Mermaid ER diagram & database architecture.
-* [`backend/docs/DECISIONS.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/DECISIONS.md) — 11 formal Architecture Decision Records (ADRs).
-* [`backend/docs/DEPLOY_RENDER.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/DEPLOY_RENDER.md) — Cloud deployment manual for Render PaaS.
-* [`backend/docs/learn/PART_A.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/learn/PART_A.md) — Auth, cryptography, lockout, and timing attack defenses.
-* [`backend/docs/learn/PART_B.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/learn/PART_B.md) — Bar Council licensing, composite unique constraints, admin review.
-* [`backend/docs/learn/PART_C.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/learn/PART_C.md) — Master handover checklist and 10 comprehensive viva questions.
-* [`frontend/docs/learn/FRONT_PART_1.md`](file:///d:/BS%20CS/FYP/legalhub/frontend/docs/learn/FRONT_PART_1.md) — Frontend architecture, High Court Gate analogy, AuthContext.
-* [`frontend/docs/learn/FRONT_PART_2.md`](file:///d:/BS%20CS/FYP/legalhub/frontend/docs/learn/FRONT_PART_2.md) — Marketplace lifecycle, URL parameter sync, privacy shielding.
-
----
-
-## 👨‍💻 Project Developer
-**Asad Syed** — Final Year Project (BS Computer Science)
+* [`docs/PROJECT_BRIEF.md`](file:///d:/BS%20CS/FYP/legalhub/docs/PROJECT_BRIEF.md) — Comprehensive academic project brief and scope boundaries.
+* [`AGENTS.md`](file:///d:/BS%20CS/FYP/legalhub/AGENTS.md) — Rules and instructions for AI pair programmers.
+* [`backend/docs/API_CONTRACT.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/API_CONTRACT.md) — Exact endpoint definitions and request/response payloads.
+* [`backend/docs/DB_DESIGN.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/DB_DESIGN.md) — Visual Mermaid ER diagram and table constraints.
+* [`backend/docs/DECISIONS.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/DECISIONS.md) — 11 Architecture Decision Records (ADRs).
+* [`backend/docs/DEPLOY_RENDER.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/DEPLOY_RENDER.md) — PaaS deployment documentation for Render.
+* [`backend/docs/learn/PART_A.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/learn/PART_A.md) — Auth, lockout, and timing attack mitigation guide.
+* [`backend/docs/learn/PART_B.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/learn/PART_B.md) — Advocate licensing, audit reviews, and directory guide.
+* [`backend/docs/learn/PART_C.md`](file:///d:/BS%20CS/FYP/legalhub/backend/docs/learn/PART_C.md) — Master handover guide and 10 viva questions.
+* [`frontend/docs/learn/FRONT_PART_1.md`](file:///d:/BS%20CS/FYP/legalhub/frontend/docs/learn/FRONT_PART_1.md) — Frontend architecture and AuthContext guide.
+* [`frontend/docs/learn/FRONT_PART_2.md`](file:///d:/BS%20CS/FYP/legalhub/frontend/docs/learn/FRONT_PART_2.md) — Lawyer onboarding, admin queue, and public directory guide.

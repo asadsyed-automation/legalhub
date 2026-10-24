@@ -20,6 +20,21 @@
       "key": "applicationId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "blockedDateId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bookingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "enquiryId",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -63,70 +78,19 @@
       "item": [
         {
           "name": "Register Client",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Zahid Mehmood\",\n  \"email\": \"zahid.client@legalhub.pk\",\n  \"password\": \"ClientSecurePass123!\",\n  \"role\": \"client\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
-            },
-            "description": "Registers a new citizen client account."
-          },
-          "response": [
-            {
-              "name": "201 Created",
-              "status": "Created",
-              "code": 201,
-              "_postman_previewlanguage": "json",
-              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": \"d5f488f2-8c10-413d-82d2-8b438d821234\",\n    \"name\": \"Zahid Mehmood\",\n    \"email\": \"zahid.client@legalhub.pk\",\n    \"role\": \"client\",\n    \"failedLoginAttempts\": 0,\n    \"lockedUntil\": null,\n    \"createdAt\": \"2026-10-18T08:00:00.000Z\",\n    \"updatedAt\": \"2026-10-18T08:00:00.000Z\"\n  }\n}"
-            }
-          ]
-        },
-        {
-          "name": "Register Lawyer",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Advocate Haris Rauf\",\n  \"email\": \"haris.lawyer@legalhub.pk\",\n  \"password\": \"LawyerSecurePass123!\",\n  \"role\": \"lawyer\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
-            },
-            "description": "Registers a new advocate account."
-          },
-          "response": []
-        },
-        {
-          "name": "Login (Auto-Saves Token)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 200) {",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    var json = pm.response.json();",
                   "    if (json.token) {",
                   "        pm.collectionVariables.set('token', json.token);",
-                  "        console.log('Token saved to collection variable: ' + json.token.substring(0, 15) + '...');",
+                  "        if (typeof pm.environment !== 'undefined') {",
+                  "            pm.environment.set('token', json.token);",
+                  "        }",
+                  "        console.log('Token saved: ' + json.token.substring(0, 15) + '...');",
                   "    }",
                   "}"
                 ],
@@ -144,7 +108,101 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@legalhub.pk\",\n  \"password\": \"AdminSecurePassword123!\"\n}"
+              "raw": "{\n  \"name\": \"Zahid Mehmood\",\n  \"email\": \"zahid.client@demo.legalhub.local\",\n  \"password\": \"ClientSecurePass123!\",\n  \"role\": \"client\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Registers a new citizen client account and automatically saves token."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": \"d5f488f2-8c10-413d-82d2-8b438d821234\",\n    \"name\": \"Zahid Mehmood\",\n    \"email\": \"zahid.client@demo.legalhub.local\",\n    \"role\": \"client\",\n    \"failedLoginAttempts\": 0,\n    \"lockedUntil\": null,\n    \"createdAt\": \"2026-10-18T08:00:00.000Z\",\n    \"updatedAt\": \"2026-10-18T08:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Register Lawyer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.token) {",
+                  "        pm.collectionVariables.set('token', json.token);",
+                  "        if (typeof pm.environment !== 'undefined') {",
+                  "            pm.environment.set('token', json.token);",
+                  "        }",
+                  "        console.log('Token saved: ' + json.token.substring(0, 15) + '...');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Advocate Haris Rauf\",\n  \"email\": \"haris.lawyer@demo.legalhub.local\",\n  \"password\": \"LawyerSecurePass123!\",\n  \"role\": \"lawyer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Registers a new advocate account and automatically saves token."
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Auto-Saves Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.token) {",
+                  "        pm.collectionVariables.set('token', json.token);",
+                  "        if (typeof pm.environment !== 'undefined') {",
+                  "            pm.environment.set('token', json.token);",
+                  "        }",
+                  "        console.log('Token saved: ' + json.token.substring(0, 15) + '...');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@demo.legalhub.local\",\n  \"password\": \"AdminSecurePassword123!\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
@@ -289,6 +347,395 @@
             "description": "Allows updating application ONLY when rejected, returning status to pending."
           },
           "response": []
+        },
+        {
+          "name": "Get Professional Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "profile"]
+            },
+            "description": "Fetches the authenticated advocate's professional profile (headline, about, languages, slotMinutes, isPublic)."
+          },
+          "response": []
+        },
+        {
+          "name": "Upsert Professional Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"headline\": \"Corporate and Tax Counsel in Multan\",\n  \"about\": \"Dedicated High Court advocate with 8+ years experience guiding Pakistani SMEs and families through corporate compliance and inheritance matters.\",\n  \"languages\": [\"Urdu\", \"English\", \"Punjabi\"],\n  \"slotMinutes\": 30,\n  \"isPublic\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "profile"]
+            },
+            "description": "Creates or updates the authenticated advocate's professional profile."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lawyer Services",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "services"]
+            },
+            "description": "Lists all configured consultation services/modes for the authenticated advocate."
+          },
+          "response": []
+        },
+        {
+          "name": "Replace Lawyer Services",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"services\": [\n    {\n      \"mode\": \"video\",\n      \"feePkr\": 3000,\n      \"description\": \"Initial 30-minute legal advisory video consultation via Google Meet or LegalHub secure link.\",\n      \"isActive\": true\n    },\n    {\n      \"mode\": \"office\",\n      \"feePkr\": 5000,\n      \"description\": \"In-person comprehensive consultation at Multan District Courts chamber.\",\n      \"isActive\": true\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "services"]
+            },
+            "description": "Atomically replaces all services for the advocate in a single transaction (idempotent)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Weekly Availability",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "availability"]
+            },
+            "description": "Fetches weekly availability time windows for the authenticated advocate."
+          },
+          "response": []
+        },
+        {
+          "name": "Set Weekly Availability",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rules\": [\n    {\n      \"weekday\": 1,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"13:00\"\n    },\n    {\n      \"weekday\": 1,\n      \"startTime\": \"17:00\",\n      \"endTime\": \"20:00\"\n    },\n    {\n      \"weekday\": 3,\n      \"startTime\": \"15:00\",\n      \"endTime\": \"19:00\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "availability"]
+            },
+            "description": "Replaces all weekly availability rules atomically."
+          },
+          "response": []
+        },
+        {
+          "name": "List Blocked Dates",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/blocked-dates",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "blocked-dates"]
+            },
+            "description": "Lists all configured blocked dates for the authenticated advocate."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Blocked Date",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2026-11-05\",\n  \"reason\": \"High Court Bar Association General Body Meeting & Strike\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/blocked-dates",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "blocked-dates"]
+            },
+            "description": "Adds a blocked date to the advocate's calendar schedule."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Blocked Date",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/blocked-dates/{{blockedDateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "blocked-dates", "{{blockedDateId}}"]
+            },
+            "description": "Deletes a blocked date by its UUID."
+          },
+          "response": []
+        },
+        {
+          "name": "List Incoming Appointments",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/appointments?status=pending&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "appointments"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Lists consultation appointments requested by citizen clients."
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Appointment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lawyerNotes\": \"Case file reviewed; meeting confirmed.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/appointments/{{bookingId}}/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "appointments", "{{bookingId}}", "confirm"]
+            },
+            "description": "Advocate accepts a pending consultation appointment."
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Appointment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"rejected\",\n  \"reason\": \"Prior hearing scheduled before High Court division bench.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/appointments/{{bookingId}}/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "appointments", "{{bookingId}}", "reject"]
+            },
+            "description": "Advocate rejects a pending consultation appointment and releases the time slot."
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Appointment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lawyerNotes\": \"Consultation concluded; drafted notice issued to opposing counsel.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/appointments/{{bookingId}}/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "appointments", "{{bookingId}}", "complete"]
+            },
+            "description": "Advocate marks a confirmed consultation as completed."
+          },
+          "response": []
         }
       ]
     },
@@ -393,7 +840,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/lawyers?city=Lahore&practiceArea=Corporate&page=1&limit=20",
+              "raw": "{{baseUrl}}/lawyers?city=Lahore&practiceArea=Corporate&courtLevel=Advocate%20High%20Court&language=Urdu&mode=video&minFee=1000&maxFee=10000&sort=fee_asc&page=1&limit=20",
               "host": ["{{baseUrl}}"],
               "path": ["lawyers"],
               "query": [
@@ -406,6 +853,31 @@
                   "value": "Corporate"
                 },
                 {
+                  "key": "courtLevel",
+                  "value": "Advocate High Court"
+                },
+                {
+                  "key": "language",
+                  "value": "Urdu"
+                },
+                {
+                  "key": "mode",
+                  "value": "video"
+                },
+                {
+                  "key": "minFee",
+                  "value": "1000"
+                },
+                {
+                  "key": "maxFee",
+                  "value": "10000"
+                },
+                {
+                  "key": "sort",
+                  "value": "fee_asc",
+                  "description": "Allowed: newest, exp_desc, fee_asc, fee_desc (Rule 135 compliant)"
+                },
+                {
                   "key": "page",
                   "value": "1"
                 },
@@ -415,7 +887,7 @@
                 }
               ]
             },
-            "description": "Public search for approved lawyers (never leaks email, enrolmentNo, or chamberAddress)."
+            "description": "Public search for approved lawyers with directory filters and sorting (never leaks email, enrolmentNo, or chamberAddress; excludes isPublic=false)."
           },
           "response": []
         },
@@ -430,6 +902,802 @@
               "path": ["lawyers", "{{applicationId}}"]
             },
             "description": "Public view of a single approved lawyer profile."
+          },
+          "response": []
+        },
+        {
+          "name": "Query Available Slots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lawyers/{{applicationId}}/slots?from=2026-10-25&to=2026-10-28",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyers", "{{applicationId}}", "slots"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-10-25",
+                  "description": "Start date YYYY-MM-DD (must be today or future)"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-10-28",
+                  "description": "End date YYYY-MM-DD (max 14 days lookahead)"
+                }
+              ]
+            },
+            "description": "Public real-time slot generation for an approved advocate schedule (respects 2-hr lead time buffer and skips blocked dates)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Consultation Bookings",
+      "item": [
+        {
+          "name": "Create Booking Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lawyerId\": \"{{applicationId}}\",\n  \"mode\": \"video\",\n  \"startUtc\": \"2030-08-12T12:00:00.000Z\",\n  \"clientNotes\": \"Seeking legal advisory on civil property partition matter.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings"]
+            },
+            "description": "Client books an appointment slot (locked fee and duration from active service)."
+          },
+          "response": []
+        },
+        {
+          "name": "List My Appointments (Client)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/my-appointments?status=pending&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "my-appointments"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Lists paginated appointments for the authenticated client."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Appointment By ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}"]
+            },
+            "description": "Fetches appointment details (accessible only to booking client, lawyer, or admin)."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Appointment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Family emergency; unable to attend consultation.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "cancel"]
+            },
+            "description": "Cancels an active appointment before start time and releases the slot. If paid, issues payment refund."
+          },
+          "response": []
+        },
+        {
+          "name": "Advocate Accept Booking (Part G)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lawyerNotes\": \"Briefing accepted; please provide relevant property case documents.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/accept",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "accept"]
+            },
+            "description": "Advocate accepts a requested consultation appointment, granting 12h for client payment."
+          },
+          "response": []
+        },
+        {
+          "name": "Advocate Decline Booking (Part G)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Advocate has a conflicting Supreme Court Division Bench fixture on this date.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/decline",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "decline"]
+            },
+            "description": "Advocate declines a requested consultation appointment with a mandatory cause-list explanation."
+          },
+          "response": []
+        },
+        {
+          "name": "Simulated Sandbox Payment (Part G)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"sandbox\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/pay",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "pay"]
+            },
+            "description": "Client executes simulated sandbox checkout for an accepted consultation appointment."
+          },
+          "response": []
+        },
+        {
+          "name": "Advocate Confirm Appointment (Part G)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionInfo\": \"https://meet.jit.si/legalhub-multan-civil-case-98\",\n  \"lawyerNotes\": \"Please join 5 minutes early with title deed copies.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "confirm"]
+            },
+            "description": "Advocate confirms paid appointment and provides confidential session details."
+          },
+          "response": []
+        },
+        {
+          "name": "Advocate Complete Appointment (Part G)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lawyerNotes\": \"Consultation completed; formal legal notice drafted and issued.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "complete"]
+            },
+            "description": "Advocate marks confirmed appointment completed after consultation concludes."
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Refund Consultation (Part G)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Technical video link disconnection during session resolved in client favor.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/bookings/{{bookingId}}/refund",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "bookings", "{{bookingId}}", "refund"]
+            },
+            "description": "Admin issues consultation refund for paid/confirmed/completed appointment."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Pre-Booking Enquiries",
+      "item": [
+        {
+          "name": "Submit Pre-Booking Enquiry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "  pm.collectionVariables.set('enquiryId', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lawyerId\": \"{{applicationId}}\",\n  \"practiceArea\": \"Corporate\",\n  \"subject\": \"Contract breach legal guidance\",\n  \"message\": \"Our company experienced a vendor default on contractual deliverables. Seeking guidance on issuing a formal legal notice.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/enquiries",
+              "host": ["{{baseUrl}}"],
+              "path": ["enquiries"]
+            },
+            "description": "Client submits a preliminary case inquiry to an approved advocate."
+          },
+          "response": []
+        },
+        {
+          "name": "List Client Submitted Enquiries",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/enquiries/my-enquiries?status=submitted&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["enquiries", "my-enquiries"],
+              "query": [
+                { "key": "status", "value": "submitted" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Lists paginated enquiries submitted by the authenticated client."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Enquiry By ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/enquiries/{{enquiryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["enquiries", "{{enquiryId}}"]
+            },
+            "description": "Retrieves full details of an enquiry (accessible to client, lawyer, or admin)."
+          },
+          "response": []
+        },
+        {
+          "name": "Close Enquiry",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/enquiries/{{enquiryId}}/close",
+              "host": ["{{baseUrl}}"],
+              "path": ["enquiries", "{{enquiryId}}", "close"]
+            },
+            "description": "Closes an active enquiry to conclude correspondence."
+          },
+          "response": []
+        },
+        {
+          "name": "List Advocate Received Enquiries",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/enquiries?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "enquiries"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Retrieves incoming client queries for the authenticated advocate."
+          },
+          "response": []
+        },
+        {
+          "name": "Advocate Reply to Enquiry",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reply\": \"I have reviewed your query. Please schedule a 30-minute consultation slot so we can examine the contract clauses and prepare the requisite legal notice.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lawyer/enquiries/{{enquiryId}}/reply",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyer", "enquiries", "{{enquiryId}}", "reply"]
+            },
+            "description": "Advocate submits preliminary answer to a client inquiry."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Rule-Based Matching",
+      "item": [
+        {
+          "name": "Classify Legal Problem Description",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"My employer terminated my contract without notice or gratuity after 5 years of service. Need advice on labor court remedies.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/match/classify",
+              "host": ["{{baseUrl}}"],
+              "path": ["match", "classify"]
+            },
+            "description": "Deterministic keyword classification returning practice area, confidence (high/low/none), and follow-up intake questions."
+          },
+          "response": []
+        },
+        {
+          "name": "Multi-Factor Match Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"practiceArea\": \"Corporate\",\n  \"city\": \"Multan\",\n  \"urgency\": \"this_week\",\n  \"maxFeePkr\": 5000,\n  \"mode\": \"video\",\n  \"language\": \"Urdu\",\n  \"page\": 1,\n  \"limit\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/match/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["match", "search"]
+            },
+            "description": "Public multi-factor candidate matching returning scored approved advocates and law firms with plain reasons."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "9. Consultation Notes & Reviews",
+      "item": [
+        {
+          "name": "Get Consultation Notes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "notes"]
+            },
+            "description": "Assigned advocate retrieves private consultation work product notes."
+          },
+          "response": []
+        },
+        {
+          "name": "Upsert Consultation Notes",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"summary\": \"Client presented registry deeds for Multan Cantt land. Boundary wall dispute.\",\n  \"actionItems\": [\n    \"Obtain certified copy of Aks-Shajra from Patwari\",\n    \"File suit for permanent injunction in Civil Court\"\n  ],\n  \"privateNotes\": \"Check limitation period under Limitation Act 1908 before drafting.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "notes"]
+            },
+            "description": "Assigned advocate saves or updates confidential case diary notes."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Verified Consultation Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Very professional consultation. Advocate Hamza explained the land registry process clearly.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/review",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "review"]
+            },
+            "description": "Verified client submits review (1-5 stars) for completed appointment."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Public Practitioner Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lawyers/{{lawyerId}}/reviews?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["lawyers", "{{lawyerId}}", "reviews"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Public endpoint retrieving verified reviews and aggregate rating statistics."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10. Formal Legal Engagements",
+      "item": [
+        {
+          "name": "Create Engagement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lawyerId\": \"{{lawyerId}}\",\n  \"bookingId\": \"{{bookingId}}\",\n  \"title\": \"Civil Revision in Multan High Court Bench\",\n  \"practiceArea\": \"Civil\",\n  \"notes\": \"Converted from consultation. Vakalatnama signed.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/engagements",
+              "host": ["{{baseUrl}}"],
+              "path": ["engagements"]
+            },
+            "description": "Establish formal legal representation (Vakalatnama)."
+          },
+          "response": []
+        },
+        {
+          "name": "List Engagements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/engagements?status=active&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["engagements"],
+              "query": [
+                { "key": "status", "value": "active" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "List paginated engagements for the authenticated participant."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Engagement Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/engagements/{{engagementId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["engagements", "{{engagementId}}"]
+            },
+            "description": "Get single engagement details with client, lawyer, and booking info."
+          },
+          "response": []
+        },
+        {
+          "name": "Update / Close Engagement",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"closed\",\n  \"notes\": \"Matter successfully settled out of court. File closed.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/engagements/{{engagementId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["engagements", "{{engagementId}}"]
+            },
+            "description": "Update notes or formally close engagement."
           },
           "response": []
         }

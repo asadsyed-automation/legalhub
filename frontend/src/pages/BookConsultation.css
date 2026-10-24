@@ -1,0 +1,371 @@
+/* BookConsultation.css */
+
+.bc-container {
+  max-width: var(--max-width-container);
+  margin: 0 auto;
+  padding: var(--spacing-8) var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.bc-back-link {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bc-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--spacing-6);
+  align-items: flex-start;
+}
+
+.bc-card {
+  padding: var(--spacing-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+}
+
+.bc-card__header {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--spacing-4);
+}
+
+.bc-title {
+  margin: 0 0 var(--spacing-1) 0;
+  font-size: 1.6rem;
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.bc-subtitle {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.bc-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+}
+
+.bc-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.bc-section-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.bc-field-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+  margin: 0 0 4px 0;
+  line-height: 1.4;
+}
+
+/* Service Options Grid */
+.bc-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-3);
+}
+
+.bc-service-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3);
+  background-color: var(--color-bg);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.bc-service-card:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface);
+}
+
+.bc-service-card--active {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.bc-service-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bc-service-mode-icon {
+  color: var(--color-primary);
+}
+
+.bc-service-duration {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+}
+
+.bc-service-name {
+  font-size: var(--font-size-xs);
+  color: var(--color-text);
+  margin-top: 2px;
+}
+
+.bc-service-fee {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  margin-top: 2px;
+}
+
+/* Slot Selection */
+.bc-empty-slots {
+  background-color: var(--color-bg);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-6);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.bc-slots-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3);
+  background-color: var(--color-bg);
+}
+
+.bc-slot-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bc-slot-group-title {
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bc-slots-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bc-slot-btn {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.bc-slot-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.bc-slot-btn--active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+  font-weight: var(--font-weight-semibold);
+}
+
+.bc-slot-btn--active svg {
+  stroke: #ffffff;
+}
+
+/* Form Inputs */
+.bc-textarea {
+  width: 100%;
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+}
+
+.bc-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.bc-textarea--error {
+  border-color: var(--color-danger);
+}
+
+.bc-input {
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.bc-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.bc-error-text {
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+}
+
+/* Form Footer */
+.bc-form-footer {
+  padding-top: var(--spacing-2);
+}
+
+.bc-submit-btn {
+  width: 100%;
+  padding: 0.8rem;
+  font-size: var(--font-size-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+}
+
+/* Right Summary Column */
+.bc-advocate-summary-card {
+  padding: var(--spacing-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  position: sticky;
+  top: 90px;
+}
+
+.bc-advocate-header {
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: center;
+}
+
+.bc-advocate-name {
+  margin: 0 0 2px 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+}
+
+.bc-advocate-standing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+}
+
+.bc-advocate-station {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.bc-summary-divider {
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+.bc-summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.bc-summary-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+}
+
+.bc-item-label {
+  color: var(--color-text-muted);
+}
+
+.bc-item-val {
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+  text-align: right;
+  max-width: 180px;
+}
+
+.bc-summary-item--fee {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  padding-top: var(--spacing-2);
+  border-top: 1px dashed var(--color-border);
+  color: var(--color-text);
+}
+
+.bc-summary-item--fee strong {
+  color: var(--color-primary);
+  font-size: var(--font-size-md);
+}
+
+.bc-trust-box {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-3);
+  display: flex;
+  gap: var(--spacing-2);
+  align-items: flex-start;
+  font-size: 11px;
+  color: var(--color-text-subtle);
+  line-height: 1.4;
+}
+
+@media (max-width: 860px) {
+  .bc-layout {
+    grid-template-columns: 1fr;
+  }
+}

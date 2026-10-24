@@ -49,6 +49,14 @@ if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
   errors.push('JWT_SECRET must be at least 32 characters long for security');
 }
 
+// In non-test environments, strictly reject placeholder / default keys
+if (process.env.NODE_ENV !== 'test' && process.env.JWT_SECRET) {
+  const placeholderPatterns = ['super_secret', 'placeholder', 'changeme', 'change_me', 'your_jwt_secret'];
+  if (placeholderPatterns.some((pattern) => process.env.JWT_SECRET.toLowerCase().includes(pattern))) {
+    errors.push('JWT_SECRET contains insecure placeholder text. Generate a secure key via: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+  }
+}
+
 if (errors.length > 0) {
   console.error('\n============================================================');
   console.error('❌ ENVIRONMENT VALIDATION FAILED:');

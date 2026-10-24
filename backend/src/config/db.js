@@ -17,10 +17,10 @@ const sequelize = new Sequelize(config.databaseUrl, {
   logging: config.env === 'development' ? (msg) => console.log(`[Sequelize] ${msg}`) : false,
   pool: {
     max: 10,
-    min: 0,
-    acquire: 30000,
-    idle: 10000,
-    evict: 5000
+    min: 1,
+    acquire: 60000,
+    idle: 60000,
+    evict: 30000
   }
 });
 

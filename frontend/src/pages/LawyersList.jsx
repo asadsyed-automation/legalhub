@@ -1,58 +1,103 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { directoryApi } from '../api/directory.api';
-import { CITIES, PRACTICE_AREAS } from '../constants';
+import directoryApi from '../api/directory.api';
+import AdvocateAvatar from '../components/AdvocateAvatar';
+import EmptyState from '../components/EmptyState';
+import { useToast } from '../context/ToastContext';
+import {
+  SearchIcon,
+  FilterIcon,
+  LocationIcon,
+  CourtIcon,
+  BriefcaseIcon,
+  ScalesIcon,
+  ArrowRightIcon,
+  VideoIcon,
+  PhoneIcon,
+  ChatIcon,
+} from '../components/Icons';
+import {
+  CITIES,
+  PRACTICE_AREAS,
+  COURT_LEVELS,
+  SERVICE_MODES,
+  SERVICE_MODE_LABELS,
+} from '../constants';
+import './LawyersList.css';
 
 export const LawyersList = () => {
+  const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Read URL query params with defaults
+  // URL state
   const currentCity = searchParams.get('city') || '';
   const currentPracticeArea = searchParams.get('practiceArea') || '';
+  const currentCourtLevel = searchParams.get('courtLevel') || '';
+  const currentSort = searchParams.get('sort') || 'experience';
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
+  const currentSearch = searchParams.get('q') || '';
 
+  // Local search input
+  const [searchKeyword, setSearchKeyword] = useState(currentSearch);
+
+  // Directory Data
   const [lawyers, setLawyers] = useState([]);
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 9, totalPages: 1 });
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch lawyers from public directory API
-  const fetchLawyers = useCallback(async () => {
+  // Sync search keyword with URL
+  useEffect(() => {
+    setSearchKeyword(currentSearch);
+  }, [currentSearch]);
+
+  // Fetch Directory
+  const fetchDirectory = useCallback(async () => {
     setLoading(true);
-    setErrorMessage(null);
     try {
       const params = {
         page: currentPage,
         limit: 9,
+        sort: currentSort,
       };
       if (currentCity) params.city = currentCity;
       if (currentPracticeArea) params.practiceArea = currentPracticeArea;
+      if (currentCourtLevel) params.courtLevel = currentCourtLevel;
 
-      const response = await directoryApi.getLawyers(params);
-      if (response) {
-        const items = response.items || response.lawyers || response.data?.items || response.data?.lawyers || [];
-        const total = response.total ?? response.pagination?.total ?? items.length;
-        const page = response.page ?? response.pagination?.page ?? currentPage;
-        const limit = response.limit ?? response.pagination?.limit ?? 9;
-        const totalPages = response.totalPages ?? response.pagination?.totalPages ?? Math.max(1, Math.ceil(total / limit));
+      const res = await directoryApi.getLawyers(params);
+      let items = res?.items || res?.lawyers || res?.data?.items || res?.data?.lawyers || [];
+      const total = res?.total ?? res?.pagination?.total ?? items.length;
+      const page = res?.page ?? res?.pagination?.page ?? currentPage;
+      const limit = res?.limit ?? res?.pagination?.limit ?? 9;
+      const totalPages = res?.totalPages ?? res?.pagination?.totalPages ?? Math.max(1, Math.ceil(total / limit));
 
-        setLawyers(items);
-        setPagination({ total, page, limit, totalPages });
+      // Client-side text filter for keyword search if entered
+      if (currentSearch.trim()) {
+        const q = currentSearch.trim().toLowerCase();
+        items = items.filter(
+          (l) =>
+            l.name?.toLowerCase().includes(q) ||
+            l.headline?.toLowerCase().includes(q) ||
+            l.city?.toLowerCase().includes(q) ||
+            l.practiceAreas?.some((pa) => pa.toLowerCase().includes(q))
+        );
       }
-    } catch (error) {
-      setErrorMessage(error.message || 'Failed to load public lawyer directory');
+
+      setLawyers(items);
+      setPagination({ total, page, limit, totalPages });
+    } catch (err) {
+      showToast(err.message || 'Failed to load advocate directory', 'error');
       setLawyers([]);
     } finally {
       setLoading(false);
     }
-  }, [currentCity, currentPracticeArea, currentPage]);
+  }, [currentCity, currentPracticeArea, currentCourtLevel, currentSort, currentPage, currentSearch, showToast]);
 
   useEffect(() => {
-    fetchLawyers();
-  }, [fetchLawyers]);
+    fetchDirectory();
+  }, [fetchDirectory]);
 
-  // Handle filter dropdown changes (resets to page 1)
-  const handleFilterChange = (key, value) => {
+  // Filter Update Helper
+  const updateFilter = (key, value) => {
     const newParams = new URLSearchParams(searchParams);
     if (value) {
       newParams.set(key, value);
@@ -63,73 +108,74 @@ export const LawyersList = () => {
     setSearchParams(newParams);
   };
 
-  // Handle pagination navigation
-  const handlePageChange = (newPage) => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('page', newPage.toString());
-    setSearchParams(newParams);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Keyword Search Submit
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    updateFilter('q', searchKeyword.trim());
   };
 
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSearchKeyword('');
+    setSearchParams({ page: '1' });
+  };
+
+  const hasActiveFilters = Boolean(
+    currentCity || currentPracticeArea || currentCourtLevel || currentSearch || currentSort !== 'experience'
+  );
+
   return (
-    <div className="page-container">
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-8)' }}>
-        <h1 style={{ fontSize: '2.25rem', marginBottom: 'var(--spacing-2)' }}>
-          Verified Public Legal Directory
-        </h1>
-        <p style={{ maxWidth: '650px', margin: '0 auto' }}>
-          Connect with Bar Council-verified advocates across Pakistan. Every practitioner listed below has been
-          scrutinized and cleared by the Court Administrator.
-        </p>
+    <div className="ll-container">
+      {/* Directory Page Header */}
+      <div className="ll-header">
+        <div className="ll-header__text">
+          <h1 className="ll-header__title">Practicing Advocates Directory</h1>
+          <p className="ll-header__subtitle">
+            Browse and connect directly with enrolled advocates across High Court benches and District Courts in Pakistan. Transparent chamber fees and direct scheduling.
+          </p>
+        </div>
+
+        {/* Rule 135 Regulatory Compliance Notice */}
+        <div className="ll-rule135-badge" role="note">
+          <ScalesIcon size={18} color="var(--color-primary)" />
+          <span>
+            <strong>Rule 135 Compliance:</strong> Neutral directory ordered by objective legal criteria without paid advertisements or sponsored rankings.
+          </span>
+        </div>
       </div>
 
-      {/* Filter Bar */}
-      <div
-        className="card"
-        style={{
-          marginBottom: 'var(--spacing-8)',
-          backgroundColor: 'var(--color-surface)',
-          padding: 'var(--spacing-4)',
-        }}
-      >
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: 'var(--spacing-4)',
-            alignItems: 'center',
-          }}
-        >
-          <div>
-            <label
-              htmlFor="cityFilter"
-              style={{
-                display: 'block',
-                fontSize: 'var(--font-size-xs)',
-                fontWeight: 'var(--font-weight-semibold)',
-                marginBottom: 'var(--spacing-1)',
-                color: 'var(--color-text-muted)',
-              }}
-            >
-              Filter by City:
+      {/* Multi-Facet Filter Bar */}
+      <div className="ll-filters-card">
+        {/* Search Bar Row */}
+        <form onSubmit={handleSearchSubmit} className="ll-search-row">
+          <div className="ll-search-input-wrapper">
+            <SearchIcon size={18} className="ll-search-icon" color="var(--color-text-subtle)" />
+            <input
+              type="text"
+              placeholder="Search by advocate name, city, or legal issue (e.g. bail, property, khula)..."
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              className="ll-search-input"
+            />
+          </div>
+          <button type="submit" className="btn btn-primary btn-sm ll-search-btn">
+            Search
+          </button>
+        </form>
+
+        {/* Facet Dropdowns */}
+        <div className="ll-filters-row">
+          <div className="ll-filter-group">
+            <label htmlFor="filterCity" className="ll-filter-label">
+              <LocationIcon size={14} /> Station / City
             </label>
             <select
-              id="cityFilter"
+              id="filterCity"
               value={currentCity}
-              onChange={(e) => handleFilterChange('city', e.target.value)}
-              style={{
-                width: '100%',
-                padding: 'var(--spacing-2) var(--spacing-3)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--color-border)',
-                fontSize: 'var(--font-size-sm)',
-                backgroundColor: 'var(--color-surface)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
+              onChange={(e) => updateFilter('city', e.target.value)}
+              className="ll-filter-select"
             >
-              <option value="">All Cities (Pakistan)</option>
+              <option value="">All Pakistan Cities</option>
               {CITIES.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -138,212 +184,223 @@ export const LawyersList = () => {
             </select>
           </div>
 
-          <div>
-            <label
-              htmlFor="practiceAreaFilter"
-              style={{
-                display: 'block',
-                fontSize: 'var(--font-size-xs)',
-                fontWeight: 'var(--font-weight-semibold)',
-                marginBottom: 'var(--spacing-1)',
-                color: 'var(--color-text-muted)',
-              }}
-            >
-              Filter by Practice Area:
+          <div className="ll-filter-group">
+            <label htmlFor="filterPractice" className="ll-filter-label">
+              <BriefcaseIcon size={14} /> Practice Area
             </label>
             <select
-              id="practiceAreaFilter"
+              id="filterPractice"
               value={currentPracticeArea}
-              onChange={(e) => handleFilterChange('practiceArea', e.target.value)}
-              style={{
-                width: '100%',
-                padding: 'var(--spacing-2) var(--spacing-3)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--color-border)',
-                fontSize: 'var(--font-size-sm)',
-                backgroundColor: 'var(--color-surface)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
+              onChange={(e) => updateFilter('practiceArea', e.target.value)}
+              className="ll-filter-select"
             >
-              <option value="">All Practice Areas</option>
-              {PRACTICE_AREAS.map((a) => (
-                <option key={a} value={a}>
-                  {a} Law
+              <option value="">All Legal Specialities</option>
+              {PRACTICE_AREAS.map((p) => (
+                <option key={p} value={p}>
+                  {p} Law
                 </option>
               ))}
             </select>
           </div>
 
-          {(currentCity || currentPracticeArea) && (
-            <div style={{ display: 'flex', alignItems: 'flex-end', height: '100%' }}>
+          <div className="ll-filter-group">
+            <label htmlFor="filterCourt" className="ll-filter-label">
+              <CourtIcon size={14} /> Court Standing
+            </label>
+            <select
+              id="filterCourt"
+              value={currentCourtLevel}
+              onChange={(e) => updateFilter('courtLevel', e.target.value)}
+              className="ll-filter-select"
+            >
+              <option value="">All Court Jurisdictions</option>
+              {COURT_LEVELS.map((cl) => (
+                <option key={cl} value={cl}>
+                  {cl}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="ll-filter-group">
+            <label htmlFor="filterSort" className="ll-filter-label">
+              <FilterIcon size={14} /> Sort Order
+            </label>
+            <select
+              id="filterSort"
+              value={currentSort}
+              onChange={(e) => updateFilter('sort', e.target.value)}
+              className="ll-filter-select"
+            >
+              <option value="experience">Experience (Years at Bar)</option>
+              <option value="fee_asc">Fee: Lowest to Highest</option>
+              <option value="fee_desc">Fee: Highest to Lowest</option>
+              <option value="newest">Recently Enrolled</option>
+            </select>
+          </div>
+
+          {hasActiveFilters && (
+            <div className="ll-filter-group ll-filter-group--reset">
               <button
-                onClick={() => setSearchParams({ page: '1' })}
-                className="btn btn-secondary btn-sm"
-                style={{ width: '100%' }}
+                type="button"
+                onClick={handleClearFilters}
+                className="btn btn-secondary btn-sm ll-reset-btn"
+                title="Reset all filters"
               >
-                Reset Filters
+                Clear Filters
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {errorMessage && (
-        <div className="alert alert-danger" role="alert">
-          <strong>Notice:</strong> {errorMessage}
-        </div>
-      )}
+      {/* Results Header */}
+      <div className="ll-results-meta">
+        <span className="ll-results-count">
+          Showing <strong>{lawyers.length}</strong> advocate{lawyers.length === 1 ? '' : 's'}
+          {currentCity && ` in ${currentCity}`}
+          {currentPracticeArea && ` specializing in ${currentPracticeArea} Law`}
+        </span>
+        <span className="ll-results-sort-hint">
+          Standardized Bar Registry Listing
+        </span>
+      </div>
 
-      {/* Directory Grid */}
+      {/* Advocate Cards Grid */}
       {loading ? (
-        <div className="loading-container">
-          <div className="spinner spinner-primary" style={{ width: '2.5rem', height: '2.5rem' }} />
-          <p>Searching verified advocates across Pakistan...</p>
+        <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-12)' }}>
+          <div className="ll-loader-spinner" />
+          <p style={{ color: 'var(--color-text-muted)', marginTop: 'var(--spacing-3)', marginBottom: 0 }}>
+            Loading advocates from the official registry...
+          </p>
         </div>
       ) : lawyers.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-12)' }}>
-          <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-2)' }}>🔍</div>
-          <h3>No Verified Advocates Found</h3>
-          <p style={{ marginTop: 'var(--spacing-2)', maxWidth: '440px', margin: '0 auto' }}>
-            No verified lawyers matched your active filters
-            {currentCity ? ` in ${currentCity}` : ''}
-            {currentPracticeArea ? ` for ${currentPracticeArea} Law` : ''}.
-          </p>
-          {(currentCity || currentPracticeArea) && (
-            <button
-              onClick={() => setSearchParams({ page: '1' })}
-              className="btn btn-primary btn-sm"
-              style={{ marginTop: 'var(--spacing-4)' }}
-            >
-              Clear All Filters
-            </button>
-          )}
-        </div>
+        <EmptyState
+          icon={<ScalesIcon size={44} color="var(--color-text-subtle)" />}
+          title="No Advocates Found"
+          description="No advocates match the selected combination of city, practice area, or search keywords. Try clearing your filters."
+          action={
+            hasActiveFilters && (
+              <button type="button" className="btn btn-primary" onClick={handleClearFilters}>
+                Reset All Filters
+              </button>
+            )
+          }
+        />
       ) : (
         <>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-              gap: 'var(--spacing-6)',
-              marginBottom: 'var(--spacing-8)',
-            }}
-          >
-            {lawyers.map((lawyer) => (
-              <div
-                key={lawyer.id}
-                className="card"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  borderTop: '4px solid var(--color-primary)',
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--spacing-2)' }}>
-                    <h3 style={{ fontSize: 'var(--font-size-lg)', color: 'var(--color-primary)' }}>
-                      {lawyer.name}
-                    </h3>
-                    <span
-                      style={{
-                        backgroundColor: 'var(--color-primary-light)',
-                        color: 'var(--color-primary)',
-                        padding: '0.15rem 0.5rem',
-                        borderRadius: 'var(--radius-sm)',
-                        fontSize: 'var(--font-size-xs)',
-                        fontWeight: 'var(--font-weight-semibold)',
-                      }}
-                    >
-                      {lawyer.city}
-                    </span>
-                  </div>
+          <div className="ll-advocate-grid">
+            {lawyers.map((advocate) => (
+              <article key={advocate.id} className="ll-advocate-card">
+                {/* Header with Advocate Portrait Avatar */}
+                <div className="ll-card-header">
+                  <AdvocateAvatar
+                    name={advocate.name}
+                    courtLevel={advocate.courtLevel}
+                    size={58}
+                  />
 
-                  <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-subtle)', marginBottom: 'var(--spacing-3)' }}>
-                    <span>{lawyer.courtLevel}</span> • <span>{lawyer.experienceYears} Years Experience</span>
-                    <div style={{ marginTop: '0.15rem' }}>{lawyer.barCouncil}</div>
+                  <div className="ll-card-header__info">
+                    <h2 className="ll-card-name">
+                      <Link to={`/lawyers/${advocate.id}`} className="ll-card-name-link">
+                        {advocate.name}
+                      </Link>
+                    </h2>
+                    <div className="ll-standing-pill">
+                      <CourtIcon size={13} color="var(--color-primary)" />
+                      <span>{advocate.courtLevel}</span>
+                    </div>
+                    <p className="ll-card-headline">
+                      {advocate.headline || `${advocate.courtLevel} practicing in ${advocate.city}`}
+                    </p>
                   </div>
+                </div>
 
-                  {/* Practice Areas Badges */}
-                  <div style={{ display: 'flex', gap: 'var(--spacing-1)', flexWrap: 'wrap', marginBottom: 'var(--spacing-3)' }}>
-                    {lawyer.practiceAreas?.map((area) => (
-                      <span
-                        key={area}
-                        style={{
-                          backgroundColor: 'var(--color-surface-hover)',
-                          border: '1px solid var(--color-border)',
-                          padding: '0.15rem 0.45rem',
-                          borderRadius: 'var(--radius-sm)',
-                          fontSize: 'var(--font-size-xs)',
-                        }}
-                      >
-                        {area}
+                {/* Key Facts Badges */}
+                <div className="ll-card-meta">
+                  <span className="ll-meta-badge" title="Chamber Station">
+                    <LocationIcon size={13} color="var(--color-text-muted)" />
+                    <span>{advocate.city}</span>
+                  </span>
+                  <span className="ll-meta-badge" title="Years at Bar">
+                    <BriefcaseIcon size={13} color="var(--color-text-muted)" />
+                    <span>{advocate.experienceYears} Years Practice</span>
+                  </span>
+                  <span className="ll-meta-badge" title="Provincial Bar Council">
+                    <ScalesIcon size={13} color="var(--color-text-muted)" />
+                    <span>{advocate.barCouncil}</span>
+                  </span>
+                </div>
+
+                {/* Practice Areas Chips */}
+                {advocate.practiceAreas?.length > 0 && (
+                  <div className="ll-card-practice-areas">
+                    {advocate.practiceAreas.map((pa, idx) => (
+                      <span key={idx} className="ll-practice-chip">
+                        {pa}
                       </span>
                     ))}
                   </div>
+                )}
 
-                  {/* Bio Snippet */}
-                  <p
-                    style={{
-                      fontSize: 'var(--font-size-xs)',
-                      color: 'var(--color-text-muted)',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      marginBottom: 'var(--spacing-4)',
-                    }}
-                  >
-                    {lawyer.bio}
-                  </p>
+                {/* Consultation Modes */}
+                {advocate.modes?.length > 0 && (
+                  <div className="ll-card-modes">
+                    <span className="ll-modes-label">Modes:</span>
+                    {advocate.modes.map((mode) => (
+                      <span key={mode} className="ll-mode-tag" title={SERVICE_MODE_LABELS[mode] || mode}>
+                        {mode === SERVICE_MODES.VIDEO && <VideoIcon size={12} />}
+                        {mode === SERVICE_MODES.PHONE && <PhoneIcon size={12} />}
+                        {mode === SERVICE_MODES.CHAT && <ChatIcon size={12} />}
+                        {mode === SERVICE_MODES.IN_CHAMBER && <BriefcaseIcon size={12} />}
+                        <span>{SERVICE_MODE_LABELS[mode] || mode}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Card Footer: Fee & Chamber Profile CTA */}
+                <div className="ll-advocate-card__footer">
+                  <div className="ll-fee-block">
+                    <span className="ll-fee-label">Consultation Rate</span>
+                    <span className="ll-fee-amount">
+                      {advocate.feeFrom ? `From PKR ${advocate.feeFrom.toLocaleString()}` : 'Fee on Enquiry'}
+                    </span>
+                  </div>
+
+                  <Link to={`/lawyers/${advocate.id}`} className="btn btn-primary btn-sm ll-profile-cta">
+                    <span>View Chamber Profile</span>
+                    <ArrowRightIcon size={14} />
+                  </Link>
                 </div>
-
-                <Link
-                  to={`/lawyers/${lawyer.id}`}
-                  className="btn btn-outline btn-block btn-sm"
-                  style={{ marginTop: 'auto' }}
-                >
-                  View Verified Profile →
-                </Link>
-              </div>
+              </article>
             ))}
           </div>
 
           {/* Pagination Controls */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 'var(--spacing-4)',
-              borderTop: '1px solid var(--color-border)',
-              paddingTop: 'var(--spacing-4)',
-            }}
-          >
-            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-subtle)' }}>
-              Showing Page <strong>{pagination.page}</strong> of <strong>{pagination.totalPages}</strong> ({pagination.total} verified advocates)
-            </span>
-
-            <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+          {pagination.totalPages > 1 && (
+            <div className="ll-pagination">
               <button
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page <= 1}
+                type="button"
                 className="btn btn-secondary btn-sm"
+                disabled={currentPage <= 1}
+                onClick={() => updateFilter('page', (currentPage - 1).toString())}
               >
-                ← Previous
+                Previous
               </button>
-
+              <span className="ll-pagination-info">
+                Page {currentPage} of {pagination.totalPages}
+              </span>
               <button
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page >= pagination.totalPages}
+                type="button"
                 className="btn btn-secondary btn-sm"
+                disabled={currentPage >= pagination.totalPages}
+                onClick={() => updateFilter('page', (currentPage + 1).toString())}
               >
-                Next →
+                Next
               </button>
             </div>
-          </div>
+          )}
         </>
       )}
     </div>

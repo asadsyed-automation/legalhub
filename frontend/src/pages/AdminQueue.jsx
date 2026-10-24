@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '../api/admin.api';
 import StatusBadge from '../components/StatusBadge';
+import { ShieldIcon, ClockIcon, CheckIcon, CloseIcon } from '../components/Icons';
 import { APPLICATION_STATUS } from '../constants';
 
 export const AdminQueue = () => {
@@ -105,7 +106,7 @@ export const AdminQueue = () => {
     <div className="page-container">
       <div style={{ marginBottom: 'var(--spacing-6)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
-          <span style={{ fontSize: '1.75rem' }}>🛡️</span>
+          <ShieldIcon size={28} color="var(--color-primary)" />
           <h1>Court Administrator Scrutiny Queue</h1>
         </div>
         <p>Audit and verify provincial Bar Council license claims before publishing to the public registry.</p>
@@ -131,20 +132,26 @@ export const AdminQueue = () => {
         <button
           onClick={() => setActiveTab(APPLICATION_STATUS.PENDING)}
           className={`btn btn-sm ${activeTab === APPLICATION_STATUS.PENDING ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
-          ⏳ Pending Scrutiny
+          <ClockIcon size={14} />
+          <span>Pending Scrutiny</span>
         </button>
         <button
           onClick={() => setActiveTab(APPLICATION_STATUS.APPROVED)}
           className={`btn btn-sm ${activeTab === APPLICATION_STATUS.APPROVED ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
-          ✅ Approved Advocates
+          <CheckIcon size={14} />
+          <span>Approved Advocates</span>
         </button>
         <button
           onClick={() => setActiveTab(APPLICATION_STATUS.REJECTED)}
           className={`btn btn-sm ${activeTab === APPLICATION_STATUS.REJECTED ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
-          ❌ Rejected Submissions
+          <CloseIcon size={14} />
+          <span>Rejected Submissions</span>
         </button>
         <button
           onClick={() => setActiveTab('all')}

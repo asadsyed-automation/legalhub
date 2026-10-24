@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FormField from '../components/FormField';
 import { ROLES, ALLOWED_REGISTRATION_ROLES, ROLE_LABELS } from '../constants';
+import logo from '../assets/logo.png';
 
 export const Register = () => {
   const [searchParams] = useSearchParams();
@@ -84,9 +85,19 @@ export const Register = () => {
     <div className="auth-container">
       <div className="card">
         <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-6)' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: 'var(--spacing-2)' }}>⚖️</div>
+          <img
+            src={logo}
+            alt="LegalHub"
+            style={{
+              height: '42px',
+              width: 'auto',
+              margin: '0 auto var(--spacing-3) auto',
+              display: 'block',
+              objectFit: 'contain',
+            }}
+          />
           <h2>Create a LegalHub Account</h2>
-          <p>Join Pakistan's premier verified legal network</p>
+          <p>Join Pakistan's connected legal platform</p>
         </div>
 
         {generalError && (

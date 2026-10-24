@@ -1,93 +1,596 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import StatusBadge from '../components/StatusBadge';
-import { ROLES } from '../constants';
+import PageHeader from '../components/PageHeader';
+import StatusChip from '../components/StatusChip';
+import EmptyState from '../components/EmptyState';
+import { DocumentIcon, BriefcaseIcon, SearchIcon, ShieldIcon, ClockIcon } from '../components/Icons';
+import lawyerApi from '../api/lawyer.api';
+import bookingApi from '../api/booking.api';
+import engagementApi from '../api/engagement.api';
+import { ROLES, APPLICATION_STATUS } from '../constants';
 
 export const Dashboard = () => {
   const { user } = useAuth();
 
-  return (
-    <div className="page-container">
-      {/* Top Welcome Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 'var(--spacing-4)',
-          marginBottom: 'var(--spacing-8)',
-          paddingBottom: 'var(--spacing-4)',
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
-            <h1>Dashboard</h1>
-            <StatusBadge role={user?.role} />
-          </div>
-          <p style={{ fontSize: 'var(--font-size-base)' }}>
-            Assalam-o-Alaikum, <strong>{user?.name}</strong>. Welcome to your LegalHub portal.
-          </p>
-        </div>
+  // Lawyer Application real data state
+  const [application, setApplication] = useState(null);
+  const [appLoading, setAppLoading] = useState(false);
+  const [appError, setAppError] = useState(null);
 
-        <div style={{ display: 'flex', gap: 'var(--spacing-3)' }}>
+  // Appointments & Engagements real metrics data state
+  const [appointments, setAppointments] = useState([]);
+  const [engagements, setEngagements] = useState([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (user?.role === ROLES.LAWYER) {
+      setAppLoading(true);
+      setAppError(null);
+
+      lawyerApi
+        .getApplication()
+        .then((res) => {
+          if (isMounted) {
+            setApplication(res?.application || res?.data?.application || res || null);
+          }
+        })
+        .catch((err) => {
+          if (isMounted) {
+            // 404 means the lawyer hasn't submitted an application yet
+            if (err.status === 404 || err.response?.status === 404) {
+              setApplication(null);
+            } else {
+              setAppError(err.message || 'Failed to fetch application status.');
+            }
+          }
+        })
+        .finally(() => {
+          if (isMounted) setAppLoading(false);
+        });
+
+      // Load appointments and engagements for advocate
+      setLoadingAppointments(true);
+      Promise.allSettled([
+        bookingApi.getLawyerAppointments({ page: 1, limit: 100 }),
+        engagementApi.getEngagements({ page: 1, limit: 100 }),
+      ]).then(([aptsRes, engsRes]) => {
+        if (!isMounted) return;
+        if (aptsRes.status === 'fulfilled') {
+          const val = aptsRes.value;
+          const list =
+            val?.items ||
+            val?.bookings ||
+            val?.data?.items ||
+            val?.data?.bookings ||
+            (Array.isArray(val) ? val : []);
+          setAppointments(Array.isArray(list) ? list : []);
+        }
+        if (engsRes.status === 'fulfilled') {
+          const val = engsRes.value;
+          const list =
+            val?.engagements ||
+            val?.items ||
+            val?.data?.engagements ||
+            val?.data?.items ||
+            (Array.isArray(val) ? val : []);
+          setEngagements(Array.isArray(list) ? list : []);
+        }
+        setLoadingAppointments(false);
+      });
+    } else if (user?.role === ROLES.CLIENT) {
+      // Load appointments and engagements for citizen client
+      setLoadingAppointments(true);
+      Promise.allSettled([
+        bookingApi.getClientBookings({ page: 1, limit: 100 }),
+        engagementApi.getEngagements({ page: 1, limit: 100 }),
+      ]).then(([aptsRes, engsRes]) => {
+        if (!isMounted) return;
+        if (aptsRes.status === 'fulfilled') {
+          const val = aptsRes.value;
+          const list =
+            val?.items ||
+            val?.bookings ||
+            val?.data?.items ||
+            val?.data?.bookings ||
+            (Array.isArray(val) ? val : []);
+          setAppointments(Array.isArray(list) ? list : []);
+        }
+        if (engsRes.status === 'fulfilled') {
+          const val = engsRes.value;
+          const list =
+            val?.engagements ||
+            val?.items ||
+            val?.data?.engagements ||
+            val?.data?.items ||
+            (Array.isArray(val) ? val : []);
+          setEngagements(Array.isArray(list) ? list : []);
+        }
+        setLoadingAppointments(false);
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.role]);
+
+  // Derived metrics calculations
+  const lawyerMetrics = {
+    pending: appointments.filter((a) => a.status === 'requested' || a.status === 'pending').length,
+    confirmed: appointments.filter((a) => a.status === 'confirmed').length,
+    completed: appointments.filter((a) => a.status === 'completed').length,
+    revenue: appointments
+      .filter((a) => a.status === 'paid' || a.status === 'completed')
+      .reduce((sum, a) => sum + (Number(a.feePkr) || 0), 0),
+    activeEngagements: engagements.filter((e) => e.status === 'active').length,
+  };
+
+  const clientMetrics = {
+    confirmed: appointments.filter((a) => a.status === 'confirmed').length,
+    accepted: appointments.filter((a) => a.status === 'accepted').length,
+    completed: appointments.filter((a) => a.status === 'completed').length,
+    total: appointments.length,
+    activeEngagements: engagements.filter((e) => e.status === 'active').length,
+  };
+
+  return (
+    <div className="dashboard-page">
+      <PageHeader
+        title="Dashboard"
+        subtitle={`Assalam-o-Alaikum, ${user?.name || 'User'}. Welcome to your LegalHub portal.`}
+        badge={<StatusChip status={user?.role} />}
+        actions={
           <Link to="/lawyers" className="btn btn-secondary btn-sm">
             Browse Directory
           </Link>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Role-Specific Portal Modules */}
-      {user?.role === ROLES.CLIENT && (
+      {/* =========================================================================
+          1. ADVOCATE PORTAL (REAL API DRIVEN DATA)
+          ========================================================================= */}
+      {user?.role === ROLES.LAWYER && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-          <div
-            className="card"
-            style={{
-              backgroundColor: 'var(--color-primary-light)',
-              borderColor: '#BBF7D0',
-            }}
-          >
-            <h3 style={{ color: 'var(--color-primary)' }}>Looking for Legal Representation?</h3>
-            <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-4)' }}>
-              Explore Pakistan's verified advocate directory. You can filter practitioners by jurisdiction (Lower Courts, High Court, Supreme Court), city (Lahore, Karachi, Islamabad, etc.), and specialized practice areas.
-            </p>
-            <Link to="/lawyers" className="btn btn-primary">
-              Search Legal Directory
-            </Link>
-          </div>
+          {appLoading ? (
+            <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-8)' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--spacing-2)' }}>
+                <ClockIcon size={28} color="var(--color-primary)" />
+              </div>
+              <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>
+                Loading verified Bar Council licensing records...
+              </p>
+            </div>
+          ) : appError ? (
+            <div className="card" style={{ borderColor: 'var(--color-border-error)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', color: 'var(--color-danger)' }}>
+                <ShieldIcon size={16} color="var(--color-danger)" />
+                <strong>Unable to load application details:</strong>
+              </div>
+              <p style={{ margin: 'var(--spacing-2) 0 0 0', color: 'var(--color-text-muted)' }}>{appError}</p>
+            </div>
+          ) : !application ? (
+            <EmptyState
+              icon={<DocumentIcon size={44} color="var(--color-primary)" />}
+              title="No Bar Council Application on Record"
+              description="To be published to the public legal directory, you must submit your Bar Council licensing credentials for administrative audit."
+              action={
+                <Link to="/lawyer/application" className="btn btn-primary">
+                  Submit Bar Council Application
+                </Link>
+              }
+            />
+          ) : (
+            <div
+              className="card"
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                borderLeft: `4px solid ${
+                  application.status === APPLICATION_STATUS.APPROVED
+                    ? 'var(--color-success)'
+                    : application.status === APPLICATION_STATUS.REJECTED
+                    ? 'var(--color-danger)'
+                    : 'var(--color-warning)'
+                }`,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 'var(--spacing-3)',
+                  marginBottom: 'var(--spacing-4)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                  <DocumentIcon size={22} color="var(--color-primary)" />
+                  <h3 style={{ margin: 0 }}>Bar Council Licensing Status</h3>
+                </div>
+                <StatusChip status={application.status} />
+              </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: 'var(--spacing-4)',
-            }}
-          >
-            <div className="card">
-              <h4>1. Search & Filter</h4>
-              <p style={{ fontSize: 'var(--font-size-sm)', marginTop: 'var(--spacing-2)' }}>
-                Filter across 15+ major Pakistani cities and specialized legal domains including Corporate, Civil, Criminal, Property, and Family law.
-              </p>
+              {/* Status Explanation Alert */}
+              {application.status === APPLICATION_STATUS.REJECTED && (
+                <div
+                  className="alert alert-danger"
+                  style={{
+                    backgroundColor: 'var(--color-danger-light)',
+                    borderLeft: '4px solid var(--color-danger)',
+                    padding: 'var(--spacing-3) var(--spacing-4)',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: 'var(--spacing-4)',
+                  }}
+                  role="alert"
+                >
+                  <strong style={{ color: 'var(--color-danger)', display: 'block', marginBottom: 'var(--spacing-1)' }}>
+                    Action Required — Scrutiny Rejection Notice:
+                  </strong>
+                  <span style={{ color: 'var(--color-text)' }}>
+                    {application.rejectionReason || 'Please review your credentials and re-submit.'}
+                  </span>
+                </div>
+              )}
+
+              {application.status === APPLICATION_STATUS.PENDING && (
+                <div
+                  style={{
+                    backgroundColor: 'var(--color-warning-light)',
+                    borderLeft: '4px solid var(--color-warning)',
+                    padding: 'var(--spacing-3) var(--spacing-4)',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: 'var(--spacing-4)',
+                    fontSize: 'var(--font-size-sm)',
+                    color: '#92400e',
+                  }}
+                >
+                  Your submitted credentials are queued for verification by a court administrator. You will be notified once reviewed.
+                </div>
+              )}
+
+              {application.status === APPLICATION_STATUS.APPROVED && (
+                <div
+                  style={{
+                    backgroundColor: 'var(--color-success-light)',
+                    borderLeft: '4px solid var(--color-success)',
+                    padding: 'var(--spacing-3) var(--spacing-4)',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: 'var(--spacing-4)',
+                    fontSize: 'var(--font-size-sm)',
+                    color: '#166534',
+                  }}
+                >
+                  Your credentials have been verified by administrators. Your profile is visible in the public legal directory.
+                </div>
+              )}
+
+              {/* Verified Application Attributes */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: 'var(--spacing-3)',
+                  padding: 'var(--spacing-3)',
+                  backgroundColor: 'var(--color-bg)',
+                  borderRadius: 'var(--radius-md)',
+                  marginBottom: 'var(--spacing-4)',
+                  fontSize: 'var(--font-size-sm)',
+                }}
+              >
+                <div>
+                  <span style={{ color: 'var(--color-text-subtle)', display: 'block', fontSize: 'var(--font-size-xs)' }}>
+                    Bar Council:
+                  </span>
+                  <strong>{application.barCouncil || 'N/A'}</strong>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-subtle)', display: 'block', fontSize: 'var(--font-size-xs)' }}>
+                    Enrolment Number:
+                  </span>
+                  <code>{application.enrolmentNo || 'N/A'}</code>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-subtle)', display: 'block', fontSize: 'var(--font-size-xs)' }}>
+                    Court Jurisdiction:
+                  </span>
+                  <strong>{application.courtLevel || 'N/A'}</strong>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-subtle)', display: 'block', fontSize: 'var(--font-size-xs)' }}>
+                    Station / City:
+                  </span>
+                  <strong>{application.city || 'N/A'}</strong>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-subtle)', display: 'block', fontSize: 'var(--font-size-xs)' }}>
+                    Experience:
+                  </span>
+                  <strong>{application.experienceYears ? `${application.experienceYears} Years` : 'N/A'}</strong>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-subtle)', display: 'block', fontSize: 'var(--font-size-xs)' }}>
+                    Practice Areas:
+                  </span>
+                  <strong>
+                    {Array.isArray(application.practiceAreas) && application.practiceAreas.length > 0
+                      ? application.practiceAreas.join(', ')
+                      : 'None specified'}
+                  </strong>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: 'var(--spacing-3)', flexWrap: 'wrap' }}>
+                {application.status === APPLICATION_STATUS.APPROVED && (
+                  <Link to="/lawyer/profile" className="btn btn-primary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <BriefcaseIcon size={14} />
+                    <span>Manage Chamber Profile &amp; Fees</span>
+                  </Link>
+                )}
+                <Link
+                  to="/lawyer/application"
+                  className={`btn ${application.status === APPLICATION_STATUS.APPROVED ? 'btn-secondary' : 'btn-primary'} btn-sm`}
+                >
+                  {application.status === APPLICATION_STATUS.REJECTED
+                    ? 'Update & Re-Submit Application'
+                    : 'View Application Details'}
+                </Link>
+                <Link to="/bookings" className="btn btn-secondary btn-sm">
+                  View All Appointments
+                </Link>
+              </div>
             </div>
-            <div className="card">
-              <h4>2. Verified Credentials</h4>
-              <p style={{ fontSize: 'var(--font-size-sm)', marginTop: 'var(--spacing-2)' }}>
-                Only advocates with verified provincial Bar Council licensing are displayed in the public directory.
-              </p>
+          )}
+
+          {/* Advocate Real Practice Analytics & Quick Actions */}
+          <div className="card" style={{ backgroundColor: 'var(--color-surface)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--spacing-4)', flexWrap: 'wrap', gap: 'var(--spacing-2)' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Chamber Appointments &amp; Practice Metrics</h3>
+                <p style={{ margin: 'var(--spacing-1) 0 0 0', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
+                  Real-time consultation activity, revenue, and ongoing legal engagements.
+                </p>
+              </div>
+              <Link to="/bookings" className="btn btn-secondary btn-sm">
+                Open Appointments Manager
+              </Link>
             </div>
-            <div className="card">
-              <h4>3. Zero Hidden Surprises</h4>
-              <p style={{ fontSize: 'var(--font-size-sm)', marginTop: 'var(--spacing-2)' }}>
-                Review court levels, years of legal experience, and professional biographies before reaching out.
-              </p>
+
+            {/* Metric KPI Cards */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+                gap: 'var(--spacing-3)',
+                marginBottom: 'var(--spacing-5)',
+              }}
+            >
+              <div style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: '#fffbeb', border: '1px solid #fde68a' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#92400e', fontWeight: 600, display: 'block' }}>Pending Requests</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#b45309' }}>{lawyerMetrics.pending}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#92400e', display: 'block', marginTop: '4px' }}>Awaiting chamber review</span>
+              </div>
+
+              <div style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#1e40af', fontWeight: 600, display: 'block' }}>Confirmed Sessions</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#1d4ed8' }}>{lawyerMetrics.confirmed}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#1e40af', display: 'block', marginTop: '4px' }}>Ready for consultation</span>
+              </div>
+
+              <div style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#166534', fontWeight: 600, display: 'block' }}>Completed</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#15803d' }}>{lawyerMetrics.completed}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#166534', display: 'block', marginTop: '4px' }}>Notes &amp; advice issued</span>
+              </div>
+
+              <div style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: '#faf5ff', border: '1px solid #e9d5ff' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#6b21a8', fontWeight: 600, display: 'block' }}>Chamber Revenue</span>
+                <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: '#7e22ce' }}>PKR {lawyerMetrics.revenue.toLocaleString()}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#6b21a8', display: 'block', marginTop: '4px' }}>Collected fees</span>
+              </div>
+
+              <div style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#334155', fontWeight: 600, display: 'block' }}>Active Engagements</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#0f172a' }}>{lawyerMetrics.activeEngagements}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#64748b', display: 'block', marginTop: '4px' }}>Formal representation</span>
+              </div>
             </div>
+
+            {/* Recent Appointments Quick Action List */}
+            <h4 style={{ margin: '0 0 var(--spacing-3) 0', fontSize: 'var(--font-size-sm)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-subtle)' }}>
+              Recent Consultation Appointments
+            </h4>
+            {loadingAppointments ? (
+              <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>Loading appointments...</p>
+            ) : appointments.length === 0 ? (
+              <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>No consultation appointments recorded yet.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
+                {appointments.slice(0, 4).map((apt) => (
+                  <div
+                    key={apt.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: 'var(--spacing-3)',
+                      backgroundColor: 'var(--color-bg)',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: 'var(--font-size-sm)',
+                      flexWrap: 'wrap',
+                      gap: 'var(--spacing-2)',
+                    }}
+                  >
+                    <div>
+                      <strong>{apt.client?.name || 'Citizen Client'}</strong>
+                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', display: 'flex', gap: 'var(--spacing-2)', marginTop: '2px' }}>
+                        <span>{new Date(apt.startsAt).toLocaleString('en-PK', { timeZone: 'Asia/Karachi', dateStyle: 'medium', timeStyle: 'short' })}</span>
+                        <span>•</span>
+                        <span>Mode: {apt.mode?.toUpperCase()}</span>
+                        <span>•</span>
+                        <span>PKR {apt.feePkr}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                      <StatusChip status={apt.status} size="sm" />
+                      <Link to={`/bookings/${apt.id}`} className="btn btn-secondary btn-sm" style={{ padding: '4px 10px', fontSize: 'var(--font-size-xs)' }}>
+                        Manage
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {user?.role === ROLES.LAWYER && (
+      {/* =========================================================================
+          2. CITIZEN / CLIENT PORTAL (REAL API DRIVEN DATA)
+          ========================================================================= */}
+      {user?.role === ROLES.CLIENT && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+          {/* Action Required Alert for Accepted Consultations */}
+          {clientMetrics.accepted > 0 && (
+            <div
+              className="alert"
+              style={{
+                backgroundColor: '#fffbeb',
+                borderLeft: '4px solid #f59e0b',
+                padding: 'var(--spacing-4)',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 'var(--spacing-3)',
+              }}
+            >
+              <div>
+                <strong style={{ color: '#b45309', display: 'block', fontSize: 'var(--font-size-md)' }}>
+                  Action Required: Advocate Accepted Your Consultation
+                </strong>
+                <span style={{ color: '#92400e', fontSize: 'var(--font-size-sm)' }}>
+                  You have {clientMetrics.accepted} appointment(s) awaiting payment. Please complete sandbox payment to confirm your scheduled slot.
+                </span>
+              </div>
+              <Link to="/bookings?status=accepted" className="btn btn-primary btn-sm">
+                Complete Payment Now
+              </Link>
+            </div>
+          )}
+
+          {/* Citizen Metrics Grid */}
+          <div className="card" style={{ backgroundColor: 'var(--color-surface)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--spacing-4)', flexWrap: 'wrap', gap: 'var(--spacing-2)' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>My Consultations &amp; Legal Engagements</h3>
+                <p style={{ margin: 'var(--spacing-1) 0 0 0', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
+                  Track your scheduled appointments, consultation notes, and ongoing legal cases.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+                <Link to="/lawyers" className="btn btn-primary btn-sm">
+                  Find an Advocate
+                </Link>
+                <Link to="/bookings" className="btn btn-secondary btn-sm">
+                  My Bookings
+                </Link>
+              </div>
+            </div>
+
+            {/* Metric KPI Cards */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: 'var(--spacing-3)',
+                marginBottom: 'var(--spacing-5)',
+              }}
+            >
+              <div style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#1e40af', fontWeight: 600, display: 'block' }}>Upcoming Sessions</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#1d4ed8' }}>{clientMetrics.confirmed}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#1e40af', display: 'block', marginTop: '4px' }}>Confirmed on calendar</span>
+              </div>
+
+              <div style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: '#fffbeb', border: '1px solid #fde68a' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#92400e', fontWeight: 600, display: 'block' }}>Payment Pending</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#b45309' }}>{clientMetrics.accepted}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#92400e', display: 'block', marginTop: '4px' }}>Awaiting your payment</span>
+              </div>
+
+              <div style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#166534', fontWeight: 600, display: 'block' }}>Completed</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#15803d' }}>{clientMetrics.completed}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#166534', display: 'block', marginTop: '4px' }}>With legal action items</span>
+              </div>
+
+              <div style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: '#faf5ff', border: '1px solid #e9d5ff' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#6b21a8', fontWeight: 600, display: 'block' }}>Active Engagements</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#7e22ce' }}>{clientMetrics.activeEngagements}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#6b21a8', display: 'block', marginTop: '4px' }}>Formal representation</span>
+              </div>
+            </div>
+
+            {/* Quick Action Appointments List */}
+            <h4 style={{ margin: '0 0 var(--spacing-3) 0', fontSize: 'var(--font-size-sm)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-subtle)' }}>
+              Recent Consultations
+            </h4>
+            {loadingAppointments ? (
+              <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>Loading consultations...</p>
+            ) : appointments.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 'var(--spacing-6) 0' }}>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-3)' }}>
+                  You have not scheduled any legal consultations yet.
+                </p>
+                <Link to="/lawyers" className="btn btn-primary btn-sm">
+                  Find an Advocate
+                </Link>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
+                {appointments.slice(0, 4).map((apt) => (
+                  <div
+                    key={apt.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: 'var(--spacing-3)',
+                      backgroundColor: 'var(--color-bg)',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: 'var(--font-size-sm)',
+                      flexWrap: 'wrap',
+                      gap: 'var(--spacing-2)',
+                    }}
+                  >
+                    <div>
+                      <strong>{apt.lawyer?.name || 'Advocate'}</strong>
+                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', display: 'flex', gap: 'var(--spacing-2)', marginTop: '2px' }}>
+                        <span>{new Date(apt.startsAt).toLocaleString('en-PK', { timeZone: 'Asia/Karachi', dateStyle: 'medium', timeStyle: 'short' })}</span>
+                        <span>•</span>
+                        <span>Mode: {apt.mode?.toUpperCase()}</span>
+                        <span>•</span>
+                        <span>PKR {apt.feePkr}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                      <StatusChip status={apt.status} size="sm" />
+                      <Link to={`/bookings/${apt.id}`} className="btn btn-secondary btn-sm" style={{ padding: '4px 10px', fontSize: 'var(--font-size-xs)' }}>
+                        {apt.status === 'accepted' ? 'Pay Fee' : 'View Session'}
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Find Legal Representation Discovery Card */}
           <div
             className="card"
             style={{
@@ -96,81 +599,60 @@ export const Dashboard = () => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', marginBottom: 'var(--spacing-2)' }}>
-              <span style={{ fontSize: '1.5rem' }}>📜</span>
-              <h3>Bar Council Verification Status</h3>
+              <SearchIcon size={22} color="var(--color-primary)" />
+              <h3 style={{ margin: 0 }}>Need Legal Assistance?</h3>
             </div>
-            <p style={{ marginBottom: 'var(--spacing-4)' }}>
-              As an advocate on LegalHub, your profile will be published to the public marketplace once your Bar Council credentials have been scrutinized and approved by our administrative team.
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-4)', lineHeight: 1.5 }}>
+              Browse practicing advocates across Pakistan's High Court benches and District Courts. Filter by practice domain, station, and verified licensing credentials.
             </p>
-            <div style={{ display: 'flex', gap: 'var(--spacing-3)' }}>
-              <Link to="/lawyer/application" className="btn btn-primary">
-                View / Submit Application
-              </Link>
-              <Link to="/lawyers" className="btn btn-secondary">
-                View Public Directory
+            <div style={{ display: 'flex', gap: 'var(--spacing-3)', flexWrap: 'wrap' }}>
+              <Link to="/lawyers" className="btn btn-primary">
+                Search Advocate Directory
               </Link>
             </div>
-          </div>
-
-          <div className="card">
-            <h4>Licensing Compliance Guidelines</h4>
-            <ul style={{ paddingLeft: 'var(--spacing-5)', marginTop: 'var(--spacing-3)', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
-              <li>Ensure your <strong>Bar Council</strong> selection matches your official license card (e.g., Punjab, Sindh, Islamabad Bar Council).</li>
-              <li>Enter your exact <strong>Enrolment Number</strong> (e.g. <code>LHC-2024-9871</code>). Duplicate entries under the same council are rejected.</li>
-              <li>Select between 1 and 5 <strong>Practice Areas</strong> representing your primary legal specialties.</li>
-              <li>If an application is rejected, an administrative explanation will be provided and you can update and re-submit.</li>
-            </ul>
           </div>
         </div>
       )}
 
+      {/* =========================================================================
+          3. COURT ADMINISTRATOR PORTAL
+          ========================================================================= */}
       {user?.role === ROLES.ADMIN && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
           <div
             className="card"
             style={{
               backgroundColor: 'var(--color-surface)',
-              borderLeft: '4px solid var(--color-warning)',
+              borderLeft: '4px solid var(--color-danger)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', marginBottom: 'var(--spacing-2)' }}>
-              <span style={{ fontSize: '1.5rem' }}>🛡️</span>
-              <h3>Court Administrator Control Center</h3>
+              <ShieldIcon size={22} color="var(--color-danger)" />
+              <h3 style={{ margin: 0 }}>Court Administrator Control Center</h3>
             </div>
-            <p style={{ marginBottom: 'var(--spacing-4)' }}>
-              You have privileged access to scrutinize and audit advocate applications. Review applicant Bar Council licensing, years of experience, and chamber details before granting verified status.
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-4)', lineHeight: 1.5 }}>
+              Audit incoming advocate license applications against provincial Bar Council rosters. Approve or reject submissions with constructive explanations.
             </p>
-            <Link to="/admin/queue" className="btn btn-primary">
-              Open Verification Queue
-            </Link>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-              gap: 'var(--spacing-4)',
-            }}
-          >
-            <div className="card">
-              <h4>Strict Audit Trails</h4>
-              <p style={{ fontSize: 'var(--font-size-sm)', marginTop: 'var(--spacing-2)' }}>
-                Every approval or rejection permanently stamps your administrator ID and an immutable timestamp into the audit record.
-              </p>
-            </div>
-            <div className="card">
-              <h4>Mandatory Rejection Reasons</h4>
-              <p style={{ fontSize: 'var(--font-size-sm)', marginTop: 'var(--spacing-2)' }}>
-                Rejections require a constructive explanation of at least 10 characters so the advocate can rectify their submission.
-              </p>
+            <div style={{ display: 'flex', gap: 'var(--spacing-3)', flexWrap: 'wrap' }}>
+              <Link to="/admin/queue" className="btn btn-primary">
+                Open Verification Queue
+              </Link>
+              <Link to="/bookings" className="btn btn-secondary">
+                Audit Consultations
+              </Link>
+              <Link to="/lawyers" className="btn btn-secondary">
+                Audit Public Directory
+              </Link>
             </div>
           </div>
         </div>
       )}
 
-      {/* Account Profile Card */}
-      <div className="card" style={{ marginTop: 'var(--spacing-8)' }}>
-        <h4 style={{ marginBottom: 'var(--spacing-4)' }}>Account Profile Summary</h4>
+      {/* =========================================================================
+          4. UNIFIED ACCOUNT PROFILE SUMMARY CARD (REAL DATA)
+          ========================================================================= */}
+      <div className="card" style={{ marginTop: 'var(--spacing-6)' }}>
+        <h4 style={{ margin: '0 0 var(--spacing-4) 0' }}>Account Profile Summary</h4>
         <div
           style={{
             display: 'grid',
@@ -180,19 +662,27 @@ export const Dashboard = () => {
           }}
         >
           <div>
-            <span style={{ color: 'var(--color-text-subtle)', display: 'block' }}>Account Name:</span>
+            <span style={{ color: 'var(--color-text-subtle)', display: 'block', fontSize: 'var(--font-size-xs)' }}>
+              Full Name:
+            </span>
             <strong>{user?.name}</strong>
           </div>
           <div>
-            <span style={{ color: 'var(--color-text-subtle)', display: 'block' }}>Registered Email:</span>
+            <span style={{ color: 'var(--color-text-subtle)', display: 'block', fontSize: 'var(--font-size-xs)' }}>
+              Registered Email:
+            </span>
             <strong>{user?.email}</strong>
           </div>
           <div>
-            <span style={{ color: 'var(--color-text-subtle)', display: 'block' }}>Role Category:</span>
-            <StatusBadge role={user?.role} />
+            <span style={{ color: 'var(--color-text-subtle)', display: 'block', fontSize: 'var(--font-size-xs)' }}>
+              Account Role:
+            </span>
+            <StatusChip status={user?.role} size="sm" />
           </div>
           <div>
-            <span style={{ color: 'var(--color-text-subtle)', display: 'block' }}>Account ID:</span>
+            <span style={{ color: 'var(--color-text-subtle)', display: 'block', fontSize: 'var(--font-size-xs)' }}>
+              Account Identifier (UUID):
+            </span>
             <code style={{ fontSize: 'var(--font-size-xs)' }}>{user?.id}</code>
           </div>
         </div>

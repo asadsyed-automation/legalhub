@@ -1,0 +1,90 @@
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1, 0.25rem);
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  transition: all var(--transition-fast);
+}
+
+.status-chip--sm {
+  padding: 0.2rem 0.5rem;
+  font-size: var(--font-size-xs);
+}
+
+.status-chip--md {
+  padding: 0.3rem 0.65rem;
+  font-size: var(--font-size-xs);
+}
+
+.status-chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Primary / Advocate Brand */
+.status-chip--primary {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: rgba(15, 92, 60, 0.2);
+}
+.status-chip--primary .status-chip__dot {
+  background-color: var(--color-primary);
+}
+
+/* Success / Approved / Active */
+.status-chip--success {
+  background-color: var(--color-success-light);
+  color: #15803d;
+  border-color: rgba(22, 163, 74, 0.25);
+}
+.status-chip--success .status-chip__dot {
+  background-color: var(--color-success);
+}
+
+/* Warning / Pending / Under Review */
+.status-chip--warning {
+  background-color: var(--color-warning-light);
+  color: #b45309;
+  border-color: rgba(217, 119, 6, 0.25);
+}
+.status-chip--warning .status-chip__dot {
+  background-color: var(--color-warning);
+}
+
+/* Danger / Rejected / Declined / Admin */
+.status-chip--danger {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger-hover);
+  border-color: rgba(214, 69, 69, 0.25);
+}
+.status-chip--danger .status-chip__dot {
+  background-color: var(--color-danger);
+}
+
+/* Info / Paid / Accepted */
+.status-chip--info {
+  background-color: var(--color-info-light);
+  color: var(--color-info);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+.status-chip--info .status-chip__dot {
+  background-color: var(--color-info);
+}
+
+/* Neutral / Client / Completed / Closed */
+.status-chip--neutral {
+  background-color: #f1f5f9;
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+}
+.status-chip--neutral .status-chip__dot {
+  background-color: var(--color-text-subtle);
+}

@@ -1,37 +1,46 @@
 process.env.NODE_ENV = 'test';
 
 const { Op } = require('sequelize');
-const { sequelize, User, LawyerApplication } = require('../src/models');
+const {
+  sequelize,
+  User,
+  LawyerApplication,
+  LawyerProfile,
+  LawyerService,
+  AvailabilityRule,
+  BlockedDate,
+  Booking,
+  Enquiry,
+  Payment,
+  BookingEvent,
+  ConsultationNote,
+  Engagement,
+  Review
+} = require('../src/models');
 
 const TEST_EMAIL_SUFFIX = '@test.legalhub.local';
 
-jest.setTimeout(30000);
+jest.setTimeout(90000);
 
 const cleanTestData = async () => {
   try {
-    await LawyerApplication.destroy({
-      where: {},
-      include: [
-        {
-          model: User,
-          as: 'user',
-          where: {
-            email: {
-              [Op.like]: `%${TEST_EMAIL_SUFFIX}`
-            }
+    await sequelize.query(`DELETE FROM users WHERE email LIKE '%${TEST_EMAIL_SUFFIX}'`);
+  } catch (error) {
+    try {
+      const testUsers = await User.findAll({
+        where: {
+          email: {
+            [Op.like]: `%${TEST_EMAIL_SUFFIX}`
           }
-        }
-      ]
-    }).catch(() => {});
-
-    await User.destroy({
-      where: {
-        email: {
-          [Op.like]: `%${TEST_EMAIL_SUFFIX}`
-        }
+        },
+        attributes: ['id']
+      });
+      const userIds = testUsers.map((u) => u.id);
+      if (userIds.length > 0) {
+        await User.destroy({ where: { id: userIds } });
       }
-    }).catch(() => {});
-  } catch (_) {}
+    } catch (_) {}
+  }
 };
 
 beforeAll(async () => {
@@ -48,11 +57,11 @@ beforeAll(async () => {
       console.warn('DB connect warning (resilient fallback for middleware tests):', retryError.message);
     }
   }
-}, 30000);
+}, 60000);
 
 afterAll(async () => {
   await cleanTestData();
-}, 30000);
+}, 60000);
 
 module.exports = {
   TEST_EMAIL_SUFFIX

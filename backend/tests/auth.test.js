@@ -50,6 +50,22 @@ describe('Authentication Module Integration Tests', () => {
       expect(res.body.user.passwordHash).toBeUndefined();
     });
 
+    it('should successfully register a law firm', async () => {
+      const res = await request(app)
+        .post('/api/v1/auth/register')
+        .send({
+          name: 'Khan & Associates Chambers',
+          email: `lawfirm_${Date.now()}${TEST_EMAIL_SUFFIX}`,
+          password: 'ChamberPassword123!',
+          role: 'law_firm'
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body).toHaveProperty('token');
+      expect(res.body.user.role).toBe('law_firm');
+      expect(res.body.user.passwordHash).toBeUndefined();
+    });
+
     it('should reject registration with role admin (400)', async () => {
       const res = await request(app)
         .post('/api/v1/auth/register')

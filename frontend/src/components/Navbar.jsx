@@ -2,6 +2,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from './StatusBadge';
 import { ROLES } from '../constants';
+import logo from '../assets/logo.png';
 
 export const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -23,14 +24,14 @@ export const Navbar = () => {
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        boxShadow: 'var(--shadow-xs)',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
       }}
     >
       <div
         style={{
           maxWidth: 'var(--max-width-container)',
           margin: '0 auto',
-          padding: 'var(--spacing-3) var(--spacing-4)',
+          padding: 'var(--spacing-2) var(--spacing-4)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -45,30 +46,19 @@ export const Navbar = () => {
             gap: 'var(--spacing-2)',
             textDecoration: 'none',
           }}
+          title="LegalHub Pakistan"
         >
-          <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>⚖️</span>
-          <span
+          <img
+            src={logo}
+            alt="LegalHub Pakistan"
             style={{
-              fontSize: 'var(--font-size-xl)',
-              fontWeight: 'var(--font-weight-bold)',
-              color: 'var(--color-primary)',
-              letterSpacing: '-0.025em',
+              height: '40px',
+              width: 'auto',
+              maxHeight: '40px',
+              objectFit: 'contain',
+              display: 'block',
             }}
-          >
-            LegalHub
-          </span>
-          <span
-            style={{
-              fontSize: 'var(--font-size-xs)',
-              color: 'var(--color-text-subtle)',
-              backgroundColor: 'var(--color-primary-light)',
-              padding: '0.15rem 0.4rem',
-              borderRadius: 'var(--radius-sm)',
-              fontWeight: 'var(--font-weight-medium)',
-            }}
-          >
-            Pakistan
-          </span>
+          />
         </Link>
 
         {/* Navigation Links */}
@@ -106,6 +96,17 @@ export const Navbar = () => {
                 }}
               >
                 Dashboard
+              </Link>
+
+              <Link
+                to="/bookings"
+                style={{
+                  fontSize: 'var(--font-size-sm)',
+                  fontWeight: isActive('/bookings') ? 'var(--font-weight-bold)' : 'var(--font-weight-medium)',
+                  color: isActive('/bookings') ? 'var(--color-primary)' : 'var(--color-text)',
+                }}
+              >
+                Consultations
               </Link>
 
               {user?.role === ROLES.LAWYER && (

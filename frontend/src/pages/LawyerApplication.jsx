@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { lawyerApi } from '../api/lawyer.api';
 import FormField from '../components/FormField';
-import StatusBadge from '../components/StatusBadge';
+import StatusChip from '../components/StatusChip';
+import { ShieldIcon, ClockIcon, CheckIcon } from '../components/Icons';
 import {
   BAR_COUNCILS,
   COURT_LEVELS,
@@ -166,7 +167,7 @@ export const LawyerApplication = () => {
       <div style={{ marginBottom: 'var(--spacing-6)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
           <h1>Advocate Licensing Portal</h1>
-          {application && <StatusBadge status={application.status} />}
+          {application && <StatusChip status={application.status} />}
         </div>
         <p>Manage your provincial Bar Council credentials and public marketplace visibility.</p>
       </div>
@@ -189,7 +190,10 @@ export const LawyerApplication = () => {
           {/* Status Banners */}
           {application.status === APPLICATION_STATUS.PENDING && (
             <div className="alert alert-warning">
-              <strong>⏳ Application Under Administrative Scrutiny</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                <ClockIcon size={16} color="var(--color-warning)" />
+                <strong>Application Under Administrative Scrutiny</strong>
+              </div>
               <span>
                 Your enrollment details have been received and are currently queued for verification by the Court
                 Administrator. Your profile will be automatically published to the public directory upon approval.
@@ -199,9 +203,12 @@ export const LawyerApplication = () => {
 
           {application.status === APPLICATION_STATUS.APPROVED && (
             <div className="alert alert-success">
-              <strong>✅ Bar Council Verified Advocate</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                <CheckIcon size={16} color="var(--color-success)" />
+                <strong>Enrolled Advocate Profile Live</strong>
+              </div>
               <span>
-                Your license credentials have been scrutinized and approved. Your profile is live in the public lawyer
+                Your licensing credentials have been reviewed. Your profile is live in the public lawyer
                 directory.
               </span>
               <div style={{ marginTop: 'var(--spacing-3)' }}>
@@ -214,7 +221,10 @@ export const LawyerApplication = () => {
 
           {application.status === APPLICATION_STATUS.REJECTED && (
             <div className="alert alert-danger">
-              <strong>⚠️ Action Required: Application Rejected</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ShieldIcon size={16} color="var(--color-danger)" />
+                <strong>Action Required: Application Rejected</strong>
+              </div>
               <div style={{ marginTop: 'var(--spacing-2)', fontStyle: 'italic' }}>
                 Administrative Review Reason: &ldquo;{application.rejectionReason}&rdquo;
               </div>

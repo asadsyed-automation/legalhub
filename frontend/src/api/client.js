@@ -27,13 +27,17 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    // If backend returned our standardized error envelope { success: false, error: { code, message, details } }
+    // If backend returned our standardized error envelope { error: "message", details: [...] } or { error: { message } }
     if (error.response && error.response.data && error.response.data.error) {
       const backendError = error.response.data.error;
-      const normalizedError = new Error(backendError.message || 'An unexpected error occurred');
-      normalizedError.code = backendError.code || 'API_ERROR';
+      const errorMessage =
+        typeof backendError === 'string'
+          ? backendError
+          : backendError.message || 'An unexpected error occurred';
+      const normalizedError = new Error(errorMessage);
+      normalizedError.code = typeof backendError === 'object' ? backendError.code || 'API_ERROR' : 'API_ERROR';
       normalizedError.status = error.response.status;
-      normalizedError.details = backendError.details || null;
+      normalizedError.details = error.response.data.details || (backendError.details || null);
       return Promise.reject(normalizedError);
     }
 

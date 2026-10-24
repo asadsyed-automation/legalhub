@@ -19,7 +19,7 @@ const registerSchema = z.object({
   role: z
     .enum(ALLOWED_REGISTRATION_ROLES, {
       errorMap: () => ({
-        message: `Role must be either 'client' or 'lawyer'. Admin accounts cannot be created via registration.`
+        message: `Role must be one of: 'client', 'lawyer', or 'law_firm'. Admin accounts cannot be created via registration.`
       })
     })
 });

@@ -1,0 +1,254 @@
+/* MyBookings.css */
+
+.mb-container {
+  max-width: var(--max-width-container);
+  margin: 0 auto;
+  padding: var(--spacing-8) var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.mb-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--spacing-4);
+}
+
+.mb-title {
+  margin: 0 0 var(--spacing-1) 0;
+  font-size: 1.875rem;
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.mb-subtitle {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  max-width: 680px;
+}
+
+.mb-new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Filter Tabs */
+.mb-filter-tabs {
+  display: flex;
+  gap: var(--spacing-2);
+  border-bottom: 2px solid var(--color-border);
+  overflow-x: auto;
+  padding-bottom: 0;
+}
+
+.mb-filter-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  margin-bottom: -2px;
+  transition: all var(--transition-fast);
+}
+
+.mb-filter-tab:hover {
+  color: var(--color-primary);
+}
+
+.mb-filter-tab--active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* Grid of Appointment Cards */
+.mb-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.mb-card {
+  padding: var(--spacing-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.mb-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Header */
+.mb-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+}
+
+.mb-user-capsule {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.mb-user-name {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+}
+
+.mb-user-link {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.mb-user-link:hover {
+  color: var(--color-primary);
+}
+
+.mb-role-tag {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  display: block;
+  margin-top: 2px;
+}
+
+.mb-status-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+/* Expiry Countdown */
+.mb-expiry-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.mb-expiry-badge--urgent {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #fecaca;
+  animation: mb-pulse 1.5s infinite;
+}
+
+@keyframes mb-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Meta Row */
+.mb-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-4);
+  background-color: var(--color-bg);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+}
+
+.mb-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text);
+}
+
+.mb-meta-item--fee {
+  margin-left: auto;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+}
+
+/* Issue Snippet */
+.mb-issue-snippet {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  display: flex;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.mb-snippet-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.mb-snippet-text {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Session Info Box */
+.mb-session-box {
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--font-size-xs);
+  color: var(--color-primary);
+  display: flex;
+  gap: 6px;
+}
+
+/* Actions */
+.mb-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
+  margin-top: auto;
+  padding-top: var(--spacing-3);
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+.btn-outline-danger {
+  background: transparent;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--color-danger);
+  color: #ffffff;
+}
+
+.mb-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-4);
+}

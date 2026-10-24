@@ -143,7 +143,7 @@ To master this code before speaking with your supervisor:
 > **Model Answer:** Unlike traditional SQL databases that require a separate many-to-many join table for tags, PostgreSQL provides native array data types (`TEXT[]`). We use Sequelize's `[Op.contains]` operator, which compiles to PostgreSQL's `@>` (array containment) operator, allowing high-performance searches for lawyers possessing a specific practice area.
 
 ### Q5: What is the purpose of recording `reviewedBy` and `reviewedAt`?
-> **Model Answer:** This provides an immutable audit trail. In a legal marketplace, accountability is paramount. If an unauthorized individual is approved, the system can immediately identify which administrator approved the application and at what exact date and time.
+> **Model Answer:** This provides an administrative audit record. In a legal marketplace, accountability is paramount. If an unauthorized individual is approved, the system can immediately identify which administrator approved the application and at what exact date and time.
 
 ---
 

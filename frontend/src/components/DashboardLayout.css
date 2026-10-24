@@ -1,0 +1,257 @@
+.dash-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-bg, #f9fafb);
+  font-family: var(--font-sans);
+}
+
+/* =========================================================================
+   Topbar Styles
+   ========================================================================= */
+.dash-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  height: 60px;
+  background-color: var(--color-surface, #ffffff);
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-4, 1rem);
+  box-shadow: var(--shadow-xs);
+}
+
+.dash-topbar__left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3, 0.75rem);
+}
+
+.dash-topbar__menu-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-md, 0.5rem);
+  font-size: 1.25rem;
+  color: var(--color-text, #101512);
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all var(--transition-fast);
+}
+
+.dash-topbar__menu-toggle:hover {
+  background-color: var(--color-surface-hover, #f1f5f9);
+}
+
+.dash-topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2, 0.5rem);
+  text-decoration: none;
+}
+
+.dash-topbar__brand-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.dash-topbar__brand-text {
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-primary, #0f5c3c);
+  letter-spacing: -0.025em;
+}
+
+.dash-topbar__brand-badge {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-primary, #0f5c3c);
+  background-color: var(--color-primary-light, #e8f4ee);
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm, 0.25rem);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.dash-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3, 0.75rem);
+}
+
+.dash-topbar__user-capsule {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2, 0.5rem);
+  padding: var(--spacing-1, 0.25rem) var(--spacing-2, 0.5rem);
+  border-radius: var(--radius-md, 0.5rem);
+  background-color: var(--color-bg, #f9fafb);
+  border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.dash-topbar__user-name {
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text, #101512);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-topbar__logout-btn {
+  font-size: var(--font-size-xs, 0.75rem);
+}
+
+/* =========================================================================
+   Shell Body & Sidebar Styles
+   ========================================================================= */
+.dash-shell__body {
+  display: flex;
+  flex: 1;
+  position: relative;
+}
+
+.dash-sidebar {
+  width: 240px;
+  background-color: var(--color-surface, #ffffff);
+  border-right: 1px solid var(--color-border, #e2e8f0);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition-normal);
+  z-index: 80;
+}
+
+.dash-sidebar__inner {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px);
+  position: sticky;
+  top: 60px;
+  padding: var(--spacing-4, 1rem) var(--spacing-3, 0.75rem);
+}
+
+.dash-sidebar__section-title {
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-subtle, #7a8b82);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--spacing-2, 0.5rem) var(--spacing-3, 0.75rem);
+  margin-bottom: var(--spacing-1, 0.25rem);
+}
+
+.dash-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1, 0.25rem);
+  flex: 1;
+}
+
+.dash-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3, 0.75rem);
+  padding: var(--spacing-2, 0.5rem) var(--spacing-3, 0.75rem);
+  border-radius: var(--radius-md, 0.5rem);
+  color: var(--color-text-muted, #526058);
+  text-decoration: none;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  transition: all var(--transition-fast);
+}
+
+.dash-sidebar__link:hover {
+  background-color: var(--color-surface-hover, #f1f5f9);
+  color: var(--color-text, #101512);
+}
+
+.dash-sidebar__link--active {
+  background-color: var(--color-primary-light, #e8f4ee);
+  color: var(--color-primary, #0f5c3c);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.dash-sidebar__link-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.dash-sidebar__link-text {
+  flex: 1;
+}
+
+.dash-sidebar__footer {
+  padding-top: var(--spacing-4, 1rem);
+  border-top: 1px solid var(--color-border, #e2e8f0);
+}
+
+.dash-sidebar__footer-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1, 0.25rem);
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-subtle, #7a8b82);
+}
+
+.dash-sidebar__footer-role strong {
+  color: var(--color-text, #101512);
+}
+
+/* =========================================================================
+   Content Viewport Styles
+   ========================================================================= */
+.dash-content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--spacing-6, 1.5rem) var(--spacing-6, 1.5rem);
+}
+
+.dash-content__inner {
+  max-width: var(--max-width-container, 1120px);
+  margin: 0 auto;
+}
+
+/* =========================================================================
+   Mobile Drawer (<768px)
+   ========================================================================= */
+@media (max-width: 768px) {
+  .dash-topbar__menu-toggle {
+    display: inline-flex;
+  }
+
+  .dash-sidebar {
+    position: fixed;
+    top: 60px;
+    bottom: 0;
+    left: 0;
+    width: 260px;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .dash-sidebar--open {
+    transform: translateX(0);
+  }
+
+  .dash-mobile-backdrop {
+    position: fixed;
+    inset: 60px 0 0 0;
+    background-color: rgba(16, 21, 18, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 75;
+  }
+
+  .dash-content {
+    padding: var(--spacing-4, 1rem);
+  }
+
+  .dash-topbar__user-name {
+    display: none;
+  }
+}

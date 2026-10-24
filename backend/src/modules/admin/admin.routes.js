@@ -31,4 +31,14 @@ router.patch(
   adminController.rejectApplication
 );
 
+// Part G: Admin refund consultation appointment
+const bookingController = require('../booking/booking.controller');
+const { refundBookingSchema } = require('../booking/booking.schemas');
+
+router.patch(
+  '/bookings/:id/refund',
+  validate(refundBookingSchema),
+  bookingController.refundBooking
+);
+
 module.exports = router;

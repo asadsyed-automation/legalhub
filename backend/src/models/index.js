@@ -1,12 +1,34 @@
 const { sequelize } = require('../config/db');
 const { initUserModel } = require('./user.model');
 const { initLawyerApplicationModel } = require('./lawyerApplication.model');
+const { initLawyerProfileModel } = require('./lawyerProfile.model');
+const { initLawyerServiceModel } = require('./lawyerService.model');
+const { initAvailabilityRuleModel } = require('./availabilityRule.model');
+const { initBlockedDateModel } = require('./blockedDate.model');
+const { initBookingModel } = require('./booking.model');
+const { initEnquiryModel } = require('./enquiry.model');
+const { initPaymentModel } = require('./payment.model');
+const { initBookingEventModel } = require('./bookingEvent.model');
+const { initConsultationNoteModel } = require('./consultationNote.model');
+const { initEngagementModel } = require('./engagement.model');
+const { initReviewModel } = require('./review.model');
 
 // Initialize models
 const User = initUserModel(sequelize);
 const LawyerApplication = initLawyerApplicationModel(sequelize);
+const LawyerProfile = initLawyerProfileModel(sequelize);
+const LawyerService = initLawyerServiceModel(sequelize);
+const AvailabilityRule = initAvailabilityRuleModel(sequelize);
+const BlockedDate = initBlockedDateModel(sequelize);
+const Booking = initBookingModel(sequelize);
+const Enquiry = initEnquiryModel(sequelize);
+const Payment = initPaymentModel(sequelize);
+const BookingEvent = initBookingEventModel(sequelize);
+const ConsultationNote = initConsultationNoteModel(sequelize);
+const Engagement = initEngagementModel(sequelize);
+const Review = initReviewModel(sequelize);
 
-// Define Associations
+// User <-> LawyerApplication
 User.hasOne(LawyerApplication, {
   foreignKey: 'userId',
   as: 'lawyerApplication',
@@ -23,10 +45,355 @@ LawyerApplication.belongsTo(User, {
   as: 'reviewer'
 });
 
+// User <-> LawyerProfile
+User.hasOne(LawyerProfile, {
+  foreignKey: 'userId',
+  as: 'profile',
+  onDelete: 'CASCADE'
+});
+
+LawyerProfile.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user'
+});
+
+// User <-> LawyerService
+User.hasMany(LawyerService, {
+  foreignKey: 'lawyerId',
+  as: 'services',
+  onDelete: 'CASCADE'
+});
+
+LawyerService.belongsTo(User, {
+  foreignKey: 'lawyerId',
+  as: 'lawyer'
+});
+
+// User <-> AvailabilityRule
+User.hasMany(AvailabilityRule, {
+  foreignKey: 'lawyerId',
+  as: 'availabilityRules',
+  onDelete: 'CASCADE'
+});
+
+AvailabilityRule.belongsTo(User, {
+  foreignKey: 'lawyerId',
+  as: 'lawyer'
+});
+
+// User <-> BlockedDate
+User.hasMany(BlockedDate, {
+  foreignKey: 'lawyerId',
+  as: 'blockedDates',
+  onDelete: 'CASCADE'
+});
+
+BlockedDate.belongsTo(User, {
+  foreignKey: 'lawyerId',
+  as: 'lawyer'
+});
+
+// Cross-joins for Directory (LawyerApplication <-> Profile / Services / Rules / Blocked via shared userId)
+LawyerApplication.hasOne(LawyerProfile, {
+  foreignKey: 'userId',
+  sourceKey: 'userId',
+  as: 'profile'
+});
+
+LawyerProfile.belongsTo(LawyerApplication, {
+  foreignKey: 'userId',
+  targetKey: 'userId',
+  as: 'application'
+});
+
+LawyerApplication.hasMany(LawyerService, {
+  foreignKey: 'lawyerId',
+  sourceKey: 'userId',
+  as: 'services'
+});
+
+LawyerService.belongsTo(LawyerApplication, {
+  foreignKey: 'lawyerId',
+  targetKey: 'userId',
+  as: 'application'
+});
+
+LawyerApplication.hasMany(AvailabilityRule, {
+  foreignKey: 'lawyerId',
+  sourceKey: 'userId',
+  as: 'availabilityRules'
+});
+
+AvailabilityRule.belongsTo(LawyerApplication, {
+  foreignKey: 'lawyerId',
+  targetKey: 'userId',
+  as: 'application'
+});
+
+LawyerApplication.hasMany(BlockedDate, {
+  foreignKey: 'lawyerId',
+  sourceKey: 'userId',
+  as: 'blockedDates'
+});
+
+BlockedDate.belongsTo(LawyerApplication, {
+  foreignKey: 'lawyerId',
+  targetKey: 'userId',
+  as: 'application'
+});
+
+// User <-> Booking (Client & Lawyer roles)
+User.hasMany(Booking, {
+  foreignKey: 'clientId',
+  as: 'clientBookings',
+  onDelete: 'CASCADE'
+});
+
+Booking.belongsTo(User, {
+  foreignKey: 'clientId',
+  as: 'client'
+});
+
+User.hasMany(Booking, {
+  foreignKey: 'lawyerId',
+  as: 'lawyerBookings',
+  onDelete: 'CASCADE'
+});
+
+Booking.belongsTo(User, {
+  foreignKey: 'lawyerId',
+  as: 'lawyer'
+});
+
+// LawyerService <-> Booking
+LawyerService.hasMany(Booking, {
+  foreignKey: 'serviceId',
+  as: 'bookings',
+  onDelete: 'SET NULL'
+});
+
+Booking.belongsTo(LawyerService, {
+  foreignKey: 'serviceId',
+  as: 'service'
+});
+
+// LawyerApplication <-> Booking
+LawyerApplication.hasMany(Booking, {
+  foreignKey: 'lawyerId',
+  sourceKey: 'userId',
+  as: 'bookings'
+});
+
+Booking.belongsTo(LawyerApplication, {
+  foreignKey: 'lawyerId',
+  targetKey: 'userId',
+  as: 'application'
+});
+
+// User <-> Enquiry (Client & Lawyer roles)
+User.hasMany(Enquiry, {
+  foreignKey: 'clientId',
+  as: 'clientEnquiries',
+  onDelete: 'CASCADE'
+});
+
+Enquiry.belongsTo(User, {
+  foreignKey: 'clientId',
+  as: 'client'
+});
+
+User.hasMany(Enquiry, {
+  foreignKey: 'lawyerId',
+  as: 'lawyerEnquiries',
+  onDelete: 'CASCADE'
+});
+
+Enquiry.belongsTo(User, {
+  foreignKey: 'lawyerId',
+  as: 'lawyer'
+});
+
+// LawyerApplication <-> Enquiry
+LawyerApplication.hasMany(Enquiry, {
+  foreignKey: 'lawyerId',
+  sourceKey: 'userId',
+  as: 'enquiries'
+});
+
+Enquiry.belongsTo(LawyerApplication, {
+  foreignKey: 'lawyerId',
+  targetKey: 'userId',
+  as: 'application'
+});
+
+// Booking <-> Enquiry (Conversion link)
+Booking.hasOne(Enquiry, {
+  foreignKey: 'convertedBookingId',
+  as: 'enquiry',
+  onDelete: 'SET NULL'
+});
+
+Enquiry.belongsTo(Booking, {
+  foreignKey: 'convertedBookingId',
+  as: 'convertedBooking'
+});
+
+// Booking <-> Payment
+Booking.hasOne(Payment, {
+  foreignKey: 'bookingId',
+  as: 'payment',
+  onDelete: 'CASCADE'
+});
+
+Payment.belongsTo(Booking, {
+  foreignKey: 'bookingId',
+  as: 'booking'
+});
+
+// Booking <-> BookingEvent (Audit trail)
+Booking.hasMany(BookingEvent, {
+  foreignKey: 'bookingId',
+  as: 'events',
+  onDelete: 'CASCADE'
+});
+
+BookingEvent.belongsTo(Booking, {
+  foreignKey: 'bookingId',
+  as: 'booking'
+});
+
+BookingEvent.belongsTo(User, {
+  foreignKey: 'actorId',
+  as: 'actor'
+});
+
+User.hasMany(BookingEvent, {
+  foreignKey: 'actorId',
+  as: 'bookingEvents'
+});
+
+// Booking <-> ConsultationNote
+Booking.hasOne(ConsultationNote, {
+  foreignKey: 'bookingId',
+  as: 'consultationNote',
+  onDelete: 'CASCADE'
+});
+
+ConsultationNote.belongsTo(Booking, {
+  foreignKey: 'bookingId',
+  as: 'booking'
+});
+
+User.hasMany(ConsultationNote, {
+  foreignKey: 'lawyerId',
+  as: 'consultationNotes',
+  onDelete: 'CASCADE'
+});
+
+ConsultationNote.belongsTo(User, {
+  foreignKey: 'lawyerId',
+  as: 'lawyer'
+});
+
+// User / Booking <-> Engagement
+User.hasMany(Engagement, {
+  foreignKey: 'clientId',
+  as: 'clientEngagements',
+  onDelete: 'CASCADE'
+});
+
+Engagement.belongsTo(User, {
+  foreignKey: 'clientId',
+  as: 'client'
+});
+
+User.hasMany(Engagement, {
+  foreignKey: 'lawyerId',
+  as: 'lawyerEngagements',
+  onDelete: 'CASCADE'
+});
+
+Engagement.belongsTo(User, {
+  foreignKey: 'lawyerId',
+  as: 'lawyer'
+});
+
+Booking.hasOne(Engagement, {
+  foreignKey: 'bookingId',
+  as: 'engagement',
+  onDelete: 'SET NULL'
+});
+
+Engagement.belongsTo(Booking, {
+  foreignKey: 'bookingId',
+  as: 'booking'
+});
+
+// Booking / User <-> Review
+Booking.hasOne(Review, {
+  foreignKey: 'bookingId',
+  as: 'review',
+  onDelete: 'CASCADE'
+});
+
+Review.belongsTo(Booking, {
+  foreignKey: 'bookingId',
+  as: 'booking'
+});
+
+User.hasMany(Review, {
+  foreignKey: 'clientId',
+  as: 'givenReviews',
+  onDelete: 'CASCADE'
+});
+
+Review.belongsTo(User, {
+  foreignKey: 'clientId',
+  as: 'client'
+});
+
+User.hasMany(Review, {
+  foreignKey: 'lawyerId',
+  as: 'receivedReviews',
+  onDelete: 'CASCADE'
+});
+
+Review.belongsTo(User, {
+  foreignKey: 'lawyerId',
+  as: 'lawyer'
+});
+
+LawyerApplication.hasMany(Review, {
+  foreignKey: 'lawyerId',
+  sourceKey: 'userId',
+  as: 'reviews'
+});
+
+Review.belongsTo(LawyerApplication, {
+  foreignKey: 'lawyerId',
+  targetKey: 'userId',
+  as: 'application'
+});
+
 const db = {
   sequelize,
   User,
-  LawyerApplication
+  LawyerApplication,
+  LawyerProfile,
+  LawyerService,
+  AvailabilityRule,
+  BlockedDate,
+  Booking,
+  Enquiry,
+  Payment,
+  BookingEvent,
+  ConsultationNote,
+  Engagement,
+  Review
 };
 
 module.exports = db;
+
+
+
+

@@ -1,0 +1,190 @@
+{
+  "info": {
+    "name": "LegalHub Pakistan — Advocate Marketplace",
+    "_postman_id": "a98df231-50e2-4bd5-943b-7a32d184ff99",
+    "description": "Collection for testing Advocate lifecycle, profile, services, schedule, and directory in LegalHub.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "lawyerToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "applicationId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Auth - Register Lawyer",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Adv. Mian Shahbaz Ali\",\n  \"email\": \"shahbaz.ali@law.pk\",\n  \"password\": \"SecurePassword123!\",\n  \"role\": \"lawyer\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register"]
+        }
+      }
+    },
+    {
+      "name": "2. Lawyer - Submit Licensing Application",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{lawyerToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"barCouncil\": \"Punjab Bar Council\",\n  \"enrolmentNo\": \"LHR-8899-PBC\",\n  \"courtLevel\": \"Advocate High Court\",\n  \"city\": \"Lahore\",\n  \"practiceAreas\": [\"Criminal\", \"Constitutional\", \"Civil\"],\n  \"experienceYears\": 9,\n  \"chamberAddress\": \"Chamber 21, High Court Bar Association, Lahore\",\n  \"bio\": \"Nine years of trial advocacy before Lahore High Court benches and subordinate trial courts specializing in criminal defense, pre-arrest bail, and commercial injunctions.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/lawyer/application",
+          "host": ["{{baseUrl}}"],
+          "path": ["lawyer", "application"]
+        }
+      }
+    },
+    {
+      "name": "3. Admin - Approve Application",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"approved\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/applications/{{applicationId}}/review",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "applications", "{{applicationId}}", "review"]
+        }
+      }
+    },
+    {
+      "name": "4. Lawyer - Configure Profile & Bio",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{lawyerToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"headline\": \"Advocate High Court | Trial Defense & Constitutional Counsel\",\n  \"about\": \"Comprehensive trial defense with a focus on criminal bail appeals, FIR quashment petitions, and subordinate court civil injunctions in Lahore.\",\n  \"languages\": [\"Urdu\", \"Punjabi\", \"English\"],\n  \"slotMinutes\": 30\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/lawyer/profile",
+          "host": ["{{baseUrl}}"],
+          "path": ["lawyer", "profile"]
+        }
+      }
+    },
+    {
+      "name": "5. Lawyer - Add Consultation Service",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{lawyerToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"mode\": \"in_chamber\",\n  \"durationMinutes\": 30,\n  \"feePkr\": 2500\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/lawyer/services",
+          "host": ["{{baseUrl}}"],
+          "path": ["lawyer", "services"]
+        }
+      }
+    },
+    {
+      "name": "6. Lawyer - Add Weekly Availability Rule",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{lawyerToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"weekday\": 1,\n  \"startTime\": \"09:00\",\n  \"endTime\": \"13:00\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/lawyer/availability/rules",
+          "host": ["{{baseUrl}}"],
+          "path": ["lawyer", "availability", "rules"]
+        }
+      }
+    },
+    {
+      "name": "7. Public - Query Directory",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lawyers?city=Lahore&practiceArea=Criminal&sort=experience",
+          "host": ["{{baseUrl}}"],
+          "path": ["lawyers"],
+          "query": [
+            { "key": "city", "value": "Lahore" },
+            { "key": "practiceArea", "value": "Criminal" },
+            { "key": "sort", "value": "experience" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "8. Public - View Lawyer Profile Detail",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lawyers/{{applicationId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["lawyers", "{{applicationId}}"]
+        }
+      }
+    },
+    {
+      "name": "9. Public - Query 14-Day Calendar Slots",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/lawyers/{{applicationId}}/slots?from=2026-10-23&to=2026-11-06",
+          "host": ["{{baseUrl}}"],
+          "path": ["lawyers", "{{applicationId}}", "slots"],
+          "query": [
+            { "key": "from", "value": "2026-10-23" },
+            { "key": "to", "value": "2026-11-06" }
+          ]
+        }
+      }
+    }
+  ]
+}
