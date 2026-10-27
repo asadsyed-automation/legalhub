@@ -20,13 +20,14 @@ import {
 } from '../constants';
 import CaseEntriesTab from '../components/CaseEntriesTab';
 import CaseHearingsTab from '../components/CaseHearingsTab';
+import CaseDocumentsTab from '../components/CaseDocumentsTab';
 import './CaseDetail.css';
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'entries', label: 'Entries (Diary)' },
   { id: 'hearings', label: 'Hearings' },
-  { id: 'documents', label: 'Documents', badge: 'FE-6' },
+  { id: 'documents', label: 'Documents' },
   { id: 'fees', label: 'Fees & Ledger', badge: 'FE-7' },
   { id: 'timeline', label: 'Timeline', badge: 'FE-8' },
   { id: 'messages', label: 'Messages', badge: 'FE-9' },
@@ -476,17 +477,12 @@ export const CaseDetail = () => {
           />
         )}
 
+        {/* TAB 4: DOCUMENTS */}
         {activeTab === 'documents' && (
-          <div className="case-tab-placeholder">
-            <DocumentIcon size={40} color="var(--color-primary)" />
-            <h3>Case Documents & Private Asset Storage</h3>
-            <p>
-              Upload court pleadings, certified orders, and evidence with magic-byte validation and secure streaming download proxies.
-            </p>
-            <span className="case-tab-btn__badge" style={{ fontSize: '12px', padding: '4px 12px' }}>
-              Scheduled for Phase 3 Part J (FE-6)
-            </span>
-          </div>
+          <CaseDocumentsTab
+            caseId={caseData.id}
+            isLawyer={isLawyer}
+          />
         )}
 
         {activeTab === 'fees' && (

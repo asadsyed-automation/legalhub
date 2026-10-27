@@ -83,6 +83,32 @@ export const caseApi = {
   listHearingsAcrossCases: async (params = {}) => {
     return apiClient.get('/hearings', { params });
   },
+
+  // ==========================================
+  // Case Documents (/cases/:id/documents & /documents)
+  // ==========================================
+
+  getDocuments: async (caseId, params = {}) => {
+    return apiClient.get(`/cases/${caseId}/documents`, { params });
+  },
+
+  uploadDocument: async (caseId, formData) => {
+    return apiClient.post(`/cases/${caseId}/documents`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  updateDocument: async (documentId, payload) => {
+    return apiClient.patch(`/documents/${documentId}`, payload);
+  },
+
+  fetchDocumentBlob: async (documentId) => {
+    return apiClient.get(`/documents/${documentId}/file`, {
+      responseType: 'blob',
+    });
+  },
 };
 
 export default caseApi;

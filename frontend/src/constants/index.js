@@ -224,6 +224,26 @@ export const ENTRY_VISIBILITIES = Object.freeze([
   'shared',
 ]);
 
+export const DOCUMENT_TYPES = Object.freeze([
+  'Petition',
+  'Court Order',
+  'Evidence',
+  'Affidavit',
+  'Contract',
+  'FIR Copy',
+  'Identity Document',
+  'Other',
+]);
+
+export const DOCUMENT_LIMITS = Object.freeze({
+  MAX_FILE_SIZE_BYTES: 10 * 1024 * 1024, // 10 MB
+  MAX_TAGS: 5,
+  MAX_TAG_LENGTH: 30,
+  ALLOWED_EXTENSIONS: ['.pdf', '.jpeg', '.jpg', '.png', '.doc', '.docx'],
+  ALLOWED_ACCEPT: '.pdf,.jpeg,.jpg,.png,.doc,.docx',
+});
+
+
 
 
 
