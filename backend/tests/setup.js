@@ -15,7 +15,15 @@ const {
   BookingEvent,
   ConsultationNote,
   Engagement,
-  Review
+  Review,
+  Case,
+  CaseParty,
+  CaseStatusEvent,
+  CaseEntry,
+  Hearing,
+  Document,
+  FeeAgreement,
+  FeePayment
 } = require('../src/models');
 
 const TEST_EMAIL_SUFFIX = '@test.legalhub.local';

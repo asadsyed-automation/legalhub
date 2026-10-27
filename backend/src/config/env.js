@@ -79,7 +79,12 @@ const config = {
     ? process.env.FRONTEND_URLS.split(',').map(url => url.trim()).filter(Boolean)
     : ['http://localhost:3000', 'http://localhost:5173'],
   adminEmail: (process.env.ADMIN_EMAIL || '').trim().toLowerCase(),
-  adminPassword: process.env.ADMIN_PASSWORD
+  adminPassword: process.env.ADMIN_PASSWORD,
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || 'demo_cloud',
+    apiKey: process.env.CLOUDINARY_API_KEY || 'demo_key',
+    apiSecret: process.env.CLOUDINARY_API_SECRET || 'demo_secret'
+  }
 };
 
 module.exports = config;

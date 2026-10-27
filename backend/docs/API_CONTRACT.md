@@ -1724,4 +1724,1316 @@ Privileged legal work product (*Basta*) system. Allows practicing advocates to m
 }
 ```
 
+---
+
+## 14. Case Management Endpoints (`/api/v1/cases`)
+
+> **Phase 3 (Case Journey) — Part H**  
+> Covers confidential advocate case files, parties, status/stage tracking, and client whitelist projection.
+
+### 14.1 Create New Case
+* **Method & Path:** `POST /cases`
+* **Access:** Private (`role: lawyer` with approved advocate status)
+* **Pre-conditions:**
+  1. Authenticated user must be an approved advocate.
+  2. If `bookingId` is provided:
+     * Booking must exist and belong to the authenticated advocate.
+     * Booking status must be strictly `completed`.
+     * Booking must not already be linked to another case (one-to-one).
+     * `clientId` is automatically set to the booking's `clientId`.
+  3. If `bookingId` is not provided (chamber walk-in case), `clientId` is set to `null`.
+* **Request Body:**
+```json
+{
+  "title": "Chamber Walk-in Revenue Suit",
+  "practiceArea": "Property",
+  "court": "District Court, Multan",
+  "caseOrFirNumber": "Suit No. 104/2026",
+  "filingDate": "2026-10-15",
+  "status": "Prospect",
+  "stage": null,
+  "bookingId": null,
+  "parties": [
+    {
+      "name": "Haji Ghulam Rasool",
+      "roleLabel": "Plaintiff"
+    },
+    {
+      "name": "Muhammad Akhtar",
+      "roleLabel": "Defendant"
+    }
+  ]
+}
+```
+* **Validation Rules:**
+  * `title`: String, 3 to 255 characters (Required).
+  * `practiceArea`: String from `PRACTICE_AREAS` (Required).
+  * `court`: String from `COURTS` list (Supreme Court, High Courts, District Courts) or custom string 3 to 255 characters (Required).
+  * `caseOrFirNumber`: String, optional/nullable, max 100 characters.
+  * `filingDate`: String (YYYY-MM-DD), optional/nullable.
+  * `status`: Enum (`Prospect`, `Active`, `Stay`, `Disposed`, `Archived`), defaults to `Prospect`.
+  * `stage`: Enum (`Pre-filing`, `Instituted`, `Notice Issued`, `Written Statement`, `Issues Framed`, `Evidence`, `Final Arguments`, `Judgment Reserved`, `Decreed / Allowed`, `Dismissed`, `Appeal / Revision`), optional/nullable.
+  * `bookingId`: UUID, optional/nullable.
+  * `parties`: Array of objects, optional, max 10 parties. Each party requires `name` (2 to 255 chars) and `roleLabel` (2 to 100 chars, e.g. Plaintiff, Defendant, Petitioner, Respondent).
+* **Success Response (201 Created):**
+```json
+{
+  "success": true,
+  "message": "Case file created successfully",
+  "data": {
+    "id": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "lawyerId": "c1f727b4-3a52-4a09-90bc-089c176e3381",
+    "clientId": null,
+    "bookingId": null,
+    "title": "Chamber Walk-in Revenue Suit",
+    "court": "District Court, Multan",
+    "practiceArea": "Property",
+    "status": "Prospect",
+    "stage": null,
+    "caseOrFirNumber": "Suit No. 104/2026",
+    "filingDate": "2026-10-15",
+    "parties": [
+      {
+        "id": "11111111-2222-3333-4444-555555555555",
+        "name": "Haji Ghulam Rasool",
+        "roleLabel": "Plaintiff"
+      },
+      {
+        "id": "22222222-3333-4444-5555-666666666666",
+        "name": "Muhammad Akhtar",
+        "roleLabel": "Defendant"
+      }
+    ],
+    "statusEvents": [
+      {
+        "id": "33333333-4444-5555-6666-777777777777",
+        "fromStatus": null,
+        "toStatus": "Prospect",
+        "fromStage": null,
+        "toStage": null,
+        "changedBy": "c1f727b4-3a52-4a09-90bc-089c176e3381",
+        "createdAt": "2026-10-24T12:00:00.000Z"
+      }
+    ],
+    "client": null,
+    "nextHearing": null,
+    "createdAt": "2026-10-24T12:00:00.000Z",
+    "updatedAt": "2026-10-24T12:00:00.000Z"
+  }
+}
+```
+* **Common Errors:**
+  * `400 Bad Request`: Validation failure (missing required title/court/practiceArea, or parties > 10, or uncompleted booking).
+  * `401 Unauthorized`: Missing or invalid bearer token.
+  * `403 Forbidden`: Authenticated user is not an approved advocate (`client` or `admin` or unverified lawyer).
+  * `404 Not Found`: Linked `bookingId` does not exist.
+  * `409 Conflict`: `bookingId` is already linked to another case file.
+
+---
+
+### 14.2 List Cases
+* **Method & Path:** `GET /cases`
+* **Access:** Private (`role: lawyer` or `role: client`). Admins receive `403 Forbidden`.
+* **Query Parameters:**
+  * `status`: Optional string filter (`Prospect`, `Active`, etc.).
+  * `practiceArea`: Optional string filter.
+  * `court`: Optional string filter.
+  * `page`: Integer $\ge 1$, defaults to `1`.
+  * `limit`: Integer between 1 and 50, defaults to `10`.
+* **Behavior by Role:**
+  * **Lawyer:** Returns cases owned by the authenticated advocate (`lawyerId = req.user.id`). Contains full model including `lawyerId`, `clientId`, `bookingId`, `parties`, `statusEvents`, and linked `client` summary `{ id, name }`.
+  * **Client:** Returns only cases where `clientId = req.user.id`. Each case is strictly whitelisted via `projectCaseForClient`.
+  * **Admin:** Returns `403 Forbidden`.
+* **Success Response (200 OK - Lawyer):**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+        "lawyerId": "c1f727b4-3a52-4a09-90bc-089c176e3381",
+        "clientId": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "bookingId": "b83f3604-d538-4b72-b5b6-7eb5d0f1917d",
+        "title": "Chamber Walk-in Revenue Suit",
+        "court": "District Court, Multan",
+        "practiceArea": "Property",
+        "status": "Active",
+        "stage": "Notice Issued",
+        "caseOrFirNumber": "Suit No. 104/2026",
+        "filingDate": "2026-10-15",
+        "parties": [
+          { "id": "11111111-2222-3333-4444-555555555555", "name": "Haji Ghulam Rasool", "roleLabel": "Plaintiff" }
+        ],
+        "statusEvents": [
+          { "id": "33333333-4444-5555-6666-777777777777", "fromStatus": "Prospect", "toStatus": "Active", "fromStage": null, "toStage": "Notice Issued", "changedBy": "c1f727b4-3a52-4a09-90bc-089c176e3381", "createdAt": "2026-10-24T12:30:00.000Z" }
+        ],
+        "client": { "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d", "name": "Ali Raza Litigant" },
+        "nextHearing": null,
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "updatedAt": "2026-10-24T12:30:00.000Z"
+      }
+    ],
+    "cases": [ /* mirror of items */ ],
+    "total": 1,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1
+  }
+}
+```
+* **Success Response (200 OK - Client Whitelist Projection):**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+        "title": "Chamber Walk-in Revenue Suit",
+        "court": "District Court, Multan",
+        "practiceArea": "Property",
+        "status": "Active",
+        "stage": "Notice Issued",
+        "caseOrFirNumber": "Suit No. 104/2026",
+        "filingDate": "2026-10-15",
+        "parties": [
+          { "id": "11111111-2222-3333-4444-555555555555", "name": "Haji Ghulam Rasool", "roleLabel": "Plaintiff" }
+        ],
+        "nextHearing": null,
+        "createdAt": "2026-10-24T12:00:00.000Z",
+        "updatedAt": "2026-10-24T12:30:00.000Z"
+      }
+    ],
+    "cases": [ /* mirror of items */ ],
+    "total": 1,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### 14.3 Get Single Case by ID
+* **Method & Path:** `GET /cases/:id`
+* **Access:** Private (`role: lawyer` assigned to the case OR `role: client` linked to the case).
+* **Access Rules:**
+  * Owning lawyer receives full case details.
+  * Linked client receives whitelisted projection (no `lawyerId`, no `clientId`, no `bookingId`, no `statusEvents`).
+  * Other lawyer receives `403 Forbidden`.
+  * Unlinked client receives `403 Forbidden`.
+  * Admin receives `403 Forbidden`.
+* **Success Response (200 OK):** Wrapped in `{ "success": true, "data": { ... } }`.
+* **Common Errors:**
+  * `401 Unauthorized`: Missing or invalid bearer token.
+  * `403 Forbidden`: Authenticated user is not authorized to view this confidential case file.
+  * `404 Not Found`: Case does not exist.
+
+---
+
+### 14.4 Update Case File
+* **Method & Path:** `PATCH /cases/:id`
+* **Access:** Private (`role: lawyer` assigned to the case)
+* **Pre-conditions:**
+  * Only the assigned advocate can update the case.
+  * If `bookingId` is provided:
+    * Allowed only if case currently has `clientId: null`.
+    * If case is already linked to a client, returns `409 Conflict`.
+    * Booking must belong to this advocate and be `completed`.
+  * If `parties` array is provided, it performs an atomic **full replacement** of all existing parties.
+  * If `status` or `stage` transitions, an immutable audit record is added to `case_status_events`.
+* **Request Body:**
+```json
+{
+  "title": "Chamber Walk-in Revenue Suit (Amended)",
+  "status": "Active",
+  "stage": "Notice Issued",
+  "caseOrFirNumber": "Suit No. 104/2026",
+  "filingDate": "2026-10-15",
+  "bookingId": "b83f3604-d538-4b72-b5b6-7eb5d0f1917d",
+  "parties": [
+    { "name": "Haji Ghulam Rasool", "roleLabel": "Plaintiff" },
+    { "name": "Muhammad Akhtar", "roleLabel": "Defendant No. 1" },
+    { "name": "Mukhtar Ahmad", "roleLabel": "Defendant No. 2" }
+  ]
+}
+```
+* **Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Case file updated successfully",
+  "data": {
+    "id": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "lawyerId": "c1f727b4-3a52-4a09-90bc-089c176e3381",
+    "clientId": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+    "bookingId": "b83f3604-d538-4b72-b5b6-7eb5d0f1917d",
+    "title": "Chamber Walk-in Revenue Suit (Amended)",
+    "court": "District Court, Multan",
+    "practiceArea": "Property",
+    "status": "Active",
+    "stage": "Notice Issued",
+    "caseOrFirNumber": "Suit No. 104/2026",
+    "filingDate": "2026-10-15",
+    "parties": [
+      { "id": "uuid-1", "name": "Haji Ghulam Rasool", "roleLabel": "Plaintiff" },
+      { "id": "uuid-2", "name": "Muhammad Akhtar", "roleLabel": "Defendant No. 1" },
+      { "id": "uuid-3", "name": "Mukhtar Ahmad", "roleLabel": "Defendant No. 2" }
+    ],
+    "statusEvents": [
+      { "id": "uuid-e1", "fromStatus": null, "toStatus": "Prospect", "fromStage": null, "toStage": null, "changedBy": "c1f727b4-3a52-4a09-90bc-089c176e3381", "createdAt": "2026-10-24T12:00:00.000Z" },
+      { "id": "uuid-e2", "fromStatus": "Prospect", "toStatus": "Active", "fromStage": null, "toStage": "Notice Issued", "changedBy": "c1f727b4-3a52-4a09-90bc-089c176e3381", "createdAt": "2026-10-24T12:45:00.000Z" }
+    ],
+    "client": { "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d", "name": "Ali Raza Litigant" },
+    "nextHearing": null,
+    "createdAt": "2026-10-24T12:00:00.000Z",
+    "updatedAt": "2026-10-24T12:45:00.000Z"
+  }
+}
+```
+* **Common Errors:**
+  * `400 Bad Request`: Validation failure (parties > 10, invalid status/stage, or uncompleted booking).
+  * `403 Forbidden`: Authenticated user is not the owning advocate.
+  * `404 Not Found`: Case not found.
+  * `409 Conflict`: Re-linking attempted on a case already linked to a client, or booking is already linked to another case.
+
+---
+
+## 15. Case Entries & Court Hearings Endpoints
+
+> **Phase 3 (Case Journey) — Part I**  
+> Covers case diary entries (*Roznamcha*), court hearing schedules (*Peshian*), quick outcome recording, and strict client privacy censorship.
+
+### 15.1 Create Case Diary Entry
+* **Method & Path:** `POST /cases/:id/entries`
+* **Access:** Private (`role: lawyer` assigned to the case)
+* **Request Body:**
+```json
+{
+  "entryDate": "2026-10-27",
+  "entryType": "note",
+  "title": "Chamber Confidential Strategy",
+  "body": "Cross-examination must verify mutation registry 104/1994.",
+  "visibility": "private"
+}
+```
+* **Validation Rules:**
+  * `entryDate`: String (YYYY-MM-DD), Required.
+  * `entryType`: Enum (`petition`, `order`, `note`), Required.
+  * `title`: String, 2 to 150 characters, Required.
+  * `body`: String, 1 to 5000 characters, Required.
+  * `visibility`: Enum (`private`, `shared`), defaults to `private`.
+* **Success Response (201 Created):**
+```json
+{
+  "success": true,
+  "message": "Case diary entry created successfully",
+  "data": {
+    "id": "e1111111-2222-3333-4444-555555555555",
+    "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "entryDate": "2026-10-27",
+    "entryType": "note",
+    "title": "Chamber Confidential Strategy",
+    "body": "Cross-examination must verify mutation registry 104/1994.",
+    "visibility": "private",
+    "createdAt": "2026-10-27T08:00:00.000Z",
+    "updatedAt": "2026-10-27T08:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 15.2 List Case Diary Entries
+* **Method & Path:** `GET /cases/:id/entries`
+* **Access:** Private (`role: lawyer` assigned to the case OR `role: client` linked to the case)
+* **Access Rules:**
+  * **Lawyer:** Sees all entries (`private` and `shared`).
+  * **Client:** Sees only `shared` entries projected through whitelist. Private entries are strictly omitted.
+  * **Admin / Other Lawyer:** `403 Forbidden`.
+* **Query Parameters:**
+  * `entryType`: Optional filter (`petition`, `order`, `note`).
+  * `visibility`: Optional filter for lawyer (`private`, `shared`).
+  * `page`: Integer $\ge 1$, defaults to `1`.
+  * `limit`: Integer 1 to 50, defaults to `10`.
+* **Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "e1111111-2222-3333-4444-555555555555",
+        "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+        "entryDate": "2026-10-27",
+        "entryType": "order",
+        "title": "Interim Status Quo Granted",
+        "body": "Learned Civil Judge Multan was pleased to issue temporary injunction.",
+        "visibility": "shared",
+        "createdAt": "2026-10-27T08:00:00.000Z",
+        "updatedAt": "2026-10-27T08:00:00.000Z"
+      }
+    ],
+    "entries": [ /* mirror of items */ ],
+    "total": 1,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### 15.3 Update Case Diary Entry
+* **Method & Path:** `PATCH /cases/:id/entries/:entryId`
+* **Access:** Private (`role: lawyer` assigned to the case)
+* **Request Body:** Partial update fields (`entryDate`, `entryType`, `title`, `body`, `visibility`).
+* **Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Case diary entry updated successfully",
+  "data": {
+    "id": "e1111111-2222-3333-4444-555555555555",
+    "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "entryDate": "2026-10-27",
+    "entryType": "note",
+    "title": "Chamber Strategy (Amended)",
+    "body": "Updated witness questions.",
+    "visibility": "private",
+    "createdAt": "2026-10-27T08:00:00.000Z",
+    "updatedAt": "2026-10-27T08:30:00.000Z"
+  }
+}
+```
+
+---
+
+### 15.4 Schedule Court Hearing
+* **Method & Path:** `POST /cases/:id/hearings`
+* **Access:** Private (`role: lawyer` assigned to the case)
+* **Request Body:**
+```json
+{
+  "scheduledAt": "2026-11-15T09:30:00.000Z",
+  "bench": "Court Room No. 4",
+  "stage": "Issues",
+  "outcome": null,
+  "nextDate": null,
+  "adjournmentReason": null,
+  "note": "Bring original registered sale deed.",
+  "clientExplanation": "Court will frame legal issues based on pleadings of both sides.",
+  "visibility": "shared"
+}
+```
+* **Validation Rules:**
+  * `scheduledAt`: Valid ISO date-time string, Required.
+  * `court`: String 2 to 255 chars, Optional (defaults to case's court).
+  * `bench`: String up to 120 chars, Optional.
+  * `stage`: Enum from `CASE_STAGES`, Optional.
+  * `note`: String up to 2000 chars, Optional (strictly lawyer-only).
+  * `clientExplanation`: String up to 1000 chars, Optional (litigant explanation).
+  * `visibility`: Enum (`private`, `shared`), defaults to `shared`.
+* **Success Response (201 Created):**
+```json
+{
+  "success": true,
+  "message": "Court hearing scheduled successfully",
+  "data": {
+    "id": "h1111111-2222-3333-4444-555555555555",
+    "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "scheduledAt": "2026-11-15T09:30:00.000Z",
+    "court": "District Court, Multan",
+    "bench": "Court Room No. 4",
+    "stage": "Issues",
+    "outcome": null,
+    "nextDate": null,
+    "adjournmentReason": null,
+    "note": "Bring original registered sale deed.",
+    "clientExplanation": "Court will frame legal issues based on pleadings of both sides.",
+    "visibility": "shared",
+    "createdAt": "2026-10-27T09:00:00.000Z",
+    "updatedAt": "2026-10-27T09:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 15.5 List Case Hearings
+* **Method & Path:** `GET /cases/:id/hearings`
+* **Access:** Private (`role: lawyer` assigned to the case OR `role: client` linked to the case)
+* **Access Rules:**
+  * **Lawyer:** Sees all hearings with full `note`.
+  * **Client:** Sees only `shared` hearings. Field `note` is **strictly stripped/omitted** via whitelist projection.
+  * **Admin / Other Lawyer:** `403 Forbidden`.
+* **Success Response (200 OK - Client Projection):**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "h1111111-2222-3333-4444-555555555555",
+        "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+        "scheduledAt": "2026-11-15T09:30:00.000Z",
+        "court": "District Court, Multan",
+        "bench": "Court Room No. 4",
+        "stage": "Issues",
+        "outcome": null,
+        "nextDate": null,
+        "adjournmentReason": null,
+        "clientExplanation": "Court will frame legal issues based on pleadings of both sides.",
+        "visibility": "shared",
+        "createdAt": "2026-10-27T09:00:00.000Z",
+        "updatedAt": "2026-10-27T09:00:00.000Z"
+      }
+    ],
+    "hearings": [ /* mirror of items */ ],
+    "total": 1,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### 15.6 Update Hearing Details
+* **Method & Path:** `PATCH /cases/:id/hearings/:hearingId`
+* **Access:** Private (`role: lawyer` assigned to the case)
+* **Request Body:** Partial update fields (`scheduledAt`, `court`, `bench`, `stage`, `outcome`, `nextDate`, `adjournmentReason`, `note`, `clientExplanation`, `visibility`).
+* **Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Court hearing updated successfully",
+  "data": { /* updated hearing object */ }
+}
+```
+
+---
+
+### 15.7 Quick Outcome Recording
+* **Method & Path:** `PATCH /hearings/:id/outcome`
+* **Access:** Private (`role: lawyer` assigned to the case)
+* **Request Body:**
+```json
+{
+  "outcome": "Issues framed by Senior Civil Judge; fixed for Plaintiff Evidence.",
+  "nextDate": "2026-11-28",
+  "adjournmentReason": "Court time elapsed during cause list"
+}
+```
+* **Validation Rules:**
+  * `outcome`: String 1 to 300 chars, Required.
+  * `nextDate`: String (YYYY-MM-DD), Optional/nullable.
+  * `adjournmentReason`: String up to 300 chars, Optional/nullable.
+* **Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Hearing outcome recorded successfully",
+  "data": {
+    "id": "h1111111-2222-3333-4444-555555555555",
+    "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "outcome": "Issues framed by Senior Civil Judge; fixed for Plaintiff Evidence.",
+    "nextDate": "2026-11-28",
+    "adjournmentReason": "Court time elapsed during cause list",
+    "updatedAt": "2026-10-27T10:15:00.000Z"
+  }
+}
+```
+
+---
+
+### 15.8 Cross-Case Cause List Query
+* **Method & Path:** `GET /hearings`
+* **Access:** Private (`role: lawyer` or `role: client`)
+* **Access Rules:**
+  * **Lawyer:** Sees hearings across all cases owned by their chamber.
+  * **Client:** Sees only `shared` hearings for cases linked to them (with `note` strictly censored).
+  * **Admin:** `403 Forbidden`.
+* **Query Parameters:**
+  * `from`: ISO date/time string filter (`scheduledAt >= from`).
+  * `to`: ISO date/time string filter (`scheduledAt <= to`).
+  * `court`: Case-insensitive partial text filter on court name.
+  * `page`: Integer $\ge 1$, defaults to `1`.
+  * `limit`: Integer 1 to 50, defaults to `20`.
+* **Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "h1111111-2222-3333-4444-555555555555",
+        "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+        "scheduledAt": "2026-11-15T09:30:00.000Z",
+        "court": "District Court, Multan",
+        "bench": "Court Room No. 4",
+        "stage": "Issues",
+        "outcome": null,
+        "nextDate": null,
+        "adjournmentReason": null,
+        "clientExplanation": "Court will frame legal issues based on pleadings.",
+        "visibility": "shared",
+        "case": {
+          "id": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+          "title": "Haji Ghulam Rasool Partition Suit",
+          "court": "District Court, Multan",
+          "status": "Active",
+          "caseOrFirNumber": "Suit No. 204/2026"
+        },
+        "createdAt": "2026-10-27T09:00:00.000Z",
+        "updatedAt": "2026-10-27T09:00:00.000Z"
+      }
+    ],
+    "hearings": [ /* mirror of items */ ],
+    "total": 1,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+## 16. Phase 3 Part J: Case Documents & Private Asset Storage
+
+Case documents represent evidence, petitions, court orders, affidavits, and power of attorney (Vakalatnama) files attached to a case file.
+Files are validated for authentic magic bytes (PDF, JPEG, PNG, DOC, DOCX), limited to 10 MB, stored in authenticated private asset storage, and never exposed via public URLs.
+
+---
+
+### 16.1 Upload Case Document
+* **Method & Path:** `POST /cases/:id/documents`
+* **Access:** Private (`role: lawyer`, Approved Advocate who owns the case)
+* **Content-Type:** `multipart/form-data`
+* **Access Rules:**
+  * Only the assigned advocate can upload documents to their own case.
+  * Clients cannot upload documents directly (`403 Forbidden`).
+  * Administrators cannot upload documents (`403 Forbidden`).
+* **Form Data Fields:**
+  * `file`: (Binary File, Required) Supported types: PDF, JPEG, PNG, DOC, DOCX. Max size: 10 MB (`10,485,760 bytes`).
+  * `docType`: (String, Required) One of: `['Petition', 'Court Order', 'Evidence', 'Affidavit', 'Contract', 'FIR Copy', 'Identity Document', 'Other']`.
+  * `visibility`: (String, Optional) One of `['private', 'shared']`. Defaults to `'private'`.
+  * `tags`: (JSON String or Array, Optional) Max 5 tags, max 30 characters each. Example: `'["writ", "urgent"]'`.
+* **Success Response (201 Created):**
+```json
+{
+  "message": "Document uploaded successfully",
+  "document": {
+    "id": "d1a2b3c4-9988-7766-5544-33221100aabb",
+    "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "originalName": "writ_petition_draft.pdf",
+    "mimeType": "application/pdf",
+    "sizeBytes": 145820,
+    "docType": "Petition",
+    "tags": [
+      "writ",
+      "urgent"
+    ],
+    "visibility": "private",
+    "createdAt": "2026-10-27T05:20:00.000Z",
+    "updatedAt": "2026-10-27T05:20:00.000Z"
+  }
+}
+```
+* **Security & Whitelist Projection:**
+  * `publicId` and `resourceType` are strictly omitted from the response to prevent exposing cloud storage references.
+* **Error Responses:**
+  * `400 Bad Request`: Missing file, file exceeds 10 MB, invalid magic bytes signature, or tags > 5.
+  * `401 Unauthorized`: Missing or invalid JWT.
+  * `403 Forbidden`: User is not an approved advocate or does not own the case file.
+  * `404 Not Found`: Case does not exist.
+
+---
+
+### 16.2 List Case Documents
+* **Method & Path:** `GET /cases/:id/documents`
+* **Access:** Private (`role: lawyer` or `role: client`)
+* **Access Rules:**
+  * **Assigned Lawyer:** Sees all documents (both `private` and `shared`).
+  * **Linked Client:** Sees **ONLY** documents where `visibility = 'shared'`. Private chamber documents are completely hidden.
+  * **Another Lawyer:** `403 Forbidden`.
+  * **Unlinked Client:** `403 Forbidden`.
+  * **Administrator:** `403 Forbidden` (Privacy barrier).
+* **Query Parameters:**
+  * `docType`: Optional filter by document type.
+  * `visibility`: Optional filter by visibility (for lawyers; clients are hard-forced to `shared`).
+  * `tag`: Optional filter by tag name (case-insensitive).
+* **Success Response (200 OK):**
+```json
+{
+  "items": [
+    {
+      "id": "d1a2b3c4-9988-7766-5544-33221100aabb",
+      "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+      "originalName": "certified_court_order.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 204800,
+      "docType": "Court Order",
+      "tags": [
+        "stay_order",
+        "injunction"
+      ],
+      "visibility": "shared",
+      "createdAt": "2026-10-27T05:20:00.000Z",
+      "updatedAt": "2026-10-27T05:20:00.000Z"
+    }
+  ],
+  "documents": [ /* mirror of items */ ],
+  "total": 1
+}
+```
+
+---
+
+### 16.3 Update Document Metadata
+* **Method & Path:** `PATCH /documents/:id`
+* **Access:** Private (`role: lawyer`, Assigned Advocate who owns the case)
+* **Access Rules:**
+  * Only the assigned advocate can update document metadata.
+  * Litigants and administrators receive `403 Forbidden`.
+* **Request Body (JSON):**
+```json
+{
+  "docType": "Evidence",
+  "visibility": "shared",
+  "tags": [
+    "verified",
+    "certified_copy"
+  ]
+}
+```
+* **Success Response (200 OK):**
+```json
+{
+  "message": "Document updated successfully",
+  "document": {
+    "id": "d1a2b3c4-9988-7766-5544-33221100aabb",
+    "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "originalName": "certified_court_order.pdf",
+    "mimeType": "application/pdf",
+    "sizeBytes": 204800,
+    "docType": "Evidence",
+    "tags": [
+      "verified",
+      "certified_copy"
+    ],
+    "visibility": "shared",
+    "createdAt": "2026-10-27T05:20:00.000Z",
+    "updatedAt": "2026-10-27T05:22:00.000Z"
+  }
+}
+```
+
+---
+
+### 16.4 Stream / Download Document File
+* **Method & Path:** `GET /documents/:id/file`
+* **Access:** Private (`role: lawyer` or `role: client`)
+* **Access Rules:**
+  * **Assigned Lawyer:** Can download any document in their case file.
+  * **Linked Client:** Can download **ONLY** if `visibility = 'shared'`. Attempting to stream a `private` document returns `403 Forbidden` (`Access denied to private case document`).
+  * **Another Lawyer:** `403 Forbidden`.
+  * **Unlinked Client:** `403 Forbidden`.
+  * **Administrator:** `403 Forbidden`.
+* **Response Headers:**
+  * `Content-Type`: MIME type of the document (e.g., `application/pdf`, `image/jpeg`).
+  * `Content-Disposition`: `inline; filename="certified_court_order.pdf"`.
+  * `Content-Length`: Size of binary payload in bytes.
+* **Success Response (200 OK):**
+  * Binary stream of the file content.
+
+---
+
+## 17. Phase 3 Part K: Case Fees & Payment Ledger
+
+Case fees manage agreed legal representation terms (`fixed`, `per_appearance`, `stage_wise`) and track payments made by the client across various payment methods (`cash`, `bank`, `jazzcash`, `easypaisa`, `cheque`).
+The ledger automatically computes total agreed, total paid, and the balance (displayed as-is even if negative). No corporate installment schedules, invoices, or deletion are permitted.
+
+---
+
+### 17.1 Upsert Fee Agreement
+* **Method & Path:** `PUT /cases/:id/fee-agreement`
+* **Access:** Private (`role: lawyer`, Approved Advocate who owns the case)
+* **Access Rules:**
+  * Only the assigned advocate can create or update the case fee agreement.
+  * Clients receive `403 Forbidden`.
+  * Administrators receive `403 Forbidden` (Privacy barrier).
+* **Request Body (JSON):**
+```json
+{
+  "type": "stage_wise",
+  "agreedAmountPkr": 180000,
+  "notes": "Rs. 60k pleadings, Rs. 60k evidence, Rs. 60k final arguments"
+}
+```
+* **Field Specifications:**
+  * `type`: (String, Required) One of: `['fixed', 'per_appearance', 'stage_wise']`.
+  * `agreedAmountPkr`: (Integer, Required) Range `0` to `100,000,000` (up to 10 crore PKR).
+  * `notes`: (String, Optional) Maximum 500 characters.
+* **Success Response (200 OK):**
+```json
+{
+  "message": "Fee agreement saved successfully",
+  "feeAgreement": {
+    "id": "f1111111-2222-3333-4444-555555555555",
+    "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "type": "stage_wise",
+    "agreedAmountPkr": 180000,
+    "notes": "Rs. 60k pleadings, Rs. 60k evidence, Rs. 60k final arguments",
+    "createdAt": "2026-10-27T05:30:00.000Z",
+    "updatedAt": "2026-10-27T05:30:00.000Z"
+  }
+}
+```
+
+---
+
+### 17.2 Record Fee Payment
+* **Method & Path:** `POST /cases/:id/payments`
+* **Access:** Private (`role: lawyer`, Approved Advocate who owns the case)
+* **Access Rules:**
+  * Only the assigned advocate can record payments in their case ledger.
+  * Clients and administrators receive `403 Forbidden`.
+* **Request Body (JSON):**
+```json
+{
+  "amountPkr": 60000,
+  "method": "bank",
+  "reference": "HBL-IBFT-99881122",
+  "paidOn": "2026-10-27",
+  "note": "Stage 1 payment received via bank transfer"
+}
+```
+* **Field Specifications:**
+  * `amountPkr`: (Integer, Required) Minimum `1`, Maximum `100,000,000`.
+  * `method`: (String, Required) One of: `['cash', 'bank', 'jazzcash', 'easypaisa', 'cheque']`.
+  * `reference`: (String, Optional) Transaction reference / Cheque number (max 60 characters).
+  * `paidOn`: (Date String, Required) ISO format `YYYY-MM-DD`.
+  * `note`: (String, Optional) Maximum 300 characters.
+* **Success Response (201 Created):**
+```json
+{
+  "message": "Payment recorded successfully",
+  "payment": {
+    "id": "p1111111-2222-3333-4444-555555555555",
+    "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "amountPkr": 60000,
+    "method": "bank",
+    "reference": "HBL-IBFT-99881122",
+    "paidOn": "2026-10-27",
+    "note": "Stage 1 payment received via bank transfer",
+    "createdAt": "2026-10-27T05:35:00.000Z",
+    "updatedAt": "2026-10-27T05:35:00.000Z"
+  }
+}
+```
+
+---
+
+### 17.3 Get Case Fee Ledger
+* **Method & Path:** `GET /cases/:id/fees`
+* **Access:** Private (`role: lawyer` or `role: client`)
+* **Access Rules:**
+  * **Assigned Lawyer:** Can view the complete ledger.
+  * **Linked Client:** Can view the complete ledger for their linked case.
+  * **Another Lawyer:** `403 Forbidden`.
+  * **Unlinked Client:** `403 Forbidden`.
+  * **Administrator:** `403 Forbidden` (Financial Privacy barrier).
+* **Success Response (200 OK):**
+```json
+{
+  "agreed": 180000,
+  "paid": 140000,
+  "balance": 40000,
+  "feeAgreement": {
+    "id": "f1111111-2222-3333-4444-555555555555",
+    "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "type": "stage_wise",
+    "agreedAmountPkr": 180000,
+    "notes": "Rs. 60k pleadings, Rs. 60k evidence, Rs. 60k final arguments",
+    "createdAt": "2026-10-27T05:30:00.000Z",
+    "updatedAt": "2026-10-27T05:30:00.000Z"
+  },
+  "payments": [
+    {
+      "id": "p2222222-3333-4444-5555-666666666666",
+      "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+      "amountPkr": 80000,
+      "method": "bank",
+      "reference": "HBL-IBFT-99881122",
+      "paidOn": "2026-10-26",
+      "note": "Online transfer",
+      "createdAt": "2026-10-26T12:00:00.000Z",
+      "updatedAt": "2026-10-26T12:00:00.000Z"
+    },
+    {
+      "id": "p1111111-2222-3333-4444-555555555555",
+      "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+      "amountPkr": 60000,
+      "method": "cash",
+      "reference": null,
+      "paidOn": "2026-10-25",
+      "note": "Chamber advance cash",
+      "createdAt": "2026-10-25T10:00:00.000Z",
+      "updatedAt": "2026-10-25T10:00:00.000Z"
+    }
+  ]
+}
+```
+* **Dynamic Calculations:**
+  * `agreed`: `agreedAmountPkr` from fee agreement (or `0` if no agreement has been set yet).
+  * `paid`: Sum of all `amountPkr` across recorded `payments`.
+  * `balance`: `agreed - paid` (shown as-is, even if negative when client overpays or gives an advance).
+
+---
+
+## 18. Phase 3 Part L: Case Timeline & Client View
+
+### 18.1 Get Case Timeline
+* **Method & Path:** `GET /cases/:id/timeline`
+* **Access:** Private (`role: lawyer` assigned to the case OR `role: client` linked to the case).
+* **Access Rules:**
+  * **Assigned Lawyer:** Receives complete chronological timeline including private chamber diary entries, internal documents, and full hearing records (with chamber notes).
+  * **Linked Client:** Receives sanitized chronological timeline containing **shared items only** (`visibility: 'shared'`). For hearing events, the client receives structured fields and `clientExplanation`, but the private chamber `note` is **strictly redacted/omitted**.
+  * **Another Lawyer:** `403 Forbidden` (`"Forbidden: You are not the assigned advocate for this case"`).
+  * **Unlinked Client:** `403 Forbidden` (`"Forbidden: You are not the linked client for this case"`).
+  * **Administrator:** `403 Forbidden` (`"Forbidden: Administrators have no access to confidential case files"`).
+* **Query Parameters:**
+  * `page` (optional, integer >= 1, default `1`)
+  * `limit` (optional, integer 1–100, default `20`)
+  * `kind` (optional, enum: `entry`, `hearing`, `document`, `status_event`)
+* **Success Response (200 OK) — Lawyer View:**
+```json
+{
+  "events": [
+    {
+      "kind": "hearing",
+      "date": "2026-11-15T09:30:00.000Z",
+      "title": "Hearing at District Court, Multan (Arguments)",
+      "summary": "Arguments concluded; adjourned for order",
+      "visibility": "shared",
+      "refId": "h1111111-2222-3333-4444-555555555555",
+      "court": "District Court, Multan",
+      "stage": "Arguments",
+      "outcome": "Arguments concluded",
+      "clientExplanation": "Final arguments presented by counsel",
+      "note": "Chamber note: Judge seemed convinced by High Court citations"
+    },
+    {
+      "kind": "entry",
+      "date": "2026-10-27T08:00:00.000Z",
+      "title": "Internal Chamber Conference",
+      "summary": "Met with revenue patwari to verify certified fard",
+      "visibility": "private",
+      "refId": "e1111111-2222-3333-4444-555555555555"
+    },
+    {
+      "kind": "document",
+      "date": "2026-10-26T14:00:00.000Z",
+      "title": "Certified Plaint and Affidavit",
+      "summary": "Pleading document (PDF, 245000 bytes)",
+      "visibility": "shared",
+      "refId": "d1111111-2222-3333-4444-555555555555",
+      "docType": "pleading",
+      "fileSize": 245000,
+      "mimeType": "application/pdf"
+    },
+    {
+      "kind": "status_event",
+      "date": "2026-10-25T10:00:00.000Z",
+      "title": "Status changed to Active (Notice Issued)",
+      "summary": "Formal transition recorded in court record",
+      "visibility": "shared",
+      "refId": "s1111111-2222-3333-4444-555555555555",
+      "status": "Active",
+      "stage": "Notice Issued"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 4,
+    "totalPages": 1
+  }
+}
+```
+* **Success Response (200 OK) — Linked Client View:**
+```json
+{
+  "events": [
+    {
+      "kind": "hearing",
+      "date": "2026-11-15T09:30:00.000Z",
+      "title": "Hearing at District Court, Multan (Arguments)",
+      "summary": "Final arguments presented by counsel",
+      "visibility": "shared",
+      "refId": "h1111111-2222-3333-4444-555555555555",
+      "court": "District Court, Multan",
+      "stage": "Arguments",
+      "outcome": "Arguments concluded",
+      "clientExplanation": "Final arguments presented by counsel"
+    },
+    {
+      "kind": "document",
+      "date": "2026-10-26T14:00:00.000Z",
+      "title": "Certified Plaint and Affidavit",
+      "summary": "Pleading document (PDF, 245000 bytes)",
+      "visibility": "shared",
+      "refId": "d1111111-2222-3333-4444-555555555555",
+      "docType": "pleading",
+      "fileSize": 245000,
+      "mimeType": "application/pdf"
+    },
+    {
+      "kind": "status_event",
+      "date": "2026-10-25T10:00:00.000Z",
+      "title": "Status changed to Active (Notice Issued)",
+      "summary": "Formal transition recorded in court record",
+      "visibility": "shared",
+      "refId": "s1111111-2222-3333-4444-555555555555",
+      "status": "Active",
+      "stage": "Notice Issued"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 3,
+    "totalPages": 1
+  }
+}
+```
+*(Note: In the client view, the private diary entry is completely excluded, and for hearings, the private `note` key is strictly redacted/omitted.)*
+
+---
+
+### 18.2 Client Projection for Single Case View
+* **Method & Path:** `GET /cases/:id`
+* **Access:** Private (`role: client` linked to the case).
+* **Guaranteed Whitelisted Fields:**
+```json
+{
+  "id": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+  "title": "Chamber Walk-in Revenue Suit",
+  "court": "District Court, Multan",
+  "practiceArea": "Property",
+  "status": "Active",
+  "stage": "Notice Issued",
+  "caseOrFirNumber": "Suit No. 104/2026",
+  "filingDate": "2026-10-15",
+  "parties": [
+    { "id": "cp1111111-...", "name": "Haji Ghulam Rasool", "roleLabel": "Plaintiff" }
+  ],
+  "nextHearing": {
+    "id": "h1111111-...",
+    "hearingDate": "2026-11-15T09:30:00.000Z",
+    "court": "District Court, Multan",
+    "stage": "Arguments",
+    "outcome": null,
+    "clientExplanation": "Scheduled for arguments"
+  },
+  "sharedDocumentsCount": 2
+}
+```
+* **Security & Privacy Guarantees:**
+  * `lawyerId`, `clientId`, `bookingId`, and `statusEvents` are omitted from the client response.
+  * In `nextHearing`, the private `note` field is strictly omitted.
+  * `sharedDocumentsCount` counts **only** documents with `visibility: 'shared'`. Private chamber drafts are excluded from the count.
+
+---
+
+## 19. Phase 3 Part M: Notifications, Email Delivery & Reminders
+
+### 19.1 List User Notifications
+* **Method & Path:** `GET /notifications`
+* **Access:** Private (Authenticated user: `role: lawyer`, `role: client`, `role: admin`, or `role: law_firm`).
+* **Access Rules:**
+  * Returns notifications belonging exclusively to the authenticated caller (`userId = req.user.id`).
+  * Strict user isolation: No user can view or list another user's notifications.
+* **Query Parameters:**
+  * `page` (optional, integer >= 1, default `1`)
+  * `limit` (optional, integer 1–100, default `20`)
+  * `read` (optional, boolean: `true` for read-only, `false` for unread-only)
+  * `type` (optional, string enum: `booking_created`, `booking_confirmed`, `booking_cancelled`, `case_assigned`, `case_status_changed`, `hearing_scheduled`, `hearing_reminder`, `document_uploaded`, `payment_received`, `system`)
+* **Success Response (200 OK):**
+```json
+{
+  "notifications": [
+    {
+      "id": "n1111111-2222-3333-4444-555555555555",
+      "userId": "u1111111-2222-3333-4444-555555555555",
+      "type": "hearing_reminder",
+      "title": "Upcoming Hearing in 3 Days: Revenue Suit at District Court, Multan",
+      "body": "Your case \"Revenue Suit\" has a scheduled hearing at District Court, Multan on 10/11/2026, 10:00:00 AM PKT.",
+      "link": "/cases/e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+      "readAt": null,
+      "emailStatus": "sent",
+      "metadata": {
+        "hearingId": "h1111111-2222-3333-4444-555555555555",
+        "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+        "milestone": "3_days_prior",
+        "recipientRole": "client"
+      },
+      "createdAt": "2026-11-07T04:05:00.000Z",
+      "updatedAt": "2026-11-07T04:05:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### 19.2 Get Unread Notification Count
+* **Method & Path:** `GET /notifications/unread-count`
+* **Access:** Private (Authenticated user).
+* **Success Response (200 OK):**
+```json
+{
+  "count": 4
+}
+```
+
+---
+
+### 19.3 Mark Single Notification as Read
+* **Method & Path:** `PATCH /notifications/:id/read`
+* **Access:** Private (Authenticated recipient of the notification).
+* **Access Rules:**
+  * If notification belongs to caller: updates `readAt` to current timestamp.
+  * If notification does not belong to caller: `403 Forbidden` (`"Forbidden: You do not own this notification"`).
+  * If notification is already read: idempotent (returns 200 OK without altering original `readAt`).
+* **Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Notification marked as read",
+  "data": {
+    "id": "n1111111-2222-3333-4444-555555555555",
+    "userId": "u1111111-2222-3333-4444-555555555555",
+    "type": "hearing_reminder",
+    "title": "Upcoming Hearing in 3 Days: Revenue Suit at District Court, Multan",
+    "body": "...",
+    "link": "/cases/e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "readAt": "2026-11-07T05:30:00.000Z",
+    "emailStatus": "sent",
+    "metadata": { ... },
+    "createdAt": "2026-11-07T04:05:00.000Z",
+    "updatedAt": "2026-11-07T05:30:00.000Z"
+  }
+}
+```
+
+---
+
+### 19.4 Mark All Notifications as Read
+* **Method & Path:** `PATCH /notifications/read-all`
+* **Access:** Private (Authenticated user).
+* **Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "All notifications marked as read",
+  "updatedCount": 4
+}
+```
+
+---
+
+### 19.5 Hearing Reminders & Pure Sweep Function
+* **Module:** `src/modules/notification/reminder.service.js`
+* **Function:** `runReminderSweep(now = new Date())`
+* **Pakistan Standard Time Alert Milestones (PKT / UTC+5):**
+  * `3_days_prior`: 3 days before scheduled date at 09:00 AM PKT (04:00 AM UTC).
+  * `night_before`: 1 day before scheduled date at 08:00 PM (20:00) PKT (15:00 UTC).
+  * `morning_of`: Day of hearing at 07:00 AM PKT (02:00 AM UTC).
+* **Privacy Guarantees:**
+  * Advocate always receives scheduled hearing reminders.
+  * Client receives hearing reminder **ONLY** if the hearing has `visibility: 'shared'`. For private chamber hearings, client receives zero reminders.
+  * Client notification body never leaks the advocate's confidential chamber `note`.
+* **Idempotency Guarantee:**
+  * Dispatches at most one notification per `(userId, hearingId, milestone)` combination.
+
+---
+
+## 20. Phase 3 Part N: Direct Messages (Booking & Case Contexts)
+
+### 20.1 Send Booking Direct Message
+* **Method & Path:** `POST /bookings/:id/messages`
+* **Access:** Private (`role: client` or `role: lawyer` participating in the booking).
+* **Access Rules:**
+  * Caller must be the client or advocate on this specific consultation booking.
+  * Counter-party automatically receives an in-app alert notification.
+  * Another lawyer, unlinked client, or administrator receives `403 Forbidden`.
+* **Request Body:**
+```json
+{
+  "content": "Assalam-o-Alaikum Sir, I have arranged the certified copy of the registry for our meeting.",
+  "attachments": [
+    {
+      "name": "registry_fard.pdf",
+      "url": "https://storage/registry_fard.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 154000
+    }
+  ]
+}
+```
+* **Success Response (201 Created):**
+```json
+{
+  "success": true,
+  "message": "Message sent successfully",
+  "data": {
+    "id": "m1111111-2222-3333-4444-555555555555",
+    "senderId": "u1111111-2222-3333-4444-555555555555",
+    "bookingId": "b1111111-2222-3333-4444-555555555555",
+    "caseId": null,
+    "content": "Assalam-o-Alaikum Sir, I have arranged the certified copy of the registry for our meeting.",
+    "attachments": [
+      {
+        "name": "registry_fard.pdf",
+        "url": "https://storage/registry_fard.pdf",
+        "mimeType": "application/pdf",
+        "sizeBytes": 154000
+      }
+    ],
+    "readAt": null,
+    "createdAt": "2026-10-27T06:40:00.000Z",
+    "updatedAt": "2026-10-27T06:40:00.000Z"
+  }
+}
+```
+
+---
+
+### 20.2 List Booking Direct Messages
+* **Method & Path:** `GET /bookings/:id/messages`
+* **Access:** Private (`role: client` or `role: lawyer` participating in the booking).
+* **Query Parameters:**
+  * `page` (optional, integer >= 1, default `1`)
+  * `limit` (optional, integer 1–100, default `20`)
+* **Behavior:**
+  * Returns messages sorted in reverse chronological order (`createdAt DESC`).
+  * Automatically updates `readAt = CURRENT_TIMESTAMP` for any incoming unread messages sent by the counter-party.
+* **Success Response (200 OK):**
+```json
+{
+  "messages": [
+    {
+      "id": "m2222222-3333-4444-5555-666666666666",
+      "senderId": "u2222222-3333-4444-5555-666666666666",
+      "bookingId": "b1111111-2222-3333-4444-555555555555",
+      "caseId": null,
+      "content": "Walaikum Assalam. Excellent. Please bring the original CNIC as well.",
+      "attachments": null,
+      "readAt": "2026-10-27T06:45:00.000Z",
+      "createdAt": "2026-10-27T06:42:00.000Z",
+      "updatedAt": "2026-10-27T06:45:00.000Z",
+      "sender": {
+        "id": "u2222222-3333-4444-5555-666666666666",
+        "name": "Adv. Sardar Zulfiqar Ali",
+        "role": "lawyer"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### 20.3 Send Case Direct Message
+* **Method & Path:** `POST /cases/:id/messages`
+* **Access:** Private (`role: lawyer` assigned to the case OR `role: client` linked to the case).
+* **Access Rules:**
+  * If the case has no linked client (`clientId: null`), returns `400 Bad Request` (`"Cannot send client message: Case has no linked client"`).
+  * Counter-party automatically receives an in-app alert notification.
+  * Another lawyer, unlinked client, or administrator receives `403 Forbidden`.
+* **Request Body:**
+```json
+{
+  "content": "Notice has been served on the respondent. Court has fixed 18th November for written statement."
+}
+```
+* **Success Response (201 Created):**
+```json
+{
+  "success": true,
+  "message": "Message sent successfully",
+  "data": {
+    "id": "m3333333-4444-5555-6666-777777777777",
+    "senderId": "u2222222-3333-4444-5555-666666666666",
+    "bookingId": null,
+    "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+    "content": "Notice has been served on the respondent. Court has fixed 18th November for written statement.",
+    "attachments": null,
+    "readAt": null,
+    "createdAt": "2026-10-27T06:43:00.000Z",
+    "updatedAt": "2026-10-27T06:43:00.000Z"
+  }
+}
+```
+
+---
+
+### 20.4 List Case Direct Messages
+* **Method & Path:** `GET /cases/:id/messages`
+* **Access:** Private (`role: lawyer` assigned to the case OR `role: client` linked to the case).
+* **Query Parameters:**
+  * `page` (optional, integer >= 1, default `1`)
+  * `limit` (optional, integer 1–100, default `20`)
+* **Behavior:**
+  * Returns messages sorted in reverse chronological order (`createdAt DESC`).
+  * Automatically marks counter-party messages as read.
+* **Success Response (200 OK):**
+```json
+{
+  "messages": [
+    {
+      "id": "m3333333-4444-5555-6666-777777777777",
+      "senderId": "u2222222-3333-4444-5555-666666666666",
+      "bookingId": null,
+      "caseId": "e93d5a2b-7c18-4b7b-83de-6fa8827f2940",
+      "content": "Notice has been served on the respondent. Court has fixed 18th November for written statement.",
+      "attachments": null,
+      "readAt": "2026-10-27T06:44:00.000Z",
+      "createdAt": "2026-10-27T06:43:00.000Z",
+      "updatedAt": "2026-10-27T06:44:00.000Z",
+      "sender": {
+        "id": "u2222222-3333-4444-5555-666666666666",
+        "name": "Adv. Sardar Zulfiqar Ali",
+        "role": "lawyer"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
 

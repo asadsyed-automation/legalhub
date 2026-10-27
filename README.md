@@ -41,12 +41,18 @@ In Pakistan, finding legal counsel and managing ongoing legal disputes is fragme
 * **Backend Part F (Rule-Based Matching Engine):** Keyword-based legal problem classifier across 10 practice areas with regex whole-word boundary matching (`\b`), confidence levels (`high`, `low`, `none`), and multi-factor scoring algorithm evaluating candidates across practice area (40%), city (20%), mode (15%), budget (10%), language (10%), and experience (5%).
 * **Backend Part G (Booking Lifecycle & Simulated Payments):** Finite State Machine (`requested -> accepted -> paid -> confirmed -> completed`), PostgreSQL partial unique index (`bookings_lawyer_open_slot_idx`) for zero-collision double-booking prevention, simulated sandbox checkout (`payments` table with `SBX-` reference), reactive lazy expiry, client open bookings cap of 3, and immutable event audit logs (`booking_events`).
 * **Backend Part H (Consultation Notes, Engagements & Reviews):** Privileged advocate work product notes (`consultation_notes`) with strict confidentiality, case representation tracking (`engagements` / *Vakalatnama*) with automatic closure timestamps, and Bar Council Rule 135 compliant verified client reviews (`reviews`) restricted to completed consultations.
-* **Backend Part I (Quality, Mermaid ERD & Viva Defense Guide):** 18 comprehensive Architecture Decision Records (`DECISIONS.md`), complete interactive Mermaid ERD (`MERMAID_ERD.md`), updated API contract (`API_CONTRACT.md`), Postman v2.1 collection (`postman_collection.json`), and 12 in-depth Viva Defense Questions (`VIVA_QUESTIONS.md`).
-* **Testing Milestone:** Over **130 automated integration tests** passing with 100% pass rate across 11 test suites.
+* **Backend Phase 3 Part H (Cases, Parties & Status Events):** Litigation management core (`cases`, `case_parties`, `case_status_events`), atomic party synchronization, immutable stage audit logs, zero-trust administrator barriers, and whitelisted client projections.
+* **Backend Phase 3 Part I (Case Entries & Court Hearings):** Dual-layer proceedings tracking (`case_entries` for diary memos and `hearings` for court appearances), cross-case cause lists (`GET /api/v1/hearings`), dynamic `nextHearing` derivation, and privileged hearing note shielding.
+* **Backend Phase 3 Part J (Case Documents & Private Asset Storage):** Authenticated Cloudinary asset storage (`type: 'authenticated'`), in-memory magic-byte inspection (PDF, JPEG, PNG, DOCX), zero public URLs, and streaming proxy (`GET /documents/:id/file`).
+* **Backend Phase 3 Part K (Case Fees & Payment Ledger):** Idempotent fee agreements (`PUT /cases/:id/fee-agreement`), multi-channel payment ledger (`fee_payments`), dynamic balance derivation without artificial zero-clamping, and administrator financial privacy barriers.
+* **Backend Phase 3 Part L (Case Timeline & Client View):** Polymorphic 4-source timeline merging (`GET /cases/:id/timeline`), role-based event visibility, confidential hearing note redaction, and single case `sharedDocumentsCount`.
+* **Backend Phase 3 Part M (Notifications, Email & Reminders):** In-app notification inbox (`notifications`), unread badge counter, zero-dependency mailer adapter with in-memory test outbox, and deterministic hearing reminder sweep (`runReminderSweep`) evaluating Pakistan Standard Time (PKT / UTC+5) alert windows.
+* **Backend Phase 3 Part N (Direct Messages):** Contextual dual-route messaging (`messages`) for booking consultations and active court cases, automatic bidirectional read receipts, counter-party in-app notification dispatch, and attorney-client privilege isolation.
+* **Testing Milestone:** Over **278 automated integration tests** passing with 100% pass rate across 18 test suites covering 23 PostgreSQL tables.
 
 ### Upcoming Roadmap
-* **Part J (Case Management):** Case diary timeline, court hearing calendar with email reminders, document repository, and client portal.
-* **Part K:** Python FastAPI AI microservice for petition history summarization.
+* **Phase 4:** Python FastAPI AI microservice for petition history summarization and legal draft extraction.
+
 
 ---
 

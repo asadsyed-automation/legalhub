@@ -134,3 +134,53 @@ This document formally records the architectural choices, trade-offs, and ration
 * **Context:** Rule 135 of the Legal Practitioners and Bar Councils Rules 1976 prohibits commercial solicitation, misleading advertising, and paid priority sorting for Pakistani advocates. Unrestricted review systems also invite competitor defamation.
 * **Rationale:** Restricting reviews to completed consultations guarantees that only verified clients provide feedback. A single review per booking eliminates ballot-stuffing. Ratings range strictly from 1 to 5 stars, and the public API aggregates arithmetic averages without promotional puffery or paid badges.
 
+---
+
+### ADR 19: Case File Boundaries & Zero-Trust Administrator Isolation
+* **Decision:** Isolated case files (`cases`, `case_parties`, `case_status_events`) strictly between the assigned advocate and the linked client, returning `403 Forbidden` to platform administrators.
+* **Context:** Under Article 9 of the Qanun-e-Shahadat Order 1984, professional communications and case files in an advocate’s chamber are legally privileged. System administrators must have zero backdoors into privileged litigation files.
+* **Rationale:** Enforced a zero-trust RBAC barrier at the service and controller layer. Owning advocates access the full case file, linked clients receive a projection of whitelisted public litigation fields (shielding internal foreign keys and administrative audit events), and administrators are strictly rejected with HTTP 403.
+
+---
+
+### ADR 20: Diary Entries, Cause Lists & Next-Hearing Dynamic Derivation
+* **Decision:** Dynamically derived the upcoming hearing (`nextHearing`) at query time and partitioned diary records into `case_entries` and `hearings`.
+* **Context:** Court proceedings require tracking two different concepts: past diary memos (*Roznamcha*) and future court dates (*Peshian*). Storing a static `nextHearingDate` column on the `cases` table causes data desynchronization whenever hearings are adjourned or rescheduled.
+* **Rationale:** `nextHearing` is dynamically computed by querying the earliest active hearing where `scheduledAt >= NOW()`. A dedicated cross-case cause list query (`GET /api/v1/hearings`) enables advocates to filter their daily court docket by date and forum.
+
+---
+
+### ADR 21: Authenticated Cloudinary Asset Storage & Streaming Proxy with Magic Bytes
+* **Decision:** Stored litigation documents as private, authenticated assets in Cloudinary with in-memory magic-byte inspection and streaming download proxies (`GET /documents/:id/file`).
+* **Context:** Public Cloudinary or S3 URLs allow anyone with a copied link to view confidential legal filings, FIR copies, or witness statements without authentication. File extensions can also be spoofed (e.g., uploading executable scripts renamed as `.pdf`).
+* **Rationale:** Multer memory storage inspects leading magic bytes (`%PDF`, PNG `\x89PNG`, JPEG `\xFF\xD8\xFF`, DOCX ZIP `PK\x03\x04`), rejecting spoofed extensions before reaching Cloudinary. Cloudinary assets are configured with `type: 'authenticated'`. All client downloads stream through an authorized Express proxy that validates JWTs and case permissions, generating zero public URLs.
+
+---
+
+### ADR 22: Idempotent Case Fee Agreements & Dynamic Balances
+* **Decision:** Implemented case fee agreements via an upsert (`PUT /cases/:id/fee-agreement`) and dynamically calculated balances (`balance = agreed - paid`) without artificial clamping.
+* **Context:** Each case file has at most one contractual fee agreement (`caseId UNIQUE` in `fee_agreements`). In Pakistani chamber practice, clients frequently pay advance retainers before agreed stage milestones are reached, creating temporary credit balances.
+* **Rationale:** Idempotent upsert allows frontend clients to set or amend fee terms without checking if an agreement record exists. Running ledger queries (`GET /cases/:id/fees`) compute `paid = SUM(amountPkr)` dynamically and display negative balances (e.g., `-Rs. 20,000`) as-is, accurately representing client advance credit. Platform administrators are strictly barred (403 Forbidden) from financial ledger inspection.
+
+---
+
+### ADR 23: Polymorphic Unified Case Timeline & Privileged Note Redaction
+* **Decision:** Unified 4 heterogeneous tables (`case_entries`, `hearings`, `documents`, `case_status_events`) into a normalized chronological timeline (`GET /cases/:id/timeline`), redacting privileged notes for clients.
+* **Context:** In Multan Kutchery chambers, advocates record sensitive strategic observations in hearing records (e.g. *"Judge seemed skeptical about witness B"*). This chamber work-product must never reach the litigant.
+* **Rationale:** The timeline endpoint normalizes records into `{ kind, date, title, summary, visibility, refId }`, sorted newest first. For clients, private diary entries and private documents are filtered out, and for hearings, the private chamber `note` is strictly omitted from the payload keys, using `clientExplanation` for the summary.
+
+---
+
+### ADR 24: Pure Deterministic Hearing Reminder Sweeps in Pakistan Standard Time (PKT)
+* **Decision:** Implemented hearing alert evaluation as a pure, deterministic function (`runReminderSweep(now)`) evaluating Pakistan Standard Time (`Asia/Karachi`, UTC+5) milestones.
+* **Context:** Court hearing reminders must fire at specific Pakistani local times: 3 days before at 09:00 AM PKT, night before at 08:00 PM PKT, and morning of at 07:00 AM PKT. Hardcoded cron daemons make automated integration testing brittle and clock-dependent.
+* **Rationale:** Accepting an evaluation clock parameter (`now = new Date()`) allows automated integration tests to pass mock timestamps and verify all three alert windows deterministically. Reminders enforce idempotency via structured metadata (`hearingId`, `milestone`), and private hearings strictly shield the client from receiving alerts.
+
+---
+
+### ADR 25: Contextual Dual-Route Messaging & Bidirectional Auto-Read Tracking
+* **Decision:** Unified direct communication into a single polymorphic `messages` table supporting both consultation booking and active case contexts (`bookingId` vs. `caseId`).
+* **Context:** Citizens need direct communication with counsel both before retention (during appointment booking) and during active litigation. Separate tables create redundant schemas and duplicated logic.
+* **Rationale:** A single table governed by a check constraint (`bookingId IS NOT NULL OR caseId IS NOT NULL`) provides clean polymorphism. Listing messages (`GET /:id/messages`) automatically updates `readAt` for counter-party messages in a single database round-trip, and new messages automatically trigger in-app alert notifications.
+
+

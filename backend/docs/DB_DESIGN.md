@@ -453,6 +453,118 @@ Rule 135 compliant verified client ratings (1–5 stars) and chamber responses.
 
 ---
 
+### 2.14 `cases` Table
+Advocate confidential case files (*Basta*). Linked to clients via completed bookings or offline walk-ins.
+
+| Column | Type | Nullable | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `UUID` | No | `UUIDV4` | **Primary Key** |
+| `lawyerId` | `UUID` | No | None | **Foreign Key** $\rightarrow$ `users(id)` (Managing advocate) |
+| `clientId` | `UUID` | Yes | `NULL` | **Foreign Key** $\rightarrow$ `users(id)` (Linked litigant) |
+| `bookingId` | `UUID` | Yes | `NULL` | **Foreign Key** $\rightarrow$ `bookings(id)`, **Unique** (1-to-1) |
+| `title` | `VARCHAR(255)`| No | None | Formal litigation or petition title |
+| `practiceArea` | `VARCHAR(50)` | No | None | Practice area classification |
+| `court` | `VARCHAR(255)`| No | None | Target judicial forum / bench |
+| `caseOrFirNumber`| `VARCHAR(100)`| Yes | `NULL` | Formal court suit number or police FIR number |
+| `filingDate` | `DATE` | Yes | `NULL` | Date of institution or filing |
+| `status` | `VARCHAR(50)` | No | `'Prospect'` | Lifecycle status (`Prospect`, `Active`, `Stay`, `Disposed`, `Archived`) |
+| `stage` | `VARCHAR(100)`| Yes | `NULL` | Litigation stage (`Pre-filing`, `Notice Issued`, `Evidence`, etc.) |
+| `nextHearing` | `TIMESTAMP` | Yes | `NULL` | Scheduled next hearing date |
+| `createdAt` | `TIMESTAMP` | No | Current time | Case creation timestamp |
+| `updatedAt` | `TIMESTAMP` | No | Current time | Modification timestamp |
+
+---
+
+### 2.15 `case_parties` Table
+Up to 10 litigants, petitioners, and respondents associated with a legal case file.
+
+| Column | Type | Nullable | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `UUID` | No | `UUIDV4` | **Primary Key** |
+| `caseId` | `UUID` | No | None | **Foreign Key** $\rightarrow$ `cases(id)`, **CASCADE DELETE** |
+| `name` | `VARCHAR(255)`| No | None | Litigant or party legal name |
+| `roleLabel` | `VARCHAR(100)`| No | None | Formal designation (`Plaintiff`, `Defendant`, `Petitioner`, `Respondent`) |
+| `createdAt` | `TIMESTAMP` | No | Current time | Addition timestamp |
+| `updatedAt` | `TIMESTAMP` | No | Current time | Update timestamp |
+
+---
+
+### 2.16 `case_status_events` Table
+Immutable audit log of all case status and stage transitions.
+
+| Column | Type | Nullable | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `UUID` | No | `UUIDV4` | **Primary Key** |
+| `caseId` | `UUID` | No | None | **Foreign Key** $\rightarrow$ `cases(id)`, **CASCADE DELETE** |
+| `fromStatus` | `VARCHAR(50)` | Yes | `NULL` | Pre-transition status |
+| `toStatus` | `VARCHAR(50)` | No | None | Post-transition status |
+| `fromStage` | `VARCHAR(100)`| Yes | `NULL` | Pre-transition stage |
+| `toStage` | `VARCHAR(100)`| Yes | `NULL` | Post-transition stage |
+| `changedBy` | `UUID` | No | None | **Foreign Key** $\rightarrow$ `users(id)` of actor who transitioned the case |
+| `createdAt` | `TIMESTAMP` | No | Current time | Audit record timestamp |
+
+---
+
+### 2.17 `case_entries` Table
+Case diary proceedings, interim orders, and privileged trial notes (*Roznamcha*).
+
+| Column | Type | Nullable | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `UUID` | No | `UUIDV4` | **Primary Key** |
+| `caseId` | `UUID` | No | None | **Foreign Key** $\rightarrow$ `cases(id)`, **CASCADE DELETE** |
+| `entryDate` | `DATE` | No | None | Date of court proceeding or chamber memo |
+| `entryType` | `VARCHAR(30)` | No | None | Proceeding classification (`petition`, `order`, `note`) |
+| `title` | `VARCHAR(150)`| No | None | Heading / memo title |
+| `body` | `TEXT` | No | None | Narrative details (up to 5000 characters) |
+| `visibility` | `VARCHAR(20)` | No | `'private'` | Visibility flag (`private`, `shared`) |
+| `createdAt` | `TIMESTAMP` | No | Current time | Record creation timestamp |
+| `updatedAt` | `TIMESTAMP` | No | Current time | Modification timestamp |
+
+---
+
+### 2.18 `hearings` Table
+Scheduled court appearance dates (*Peshian*), judicial benches, and hearing outcomes.
+
+| Column | Type | Nullable | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `UUID` | No | `UUIDV4` | **Primary Key** |
+| `caseId` | `UUID` | No | None | **Foreign Key** $\rightarrow$ `cases(id)`, **CASCADE DELETE** |
+| `scheduledAt`| `TIMESTAMP` | No | None | Scheduled appearance timestamp (UTC) |
+| `court` | `VARCHAR(255)`| No | None | Forum / Bench (defaults to case's court) |
+| `bench` | `VARCHAR(120)`| Yes | `NULL` | Presiding courtroom / bench designation |
+| `stage` | `VARCHAR(50)` | Yes | `NULL` | Hearing stage (`Pleadings`, `Issues`, `Evidence`, etc.) |
+| `outcome` | `VARCHAR(300)`| Yes | `NULL` | Summary of order or judicial decision |
+| `nextDate` | `DATE` | Yes | `NULL` | Next scheduled hearing date announced in court |
+| `adjournmentReason`| `VARCHAR(300)`| Yes | `NULL` | Cause for adjournment if not decided |
+| `note` | `TEXT` | Yes | `NULL` | **Private** attorney work-product (lawyer-only) |
+| `clientExplanation`| `TEXT` | Yes | `NULL` | Plain explanation for litigant transparency |
+| `visibility` | `VARCHAR(20)` | No | `'shared'` | Visibility flag (`private`, `shared`) |
+| `createdAt` | `TIMESTAMP` | No | Current time | Scheduling timestamp |
+| `updatedAt` | `TIMESTAMP` | No | Current time | Modification timestamp |
+
+---
+
+### 2.19 `documents` Table
+Digital case files, certified court orders, evidence scans, affidavits, and FIR copies (*Misl / Dastawizat*). Stored as authenticated private assets in Cloudinary with magic bytes file signature validation.
+
+| Column | Type | Nullable | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `UUID` | No | `UUIDV4` | **Primary Key** |
+| `caseId` | `UUID` | No | None | **Foreign Key** $\rightarrow$ `cases(id)`, **CASCADE DELETE** |
+| `uploadedBy` | `UUID` | No | None | **Foreign Key** $\rightarrow$ `users(id)`, **CASCADE DELETE** |
+| `originalName` | `VARCHAR(255)` | No | None | Original upload filename (e.g. `writ_petition.pdf`) |
+| `mimeType` | `VARCHAR(100)` | No | None | MIME type validated via magic bytes header |
+| `sizeBytes` | `BIGINT` | No | None | Exact file size in bytes ($\le$ 10 MB) |
+| `docType` | `VARCHAR(50)` | No | None | Document category (`Petition`, `Court Order`, `Evidence`, etc.) |
+| `tags` | `JSONB` | No | `'[]'` | Searchable categorisation tags (max 5 tags, max 30 chars each) |
+| `visibility` | `VARCHAR(20)` | No | `'private'` | Access scope (`private` = lawyer only, `shared` = client visible) |
+| `publicId` | `VARCHAR(255)` | No | None | Authenticated private Cloudinary asset reference |
+| `resourceType` | `VARCHAR(50)` | No | `'raw'` | Cloudinary resource type (`raw`, `image`) |
+| `createdAt` | `TIMESTAMP` | No | Current time | Upload timestamp |
+| `updatedAt` | `TIMESTAMP` | No | Current time | Modification timestamp |
+
+---
+
 ## 3. Database Indexes & High-Speed Constraints
 
 | Index Name | Table | Columns | Type | Purpose |
@@ -469,3 +581,143 @@ Rule 135 compliant verified client ratings (1–5 stars) and chamber responses.
 | `consultation_notes_booking_unique` | `consultation_notes` | `bookingId` | Unique B-Tree | Strict 1-to-1 privileged note guarantee |
 | `reviews_booking_unique` | `reviews` | `bookingId` | Unique B-Tree | Prevents multiple reviews for the same consultation session |
 | `reviews_lawyer_rating_idx` | `reviews` | `(lawyerId, rating)` | Composite B-Tree | High-speed average rating aggregation for advocate profiles |
+| `cases_booking_id_uk` | `cases` | `bookingId` | Unique B-Tree (Nullable) | Strict 1-to-1 booking-to-case link; prevents reuse of consultation |
+| `cases_lawyer_id_idx` | `cases` | `lawyerId` | B-Tree | High-speed advocate case list querying |
+| `cases_client_id_idx` | `cases` | `clientId` | B-Tree | High-speed client case list querying |
+| `cases_status_idx` | `cases` | `status` | B-Tree | Fast case lifecycle filtering |
+| `cases_court_idx` | `cases` | `court` | B-Tree | Forum & bench filtering |
+| `case_parties_case_id_idx` | `case_parties` | `caseId` | B-Tree | Rapid party list retrieval during case queries |
+| `case_status_events_case_id_idx`| `case_status_events`| `caseId` | B-Tree | Rapid audit history retrieval |
+| `case_entries_case_id_idx` | `case_entries` | `caseId` | B-Tree | Rapid case diary entries querying |
+| `case_entries_case_visibility_idx`| `case_entries` | `(caseId, visibility)` | Composite B-Tree | Filtered client visibility query optimization |
+| `case_entries_entry_date_idx` | `case_entries` | `entryDate` | B-Tree | Chronological diary order index |
+| `hearings_case_id_idx` | `hearings` | `caseId` | B-Tree | Rapid hearing list retrieval per case |
+| `hearings_scheduled_at_idx` | `hearings` | `scheduledAt` | B-Tree | High-speed cause list & nextHearing lookup |
+| `hearings_court_idx` | `hearings` | `court` | B-Tree | Fast judicial forum filtering |
+| `hearings_case_visibility_idx` | `hearings` | `(caseId, visibility)` | Composite B-Tree | Filtered client hearing query optimization |
+| `documents_case_id_idx` | `documents` | `caseId` | B-Tree | Rapid document retrieval per case file |
+| `documents_case_visibility_idx` | `documents` | `(caseId, visibility)` | Composite B-Tree | Filtered client shared document query optimization |
+| `documents_uploaded_by_idx` | `documents` | `uploadedBy` | B-Tree | Fast user upload auditing |
+| `documents_doc_type_idx` | `documents` | `docType` | B-Tree | Category-specific filtering (`Petition`, `Evidence`) |
+
+---
+
+### 2.20 `fee_agreements` Table
+Contracted terms of professional representation and fee agreements (*Fee Taiba / Muawaza*). Exactly one fee agreement per case file enforced by unique constraint.
+
+| Column | Type | Nullable | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `UUID` | No | `UUIDV4` | **Primary Key** |
+| `caseId` | `UUID` | No | None | **Foreign Key** $\rightarrow$ `cases(id)`, **UNIQUE**, **CASCADE DELETE** |
+| `type` | `VARCHAR(30)` | No | None | Agreement model (`fixed`, `per_appearance`, `stage_wise`) |
+| `agreedAmountPkr` | `INTEGER` | No | `0` | Contracted amount in PKR ($0$ to $100,000,000$) |
+| `notes` | `VARCHAR(500)` | Yes | `NULL` | Fee stages breakdown or billing terms memo |
+| `createdAt` | `TIMESTAMP` | No | Current time | Initial agreement timestamp |
+| `updatedAt` | `TIMESTAMP` | No | Current time | Terms modification timestamp |
+
+---
+
+### 2.21 `fee_payments` Table
+Litigant fee payment ledger entries (*Wasoolian / Khata*). Tracks all payments made across diverse channels (cash, bank, JazzCash, EasyPaisa, cheque).
+
+| Column | Type | Nullable | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `UUID` | No | `UUIDV4` | **Primary Key** |
+| `caseId` | `UUID` | No | None | **Foreign Key** $\rightarrow$ `cases(id)`, **CASCADE DELETE** |
+| `amountPkr` | `INTEGER` | No | None | Payment amount in PKR ($1$ to $100,000,000$) |
+| `method` | `VARCHAR(30)` | No | None | Payment channel (`cash`, `bank`, `jazzcash`, `easypaisa`, `cheque`) |
+| `reference` | `VARCHAR(60)` | Yes | `NULL` | Cheque number, bank IBFT TID, or mobile transaction ID |
+| `paidOn` | `DATE` | No | None | Date payment was remitted |
+| `note` | `VARCHAR(300)` | Yes | `NULL` | Memo or stage description (e.g., "Advance for evidence stage") |
+| `createdAt` | `TIMESTAMP` | No | Current time | Entry recording timestamp |
+| `updatedAt` | `TIMESTAMP` | No | Current time | Modification timestamp |
+
+---
+
+### 2.22 `notifications` Table
+In-app notification inbox, hearing reminder alerts (*Ittila-nama*), and email delivery tracking.
+
+| Column | Type | Nullable | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `UUID` | No | `UUIDV4` | **Primary Key** |
+| `userId` | `UUID` | No | None | **Foreign Key** $\rightarrow$ `users(id)`, **CASCADE DELETE** |
+| `type` | `VARCHAR(50)` | No | None | Event kind (`booking_created`, `hearing_reminder`, `document_uploaded`, etc.) |
+| `title` | `VARCHAR(255)` | No | None | Short headline for user alert bell |
+| `body` | `TEXT` | No | None | Detailed notification message |
+| `link` | `VARCHAR(500)` | Yes | `NULL` | Deep link / routing path (e.g., `/cases/:id`) |
+| `readAt` | `TIMESTAMPTZ` | Yes | `NULL` | Timestamp when user opened/marked as read (`NULL` = unread) |
+| `emailStatus` | `VARCHAR(20)` | No | `'skipped'` | Outbound email status (`queued`, `sent`, `failed`, `skipped`) |
+| `metadata` | `JSONB` | Yes | `NULL` | Contextual payload (e.g., `hearingId`, `caseId`, `milestone`, `recipientRole`) |
+| `createdAt` | `TIMESTAMP` | No | Current time | Notification generation timestamp |
+| `updatedAt` | `TIMESTAMP` | No | Current time | Last modification timestamp |
+
+---
+
+### 2.23 `messages` Table
+Direct communications between litigants and advocates within consultation booking or active case contexts (*Muraslat*).
+
+| Column | Type | Nullable | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `UUID` | No | `UUIDV4` | **Primary Key** |
+| `senderId` | `UUID` | No | None | **Foreign Key** $\rightarrow$ `users(id)`, **CASCADE DELETE** |
+| `bookingId` | `UUID` | Yes | `NULL` | **Foreign Key** $\rightarrow$ `bookings(id)`, **CASCADE DELETE** |
+| `caseId` | `UUID` | Yes | `NULL` | **Foreign Key** $\rightarrow$ `cases(id)`, **CASCADE DELETE** |
+| `content` | `TEXT` | No | None | Message text ($1$ to $2,000$ characters) |
+| `attachments` | `JSONB` | Yes | `NULL` | Array of optional file metadata objects (max 5) |
+| `readAt` | `TIMESTAMPTZ` | Yes | `NULL` | Timestamp when counter-party viewed message (`NULL` = unread) |
+| `createdAt` | `TIMESTAMP` | No | Current time | Message sent timestamp |
+| `updatedAt` | `TIMESTAMP` | No | Current time | Last modification timestamp |
+
+* **Integrity Constraint:** Check constraint requires `(bookingId IS NOT NULL OR caseId IS NOT NULL)`.
+
+---
+
+## 3. Database Indexes & High-Speed Constraints
+
+| Index Name | Table | Columns | Type | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| `users_email_unique_idx` | `users` | `email` | Unique B-Tree | High-speed login lookup & prevents duplicate emails |
+| `lawyer_applications_bar_enrolment_unique` | `lawyer_applications` | `(barCouncil, enrolmentNo)` | Composite Unique | **Anti-fraud**: Prevents duplicate Bar Council credentials |
+| `lawyer_applications_status_idx` | `lawyer_applications` | `status` | B-Tree | Fast filtering for directory (approved lawyers only) |
+| `lawyer_services_lawyer_mode_unique` | `lawyer_services` | `(lawyerId, mode)` | Composite Unique | Enforces 1 active service tariff per mode |
+| `availability_rules_lawyer_day_idx` | `availability_rules` | `(lawyerId, dayOfWeek)` | B-Tree | High-speed weekly schedule calculation |
+| `blocked_dates_lawyer_date_unique` | `blocked_dates` | `(lawyerId, date)` | Composite Unique | Prevents duplicate holiday blocks on the same date |
+| `bookings_lawyer_open_slot_idx` | `bookings` | `(lawyerId, startsAt) WHERE status IN ('requested', 'accepted', 'paid', 'confirmed', 'pending')` | Partial Unique | **Zero Double-Bookings**: Prevents overlapping slots under simultaneous bookings |
+| `payments_booking_unique` | `payments` | `bookingId` | Unique B-Tree | Strict 1-to-1 payment remittance guarantee |
+| `payments_reference_unique` | `payments` | `reference` | Unique B-Tree | Prevents duplicate transaction references |
+| `consultation_notes_booking_unique` | `consultation_notes` | `bookingId` | Unique B-Tree | Strict 1-to-1 privileged note guarantee |
+| `reviews_booking_unique` | `reviews` | `bookingId` | Unique B-Tree | Prevents multiple reviews for the same consultation session |
+| `reviews_lawyer_rating_idx` | `reviews` | `(lawyerId, rating)` | Composite B-Tree | High-speed average rating aggregation for advocate profiles |
+| `cases_booking_id_uk` | `cases` | `bookingId` | Unique B-Tree (Nullable) | Strict 1-to-1 booking-to-case link; prevents reuse of consultation |
+| `cases_lawyer_id_idx` | `cases` | `lawyerId` | B-Tree | High-speed advocate case list querying |
+| `cases_client_id_idx` | `cases` | `clientId` | B-Tree | High-speed client case list querying |
+| `cases_status_idx` | `cases` | `status` | B-Tree | Fast case lifecycle filtering |
+| `cases_court_idx` | `cases` | `court` | B-Tree | Forum & bench filtering |
+| `case_parties_case_id_idx` | `case_parties` | `caseId` | B-Tree | Rapid party list retrieval during case queries |
+| `case_status_events_case_id_idx`| `case_status_events`| `caseId` | B-Tree | Rapid audit history retrieval |
+| `case_entries_case_id_idx` | `case_entries` | `caseId` | B-Tree | Rapid case diary entries querying |
+| `case_entries_case_visibility_idx`| `case_entries` | `(caseId, visibility)` | Composite B-Tree | Filtered client visibility query optimization |
+| `case_entries_entry_date_idx` | `case_entries` | `entryDate` | B-Tree | Chronological diary order index |
+| `hearings_case_id_idx` | `hearings` | `caseId` | B-Tree | Rapid hearing list retrieval per case |
+| `hearings_scheduled_at_idx` | `hearings` | `scheduledAt` | B-Tree | High-speed cause list & nextHearing lookup |
+| `hearings_court_idx` | `hearings` | `court` | B-Tree | Fast judicial forum filtering |
+| `hearings_case_visibility_idx` | `hearings` | `(caseId, visibility)` | Composite B-Tree | Filtered client hearing query optimization |
+| `documents_case_id_idx` | `documents` | `caseId` | B-Tree | Rapid document retrieval per case file |
+| `documents_case_visibility_idx` | `documents` | `(caseId, visibility)` | Composite B-Tree | Filtered client shared document query optimization |
+| `documents_uploaded_by_idx` | `documents` | `uploadedBy` | B-Tree | Fast user upload auditing |
+| `documents_doc_type_idx` | `documents` | `docType` | B-Tree | Category-specific filtering (`Petition`, `Evidence`) |
+| `fee_agreements_case_id_uk` | `fee_agreements` | `caseId` | Unique B-Tree | Enforces 1 contractual fee agreement per case |
+| `fee_payments_case_id_idx` | `fee_payments` | `caseId` | B-Tree | Rapid fee payment retrieval and sum calculation per case |
+| `fee_payments_paid_on_idx` | `fee_payments` | `paidOn` | B-Tree | Chronological payment receipt ordering |
+| `notifications_user_id_read_at_idx` | `notifications` | `(userId, readAt)` | Composite B-Tree | Rapid unread badge count & read-filtered queries |
+| `notifications_user_id_created_at_idx` | `notifications` | `(userId, createdAt)` | Composite B-Tree | Chronological pagination of user notification inbox |
+| `notifications_user_id_type_idx` | `notifications` | `(userId, type)` | Composite B-Tree | Type-specific filtering & reminder idempotency checks |
+| `messages_booking_id_created_at_idx` | `messages` | `(bookingId, createdAt DESC)` | Composite B-Tree | High-speed reverse-chronological booking message history |
+| `messages_case_id_created_at_idx` | `messages` | `(caseId, createdAt DESC)` | Composite B-Tree | High-speed reverse-chronological case message history |
+| `messages_sender_id_created_at_idx` | `messages` | `(senderId, createdAt)` | Composite B-Tree | Audit logging of sent communications |
+
+
+
+
+
+

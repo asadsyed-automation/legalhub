@@ -12,6 +12,16 @@ const { initBookingEventModel } = require('./bookingEvent.model');
 const { initConsultationNoteModel } = require('./consultationNote.model');
 const { initEngagementModel } = require('./engagement.model');
 const { initReviewModel } = require('./review.model');
+const { initCaseModel } = require('./case.model');
+const { initCasePartyModel } = require('./caseParty.model');
+const { initCaseStatusEventModel } = require('./caseStatusEvent.model');
+const { initCaseEntryModel } = require('./caseEntry.model');
+const { initHearingModel } = require('./hearing.model');
+const { initDocumentModel } = require('./document.model');
+const { initFeeAgreementModel } = require('./feeAgreement.model');
+const { initFeePaymentModel } = require('./feePayment.model');
+const { initNotificationModel } = require('./notification.model');
+const { initMessageModel } = require('./message.model');
 
 // Initialize models
 const User = initUserModel(sequelize);
@@ -27,6 +37,16 @@ const BookingEvent = initBookingEventModel(sequelize);
 const ConsultationNote = initConsultationNoteModel(sequelize);
 const Engagement = initEngagementModel(sequelize);
 const Review = initReviewModel(sequelize);
+const Case = initCaseModel(sequelize);
+const CaseParty = initCasePartyModel(sequelize);
+const CaseStatusEvent = initCaseStatusEventModel(sequelize);
+const CaseEntry = initCaseEntryModel(sequelize);
+const Hearing = initHearingModel(sequelize);
+const Document = initDocumentModel(sequelize);
+const FeeAgreement = initFeeAgreementModel(sequelize);
+const FeePayment = initFeePaymentModel(sequelize);
+const Notification = initNotificationModel(sequelize);
+const Message = initMessageModel(sequelize);
 
 // User <-> LawyerApplication
 User.hasOne(LawyerApplication, {
@@ -369,10 +389,185 @@ LawyerApplication.hasMany(Review, {
   as: 'reviews'
 });
 
-Review.belongsTo(LawyerApplication, {
+// ==========================================
+// Case, CaseParty, CaseStatusEvent Associations (Phase 3 Part H)
+// ==========================================
+User.hasMany(Case, {
   foreignKey: 'lawyerId',
-  targetKey: 'userId',
-  as: 'application'
+  as: 'lawyerCases',
+  onDelete: 'CASCADE'
+});
+
+Case.belongsTo(User, {
+  foreignKey: 'lawyerId',
+  as: 'lawyer'
+});
+
+User.hasMany(Case, {
+  foreignKey: 'clientId',
+  as: 'clientCases',
+  onDelete: 'SET NULL'
+});
+
+Case.belongsTo(User, {
+  foreignKey: 'clientId',
+  as: 'client'
+});
+
+Booking.hasOne(Case, {
+  foreignKey: 'bookingId',
+  as: 'case',
+  onDelete: 'SET NULL'
+});
+
+Case.belongsTo(Booking, {
+  foreignKey: 'bookingId',
+  as: 'booking'
+});
+
+Case.hasMany(CaseParty, {
+  foreignKey: 'caseId',
+  as: 'parties',
+  onDelete: 'CASCADE'
+});
+
+CaseParty.belongsTo(Case, {
+  foreignKey: 'caseId',
+  as: 'case'
+});
+
+Case.hasMany(CaseStatusEvent, {
+  foreignKey: 'caseId',
+  as: 'statusEvents',
+  onDelete: 'CASCADE'
+});
+
+CaseStatusEvent.belongsTo(Case, {
+  foreignKey: 'caseId',
+  as: 'case'
+});
+
+CaseStatusEvent.belongsTo(User, {
+  foreignKey: 'changedBy',
+  as: 'actor'
+});
+
+// Case <-> CaseEntry
+Case.hasMany(CaseEntry, {
+  foreignKey: 'caseId',
+  as: 'entries',
+  onDelete: 'CASCADE'
+});
+
+CaseEntry.belongsTo(Case, {
+  foreignKey: 'caseId',
+  as: 'case'
+});
+
+// Case <-> Hearing
+Case.hasMany(Hearing, {
+  foreignKey: 'caseId',
+  as: 'hearings',
+  onDelete: 'CASCADE'
+});
+
+Hearing.belongsTo(Case, {
+  foreignKey: 'caseId',
+  as: 'case'
+});
+
+// Case <-> Document
+Case.hasMany(Document, {
+  foreignKey: 'caseId',
+  as: 'documents',
+  onDelete: 'CASCADE'
+});
+
+Document.belongsTo(Case, {
+  foreignKey: 'caseId',
+  as: 'case'
+});
+
+Document.belongsTo(User, {
+  foreignKey: 'uploadedBy',
+  as: 'uploader'
+});
+
+User.hasMany(Document, {
+  foreignKey: 'uploadedBy',
+  as: 'uploadedDocuments'
+});
+
+// Case <-> FeeAgreement (1-to-1)
+Case.hasOne(FeeAgreement, {
+  foreignKey: 'caseId',
+  as: 'feeAgreement',
+  onDelete: 'CASCADE'
+});
+
+FeeAgreement.belongsTo(Case, {
+  foreignKey: 'caseId',
+  as: 'case'
+});
+
+// Case <-> FeePayment (1-to-many)
+Case.hasMany(FeePayment, {
+  foreignKey: 'caseId',
+  as: 'feePayments',
+  onDelete: 'CASCADE'
+});
+
+FeePayment.belongsTo(Case, {
+  foreignKey: 'caseId',
+  as: 'case'
+});
+
+// User <-> Notification (1-to-many)
+User.hasMany(Notification, {
+  foreignKey: 'userId',
+  as: 'notifications',
+  onDelete: 'CASCADE'
+});
+
+Notification.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user'
+});
+
+// User <-> Message (1-to-many sent)
+User.hasMany(Message, {
+  foreignKey: 'senderId',
+  as: 'sentMessages',
+  onDelete: 'CASCADE'
+});
+
+Message.belongsTo(User, {
+  foreignKey: 'senderId',
+  as: 'sender'
+});
+
+// Booking <-> Message (1-to-many)
+Booking.hasMany(Message, {
+  foreignKey: 'bookingId',
+  as: 'messages',
+  onDelete: 'CASCADE'
+});
+
+Message.belongsTo(Booking, {
+  foreignKey: 'bookingId',
+  as: 'booking'
+});
+
+// Case <-> Message (1-to-many)
+Case.hasMany(Message, {
+  foreignKey: 'caseId',
+  as: 'messages',
+  onDelete: 'CASCADE'
+});
+
+Message.belongsTo(Case, {
+  foreignKey: 'caseId',
+  as: 'case'
 });
 
 const db = {
@@ -389,10 +584,22 @@ const db = {
   BookingEvent,
   ConsultationNote,
   Engagement,
-  Review
+  Review,
+  Case,
+  CaseParty,
+  CaseStatusEvent,
+  CaseEntry,
+  Hearing,
+  Document,
+  FeeAgreement,
+  FeePayment,
+  Notification,
+  Message
 };
 
 module.exports = db;
+
+
 
 
 

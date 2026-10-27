@@ -117,5 +117,28 @@ router.patch(
   bookingController.cancelBooking
 );
 
+// ==========================================
+// Direct Messages (Booking Context)
+// ==========================================
+const messageController = require('../message/message.controller');
+const {
+  createMessageSchema,
+  getMessagesQuerySchema,
+  targetIdParamSchema
+} = require('../message/message.schemas');
+
+router.post(
+  '/:id/messages',
+  validate({ params: targetIdParamSchema, body: createMessageSchema }),
+  messageController.sendBookingMessage
+);
+
+router.get(
+  '/:id/messages',
+  validate({ params: targetIdParamSchema, query: getMessagesQuerySchema }),
+  messageController.getBookingMessages
+);
+
 module.exports = router;
+
 

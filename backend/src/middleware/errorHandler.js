@@ -37,6 +37,16 @@ const errorHandler = (err, req, res, next) => {
     message = 'Authentication token has expired';
   }
 
+  // Multer File Upload Errors -> 400 Bad Request
+  if (err.name === 'MulterError') {
+    statusCode = 400;
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      message = 'File size exceeds maximum permitted limit (10 MB)';
+    } else {
+      message = `File upload error: ${err.message}`;
+    }
+  }
+
   // In production, mask internal server error messages to prevent information leaks
   if (statusCode === 500 && process.env.NODE_ENV === 'production') {
     message = 'Internal Server Error';

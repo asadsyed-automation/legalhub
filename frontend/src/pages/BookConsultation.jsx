@@ -18,6 +18,7 @@ import {
   ShieldIcon,
   ArrowRightIcon,
 } from '../components/Icons';
+import ConsultationCalendar from '../components/ConsultationCalendar';
 import { SERVICE_MODES, SERVICE_MODE_LABELS, ROLES } from '../constants';
 import './BookConsultation.css';
 
@@ -33,6 +34,7 @@ export const BookConsultation = () => {
   const [loading, setLoading] = useState(true);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Form State
   const [selectedService, setSelectedService] = useState(null);
@@ -59,8 +61,8 @@ export const BookConsultation = () => {
     }
   }, [lawyerId, showToast]);
 
-  // Fetch Available Slots (14-day lookahead)
-  const fetchSlots = useCallback(async () => {
+  // Fetch Available Slots (14-day lookahead starting from target date or today)
+  const fetchSlots = useCallback(async (targetDate = new Date()) => {
     if (!lawyerId) return;
     setSlotsLoading(true);
     try {
@@ -72,8 +74,17 @@ export const BookConsultation = () => {
           month: '2-digit',
           day: '2-digit',
         }).format(d);
-      const fromStr = getKarachiDateStr(now);
-      const toStr = getKarachiDateStr(new Date(now.getTime() + 13 * 24 * 60 * 60 * 1000));
+
+      const isCurrentMonth =
+        targetDate.getFullYear() === now.getFullYear() &&
+        targetDate.getMonth() === now.getMonth();
+
+      const startDate = isCurrentMonth
+        ? now
+        : new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+
+      const fromStr = getKarachiDateStr(startDate);
+      const toStr = getKarachiDateStr(new Date(startDate.getTime() + 13 * 24 * 60 * 60 * 1000));
 
       const res = await directoryApi.getSlots(lawyerId, fromStr, toStr);
       const list = Array.isArray(res) ? res : res?.slots || [];
@@ -334,16 +345,16 @@ export const BookConsultation = () => {
                 )}
               </div>
 
-              {/* Step 2: Pick Available Slot */}
+              {/* Step 2: Pick Available Slot via Calendar */}
               <div className="bc-section">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
                   <label className="bc-section-title" style={{ margin: 0 }}>
-                    <span>2. Select Calendar Slot (14-Day Window)</span>
+                    <span>2. Select Calendar Slot</span>
                   </label>
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
-                    onClick={fetchSlots}
+                    onClick={() => fetchSlots(currentMonth)}
                     disabled={slotsLoading}
                     style={{ fontSize: '11px', padding: '3px 8px' }}
                   >
@@ -351,48 +362,23 @@ export const BookConsultation = () => {
                   </button>
                 </div>
 
-                {slotsLoading ? (
-                  <div style={{ textAlign: 'center', padding: 'var(--spacing-6)', color: 'var(--color-text-muted)' }}>
-                    Loading open calendar slots...
-                  </div>
-                ) : slots.length === 0 ? (
-                  <div className="bc-empty-slots">
-                    <CalendarIcon size={24} color="var(--color-text-subtle)" />
-                    <p style={{ margin: 'var(--spacing-1) 0 0 0', fontSize: 'var(--font-size-sm)' }}>
-                      No automated open slots in the next 14 days. You can submit an enquiry directly to the advocate.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bc-slots-container">
-                    {Object.entries(groupedSlots).map(([dateLabel, daySlots]) => (
-                      <div key={dateLabel} className="bc-slot-group">
-                        <span className="bc-slot-group-title">{dateLabel}</span>
-                        <div className="bc-slots-row">
-                          {daySlots.map((slot, sIdx) => {
-                            const rawIso = getSlotIso(slot);
-                            const isSelected = getSlotIso(selectedSlot) === rawIso;
-                            return (
-                              <button
-                                key={sIdx}
-                                type="button"
-                                className={`bc-slot-btn ${isSelected ? 'bc-slot-btn--active' : ''}`}
-                                onClick={() => {
-                                  setSelectedSlot(slot);
-                                  if (validationErrors.slot) {
-                                    setValidationErrors((prev) => ({ ...prev, slot: null }));
-                                  }
-                                }}
-                              >
-                                <ClockIcon size={12} />
-                                <span>{getSlotTimeOnly(slot)}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <ConsultationCalendar
+                  slots={slots}
+                  selectedSlot={selectedSlot}
+                  onSelectSlot={(slot) => {
+                    setSelectedSlot(slot);
+                    if (validationErrors.slot) {
+                      setValidationErrors((prev) => ({ ...prev, slot: null }));
+                    }
+                  }}
+                  currentMonth={currentMonth}
+                  onMonthChange={(newMonth) => {
+                    setCurrentMonth(newMonth);
+                    fetchSlots(newMonth);
+                  }}
+                  isLoading={slotsLoading}
+                />
+
                 {validationErrors.slot && (
                   <span className="bc-error-text">{validationErrors.slot}</span>
                 )}
