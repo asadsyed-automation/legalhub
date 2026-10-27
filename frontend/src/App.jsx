@@ -15,6 +15,10 @@ import AdminQueue from './pages/AdminQueue';
 import BookConsultation from './pages/BookConsultation';
 import MyBookings from './pages/MyBookings';
 import BookingDetail from './pages/BookingDetail';
+import CasesList from './pages/CasesList';
+import NewCase from './pages/NewCase';
+import CaseDetail from './pages/CaseDetail';
+import HearingsCalendar from './pages/HearingsCalendar';
 import { ROLES } from './constants';
 
 function App() {
@@ -22,7 +26,9 @@ function App() {
   const isDashboardRoute =
     location.pathname.startsWith('/dashboard') ||
     location.pathname.startsWith('/lawyer/profile') ||
-    location.pathname.startsWith('/bookings');
+    location.pathname.startsWith('/bookings') ||
+    location.pathname.startsWith('/cases') ||
+    location.pathname.startsWith('/calendar');
 
   return (
     <>
@@ -107,6 +113,48 @@ function App() {
               <ProtectedRoute>
                 <DashboardLayout>
                   <BookingDetail />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Cases & Digital Chamber Matter Management */}
+          <Route
+            path="/cases"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <CasesList />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/cases/new"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.LAWYER]}>
+                <DashboardLayout>
+                  <NewCase />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/cases/:id"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <CaseDetail />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <HearingsCalendar />
                 </DashboardLayout>
               </ProtectedRoute>
             }

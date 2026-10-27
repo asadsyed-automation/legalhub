@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import bookingApi from '../api/booking.api';
 import engagementApi from '../api/engagement.api';
 import AdvocateAvatar from '../components/AdvocateAvatar';
@@ -19,13 +19,8 @@ import {
   PhoneIcon,
   ChatIcon,
   BriefcaseIcon,
-  ArrowRightIcon,
   CheckIcon,
-  CloseIcon,
   ShieldIcon,
-  LocationIcon,
-  CourtIcon,
-  DocumentIcon,
   StarIcon,
 } from '../components/Icons';
 import { BOOKING_STATUS, SERVICE_MODES, SERVICE_MODE_LABELS, ROLES } from '../constants';
@@ -80,7 +75,6 @@ const ExpiryTimer = ({ expiresAt }) => {
 
 export const BookingDetail = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { showToast } = useToast();
 

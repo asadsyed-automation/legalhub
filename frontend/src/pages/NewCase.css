@@ -1,0 +1,169 @@
+/* NewCase.css - New Case Registration Form */
+
+.new-case-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.new-case-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.new-case-header h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-main);
+  margin: 0;
+}
+
+.new-case-header p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.new-case-form {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.new-case-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding-bottom: var(--spacing-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.new-case-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.new-case-section__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-main);
+  margin: 0;
+}
+
+.new-case-section__desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin: calc(-1 * var(--spacing-2)) 0 0 0;
+}
+
+.new-case-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-4);
+}
+
+.new-case-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.new-case-field label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-main);
+}
+
+.new-case-field input,
+.new-case-field select,
+.new-case-field textarea {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  background-color: var(--color-bg);
+  color: var(--color-text-main);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.new-case-field input:focus,
+.new-case-field select:focus,
+.new-case-field textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.new-case-field--error input,
+.new-case-field--error select {
+  border-color: var(--color-danger);
+}
+
+.new-case-field__error {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+}
+
+/* Dynamic Parties Row */
+.new-case-party-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: var(--spacing-3);
+  align-items: flex-end;
+  background-color: var(--color-bg);
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.new-case-party-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-2);
+}
+
+/* Actions footer */
+.new-case-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-3);
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Mobile responsive (375px) */
+@media (max-width: 640px) {
+  .new-case-form {
+    padding: var(--spacing-4);
+  }
+
+  .new-case-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .new-case-party-row {
+    grid-template-columns: 1fr;
+  }
+
+  .new-case-party-row button {
+    align-self: flex-start;
+  }
+
+  .new-case-actions {
+    flex-direction: column-reverse;
+  }
+
+  .new-case-actions button,
+  .new-case-actions a {
+    width: 100%;
+    text-align: center;
+  }
+}

@@ -16,9 +16,6 @@ import {
   ChatIcon,
   BriefcaseIcon,
   ArrowRightIcon,
-  CheckIcon,
-  CloseIcon,
-  ShieldIcon,
 } from '../components/Icons';
 import { BOOKING_STATUS, SERVICE_MODES, SERVICE_MODE_LABELS, ROLES } from '../constants';
 import './MyBookings.css';

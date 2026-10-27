@@ -7,7 +7,6 @@ import {
   CheckIcon,
   CloseIcon,
   ShieldIcon,
-  ArrowRightIcon,
 } from './Icons';
 import './ConsultationNotesEditor.css';
 

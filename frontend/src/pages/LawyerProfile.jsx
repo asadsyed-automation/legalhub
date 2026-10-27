@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import directoryApi from '../api/directory.api';
 import AdvocateAvatar from '../components/AdvocateAvatar';
-import { useToast } from '../context/ToastContext';
 import {
   CourtIcon,
   LocationIcon,
@@ -15,13 +14,11 @@ import {
   VideoIcon,
   PhoneIcon,
   ChatIcon,
-  CheckIcon,
 } from '../components/Icons';
 import { SERVICE_MODES, SERVICE_MODE_LABELS } from '../constants';
 
 export const LawyerProfile = () => {
   const { id } = useParams();
-  const { showToast } = useToast();
 
   const [lawyer, setLawyer] = useState(null);
   const [loading, setLoading] = useState(true);

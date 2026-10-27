@@ -281,7 +281,7 @@ export const LawyerApplication = () => {
               </div>
               <div>
                 <span style={{ color: 'var(--color-text-subtle)', display: 'block' }}>Verification Status:</span>
-                <StatusBadge status={application.status} />
+                <StatusChip status={application.status} />
               </div>
             </div>
 

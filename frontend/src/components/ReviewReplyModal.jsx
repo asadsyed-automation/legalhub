@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { CloseIcon, ChatIcon } from './Icons';
+import { CloseIcon } from './Icons';
 import './ReviewModal.css';
 
 export const ReviewReplyModal = ({

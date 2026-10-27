@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { SearchIcon, ScalesIcon, CourtIcon, ShieldIcon, BriefcaseIcon, ClockIcon } from '../components/Icons';
+import { SearchIcon, ScalesIcon, CourtIcon, ShieldIcon, BriefcaseIcon } from '../components/Icons';
 
 export const Home = () => {
   const { isAuthenticated, user } = useAuth();

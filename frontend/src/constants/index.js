@@ -148,4 +148,82 @@ export const PAYMENT_STATUS = Object.freeze({
   REFUNDED: 'refunded',
 });
 
+export const CASE_STATUSES = Object.freeze([
+  'Prospect',
+  'Active',
+  'Adjourned',
+  'Reserved',
+  'Stayed',
+  'Decided',
+  'Appealed',
+  'Withdrawn',
+  'Closed',
+]);
+
+export const CASE_STATUS_LABELS = Object.freeze({
+  Prospect: 'Prospect / Intake',
+  Active: 'Active Hearing',
+  Adjourned: 'Adjourned / Tariq Peshi',
+  Reserved: 'Reserved for Orders',
+  Stayed: 'Stay Granted',
+  Decided: 'Decided / Disposed',
+  Appealed: 'Under Appeal',
+  Withdrawn: 'Withdrawn',
+  Closed: 'Closed File',
+});
+
+export const CASE_STAGES = Object.freeze([
+  'Pleadings',
+  'Issues',
+  'Evidence',
+  'Arguments',
+  'Judgment',
+  'Execution',
+]);
+
+export const CASE_STAGE_LABELS = Object.freeze({
+  Pleadings: 'Pleadings / Written Statement',
+  Issues: 'Framing of Issues',
+  Evidence: 'Recording of Evidence',
+  Arguments: 'Final Arguments',
+  Judgment: 'Pronouncement of Judgment',
+  Execution: 'Execution of Decree',
+});
+
+export const BASE_SUPERIOR_COURTS = [
+  'Supreme Court of Pakistan',
+  'Lahore High Court',
+  'Sindh High Court',
+  'Peshawar High Court',
+  'Balochistan High Court',
+  'Islamabad High Court',
+];
+
+export const COURTS = Object.freeze([
+  ...BASE_SUPERIOR_COURTS,
+  ...CITIES.flatMap((city) => [
+    `District Court, ${city}`,
+    `Sessions Court, ${city}`,
+  ]),
+]);
+
+export const CASE_ENTRY_TYPES = Object.freeze([
+  'petition',
+  'order',
+  'note',
+]);
+
+export const CASE_ENTRY_TYPE_LABELS = Object.freeze({
+  petition: 'Pleading / Petition',
+  order: 'Court Order / Hukam',
+  note: 'Chamber Note / Strategy',
+});
+
+export const ENTRY_VISIBILITIES = Object.freeze([
+  'private',
+  'shared',
+]);
+
+
+
 

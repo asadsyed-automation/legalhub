@@ -10,11 +10,8 @@ import {
   VideoIcon,
   PhoneIcon,
   ChatIcon,
-  CalendarIcon,
-  ClockIcon,
   CourtIcon,
   LocationIcon,
-  CheckIcon,
   ShieldIcon,
   ArrowRightIcon,
 } from '../components/Icons';
@@ -127,48 +124,6 @@ export const BookConsultation = () => {
       return String(slotOrIso);
     }
   };
-
-  const getSlotDayLabel = (slotOrIso) => {
-    try {
-      const isoStr = getSlotIso(slotOrIso);
-      const d = new Date(isoStr);
-      return d.toLocaleDateString('en-PK', {
-        timeZone: 'Asia/Karachi',
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-      });
-    } catch {
-      return '';
-    }
-  };
-
-  const getSlotTimeOnly = (slotOrIso) => {
-    try {
-      if (typeof slotOrIso === 'object' && slotOrIso !== null && (slotOrIso.localTime || slotOrIso.startLocal)) {
-        return slotOrIso.localTime || slotOrIso.startLocal;
-      }
-      const isoStr = getSlotIso(slotOrIso);
-      const d = new Date(isoStr);
-      return d.toLocaleTimeString('en-PK', {
-        timeZone: 'Asia/Karachi',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      });
-    } catch {
-      return '';
-    }
-  };
-
-  // Group slots by date
-  const groupedSlots = slots.reduce((acc, slot) => {
-    const rawTime = getSlotIso(slot);
-    const dateKey = getSlotDayLabel(rawTime) || 'Upcoming Slots';
-    if (!acc[dateKey]) acc[dateKey] = [];
-    acc[dateKey].push(slot);
-    return acc;
-  }, {});
 
   // Handle Form Submission
   const handleSubmit = async (e) => {

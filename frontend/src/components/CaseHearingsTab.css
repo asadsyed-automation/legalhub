@@ -1,0 +1,210 @@
+/* CaseHearingsTab.css - Court Hearing Schedule & Outcomes */
+
+.hearings-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+  width: 100%;
+}
+
+.hearings-tab__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+}
+
+.hearings-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.hearing-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  transition: border-color var(--transition-fast);
+}
+
+.hearing-card--upcoming {
+  border-left: 4px solid var(--color-primary);
+}
+
+.hearing-card--past {
+  border-left: 4px solid var(--color-text-subtle);
+  opacity: 0.95;
+}
+
+.hearing-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.hearing-card__time-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-main);
+}
+
+.hearing-card__badges {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}
+
+.hearing-pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-semibold);
+}
+
+.hearing-pill--upcoming {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.hearing-pill--past {
+  background-color: var(--color-bg);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.hearing-card__details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-3);
+  font-size: var(--font-size-xs);
+  background-color: var(--color-bg);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.hearing-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hearing-detail-label {
+  color: var(--color-text-subtle);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hearing-detail-val {
+  color: var(--color-text-main);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Outcome Alert Box */
+.hearing-outcome-box {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3) var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.hearing-outcome-box__title {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: #166534;
+  text-transform: uppercase;
+}
+
+.hearing-outcome-box__text {
+  font-size: var(--font-size-sm);
+  color: #14532d;
+  line-height: 1.5;
+}
+
+/* Notes & Explanation */
+.hearing-notes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3);
+}
+
+.hearing-note-box {
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.hearing-note-box--client {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: var(--color-text-main);
+}
+
+.hearing-note-box--private {
+  background-color: #fefce8;
+  border: 1px solid #fef08a;
+  color: #713f12;
+}
+
+.hearing-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--spacing-3);
+}
+
+/* Quick Outcome Modal (Optimized for phone at 375px) */
+.quick-outcome-modal {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  width: 100%;
+  max-width: 480px;
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 640px) {
+  .hearing-notes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hearings-tab__top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hearings-tab__top button {
+    width: 100%;
+  }
+
+  .hearing-card__actions {
+    flex-direction: column;
+  }
+
+  .hearing-card__actions button {
+    width: 100%;
+  }
+}

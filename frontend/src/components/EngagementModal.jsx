@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { CloseIcon, BriefcaseIcon, ShieldIcon } from './Icons';
+import { CloseIcon, BriefcaseIcon } from './Icons';
 import { PRACTICE_AREAS } from '../constants';
 import './EngagementModal.css';
 

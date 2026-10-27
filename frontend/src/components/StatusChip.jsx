@@ -23,6 +23,15 @@ const STATUS_CONFIGS = {
   closed: { label: 'Closed', className: 'status-chip--neutral' },
   answered: { label: 'Answered', className: 'status-chip--success' },
 
+  // Case Lifecycle statuses
+  prospect: { label: 'Prospect', className: 'status-chip--warning' },
+  adjourned: { label: 'Adjourned', className: 'status-chip--warning' },
+  reserved: { label: 'Reserved', className: 'status-chip--info' },
+  stayed: { label: 'Stayed', className: 'status-chip--danger' },
+  decided: { label: 'Decided', className: 'status-chip--neutral' },
+  appealed: { label: 'Appealed', className: 'status-chip--info' },
+  withdrawn: { label: 'Withdrawn', className: 'status-chip--neutral' },
+
   // Roles
   client: { label: 'Client', className: 'status-chip--neutral' },
   lawyer: { label: 'Advocate', className: 'status-chip--primary' },
