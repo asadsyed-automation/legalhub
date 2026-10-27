@@ -243,6 +243,59 @@ export const DOCUMENT_LIMITS = Object.freeze({
   ALLOWED_ACCEPT: '.pdf,.jpeg,.jpg,.png,.doc,.docx',
 });
 
+export const FEE_AGREEMENT_TYPES = Object.freeze([
+  'fixed',
+  'per_appearance',
+  'stage_wise',
+]);
+
+export const FEE_AGREEMENT_TYPE_LABELS = Object.freeze({
+  fixed: 'Fixed Lump-Sum (Total Case)',
+  per_appearance: 'Per Appearance / Hearing (Peshi)',
+  stage_wise: 'Stage-Wise Retainer',
+});
+
+export const FEE_PAYMENT_METHODS = Object.freeze([
+  'cash',
+  'bank',
+  'jazzcash',
+  'easypaisa',
+  'cheque',
+]);
+
+export const FEE_PAYMENT_METHOD_LABELS = Object.freeze({
+  cash: 'Cash',
+  bank: 'Bank Transfer',
+  jazzcash: 'JazzCash',
+  easypaisa: 'Easypaisa',
+  cheque: 'Bank Cheque',
+});
+
+export const FEE_LIMITS = Object.freeze({
+  MIN_AGREED_AMOUNT_PKR: 0,
+  MAX_FEE_PKR: 100000000, // 10 Crore PKR
+  MIN_PAYMENT_PKR: 1,
+  MAX_AGREEMENT_NOTES_LENGTH: 500,
+  MAX_PAYMENT_NOTE_LENGTH: 300,
+  MAX_PAYMENT_REF_LENGTH: 60,
+});
+
+export const TIMELINE_EVENT_KINDS = Object.freeze([
+  'all',
+  'entry',
+  'hearing',
+  'document',
+  'status_change',
+]);
+
+export const TIMELINE_EVENT_LABELS = Object.freeze({
+  all: 'All Events',
+  entry: 'Diary Entries',
+  hearing: 'Court Hearings',
+  document: 'Case Documents',
+  status_change: 'Status Changes',
+});
+
 
 
 

@@ -8,6 +8,8 @@ import { DocumentIcon, BriefcaseIcon, SearchIcon, ShieldIcon, ClockIcon } from '
 import lawyerApi from '../api/lawyer.api';
 import bookingApi from '../api/booking.api';
 import engagementApi from '../api/engagement.api';
+import caseApi from '../api/case.api';
+import notificationApi from '../api/notification.api';
 import { ROLES, APPLICATION_STATUS } from '../constants';
 
 export const Dashboard = () => {
@@ -22,6 +24,13 @@ export const Dashboard = () => {
   const [appointments, setAppointments] = useState([]);
   const [engagements, setEngagements] = useState([]);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
+
+  // Case & Hearing real metrics
+  const [caseMetrics, setCaseMetrics] = useState({
+    totalCases: 0,
+    upcomingHearings: 0,
+    unreadNotifications: 0,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -109,6 +118,45 @@ export const Dashboard = () => {
           setEngagements(Array.isArray(list) ? list : []);
         }
         setLoadingAppointments(false);
+      });
+    }
+
+    // Load Phase 3 Case & Hearing statistics for authenticated advocate or client
+    if (user?.role === ROLES.LAWYER || user?.role === ROLES.CLIENT) {
+      Promise.allSettled([
+        caseApi.listCases({ page: 1, limit: 1 }),
+        caseApi.listHearingsAcrossCases({ from: new Date().toISOString() }),
+        notificationApi.getUnreadCount(),
+      ]).then(([casesRes, hearingsRes, notifsRes]) => {
+        if (!isMounted) return;
+        let totalCases = 0;
+        let upcomingHearings = 0;
+        let unreadNotifications = 0;
+
+        if (casesRes.status === 'fulfilled') {
+          const val = casesRes.value;
+          totalCases =
+            val?.pagination?.total ||
+            val?.data?.total ||
+            (Array.isArray(val?.items) ? val.items.length : 0);
+        }
+        if (hearingsRes.status === 'fulfilled') {
+          const val = hearingsRes.value;
+          const list =
+            val?.data ||
+            val?.hearings ||
+            (Array.isArray(val) ? val : []);
+          upcomingHearings = Array.isArray(list) ? list.length : 0;
+        }
+        if (notifsRes.status === 'fulfilled') {
+          unreadNotifications = notifsRes.value?.count || 0;
+        }
+
+        setCaseMetrics({
+          totalCases,
+          upcomingHearings,
+          unreadNotifications,
+        });
       });
     }
 
@@ -345,6 +393,91 @@ export const Dashboard = () => {
             </div>
           )}
 
+          {/* Advocate Connected Cases & Cause List Panel */}
+          <div className="card" style={{ backgroundColor: 'var(--color-surface)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--spacing-4)', flexWrap: 'wrap', gap: 'var(--spacing-2)' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Active Litigation &amp; Court Cause List</h3>
+                <p style={{ margin: 'var(--spacing-1) 0 0 0', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
+                  Connected case dossiers, upcoming court hearings, and pending procedural alerts.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+                <Link to="/cases/new" className="btn btn-primary btn-sm">
+                  + New Case File
+                </Link>
+                <Link to="/cases" className="btn btn-secondary btn-sm">
+                  All Case Files
+                </Link>
+                <Link to="/calendar" className="btn btn-secondary btn-sm">
+                  Court Calendar
+                </Link>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: 'var(--spacing-3)',
+              }}
+            >
+              <Link
+                to="/cases"
+                style={{
+                  textDecoration: 'none',
+                  padding: 'var(--spacing-3) var(--spacing-4)',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}
+              >
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#1e40af', fontWeight: 600 }}>Active Case Files</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#1d4ed8' }}>{caseMetrics.totalCases}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#1e40af' }}>Dossiers in chamber</span>
+              </Link>
+
+              <Link
+                to="/calendar"
+                style={{
+                  textDecoration: 'none',
+                  padding: 'var(--spacing-3) var(--spacing-4)',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}
+              >
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#92400e', fontWeight: 600 }}>Upcoming Hearings</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#b45309' }}>{caseMetrics.upcomingHearings}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#92400e' }}>Fixed on cause list</span>
+              </Link>
+
+              <Link
+                to="/notifications"
+                style={{
+                  textDecoration: 'none',
+                  padding: 'var(--spacing-3) var(--spacing-4)',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: '#f5f3ff',
+                  border: '1px solid #ddd6fe',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}
+              >
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#5b21b6', fontWeight: 600 }}>Unread Alerts</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#6d28d9' }}>{caseMetrics.unreadNotifications}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#5b21b6' }}>Case &amp; booking notices</span>
+              </Link>
+            </div>
+          </div>
+
           {/* Advocate Real Practice Analytics & Quick Actions */}
           <div className="card" style={{ backgroundColor: 'var(--color-surface)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--spacing-4)', flexWrap: 'wrap', gap: 'var(--spacing-2)' }}>
@@ -482,6 +615,88 @@ export const Dashboard = () => {
               </Link>
             </div>
           )}
+
+          {/* Citizen Connected Cases & Cause List Panel */}
+          <div className="card" style={{ backgroundColor: 'var(--color-surface)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--spacing-4)', flexWrap: 'wrap', gap: 'var(--spacing-2)' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>My Active Lawsuits &amp; Court Schedule</h3>
+                <p style={{ margin: 'var(--spacing-1) 0 0 0', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
+                  Transparent timeline, shared documents, and upcoming hearing dates.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+                <Link to="/cases" className="btn btn-secondary btn-sm">
+                  View My Case Files
+                </Link>
+                <Link to="/calendar" className="btn btn-secondary btn-sm">
+                  Court Hearing Calendar
+                </Link>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: 'var(--spacing-3)',
+              }}
+            >
+              <Link
+                to="/cases"
+                style={{
+                  textDecoration: 'none',
+                  padding: 'var(--spacing-3) var(--spacing-4)',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}
+              >
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#1e40af', fontWeight: 600 }}>Active Case Files</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#1d4ed8' }}>{caseMetrics.totalCases}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#1e40af' }}>Represented matters</span>
+              </Link>
+
+              <Link
+                to="/calendar"
+                style={{
+                  textDecoration: 'none',
+                  padding: 'var(--spacing-3) var(--spacing-4)',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}
+              >
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#92400e', fontWeight: 600 }}>Upcoming Court Dates</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#b45309' }}>{caseMetrics.upcomingHearings}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#92400e' }}>Upcoming appearances</span>
+              </Link>
+
+              <Link
+                to="/notifications"
+                style={{
+                  textDecoration: 'none',
+                  padding: 'var(--spacing-3) var(--spacing-4)',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: '#f5f3ff',
+                  border: '1px solid #ddd6fe',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}
+              >
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#5b21b6', fontWeight: 600 }}>Pending Alerts</span>
+                <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#6d28d9' }}>{caseMetrics.unreadNotifications}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: '#5b21b6' }}>Unread notifications</span>
+              </Link>
+            </div>
+          </div>
 
           {/* Citizen Metrics Grid */}
           <div className="card" style={{ backgroundColor: 'var(--color-surface)' }}>

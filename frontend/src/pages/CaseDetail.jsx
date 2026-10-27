@@ -8,8 +8,6 @@ import {
   CourtIcon,
   CalendarIcon,
   ClockIcon,
-  DocumentIcon,
-  BriefcaseIcon,
 } from '../components/Icons';
 import {
   ROLES,
@@ -21,6 +19,9 @@ import {
 import CaseEntriesTab from '../components/CaseEntriesTab';
 import CaseHearingsTab from '../components/CaseHearingsTab';
 import CaseDocumentsTab from '../components/CaseDocumentsTab';
+import CaseFeesTab from '../components/CaseFeesTab';
+import CaseTimelineTab from '../components/CaseTimelineTab';
+import CaseMessagesTab from '../components/CaseMessagesTab';
 import './CaseDetail.css';
 
 const TABS = [
@@ -28,9 +29,9 @@ const TABS = [
   { id: 'entries', label: 'Entries (Diary)' },
   { id: 'hearings', label: 'Hearings' },
   { id: 'documents', label: 'Documents' },
-  { id: 'fees', label: 'Fees & Ledger', badge: 'FE-7' },
-  { id: 'timeline', label: 'Timeline', badge: 'FE-8' },
-  { id: 'messages', label: 'Messages', badge: 'FE-9' },
+  { id: 'fees', label: 'Fees & Ledger' },
+  { id: 'timeline', label: 'Timeline' },
+  { id: 'messages', label: 'Messages' },
 ];
 
 export const CaseDetail = () => {
@@ -485,43 +486,28 @@ export const CaseDetail = () => {
           />
         )}
 
+        {/* TAB 5: FEES & LEDGER */}
         {activeTab === 'fees' && (
-          <div className="case-tab-placeholder">
-            <BriefcaseIcon size={40} color="var(--color-primary)" />
-            <h3>Case Fee Agreements & Payment Ledger</h3>
-            <p>
-              Record fee arrangements (fixed, per-appearance, or stage-wise), track client installments, and calculate real-time chamber balances.
-            </p>
-            <span className="case-tab-btn__badge" style={{ fontSize: '12px', padding: '4px 12px' }}>
-              Scheduled for Phase 3 Part K (FE-7)
-            </span>
-          </div>
+          <CaseFeesTab
+            caseId={caseData.id}
+            isLawyer={isLawyer}
+          />
         )}
 
+        {/* TAB 6: TIMELINE */}
         {activeTab === 'timeline' && (
-          <div className="case-tab-placeholder">
-            <ClockIcon size={40} color="var(--color-primary)" />
-            <h3>Chronological Case Journey Timeline</h3>
-            <p>
-              Unified 4-way chronological timeline merging diary entries, hearing outcomes, document uploads, and procedural status events.
-            </p>
-            <span className="case-tab-btn__badge" style={{ fontSize: '12px', padding: '4px 12px' }}>
-              Scheduled for Phase 3 Part L (FE-8)
-            </span>
-          </div>
+          <CaseTimelineTab
+            caseId={caseData.id}
+            isLawyer={isLawyer}
+          />
         )}
 
+        {/* TAB 7: MESSAGES */}
         {activeTab === 'messages' && (
-          <div className="case-tab-placeholder">
-            <DocumentIcon size={40} color="var(--color-primary)" />
-            <h3>Case Context Direct Messaging</h3>
-            <p>
-              Direct, privileged attorney-client communication scoped specifically to this case file with automatic read receipts.
-            </p>
-            <span className="case-tab-btn__badge" style={{ fontSize: '12px', padding: '4px 12px' }}>
-              Scheduled for Phase 3 Part N (FE-9)
-            </span>
-          </div>
+          <CaseMessagesTab
+            caseId={caseData.id}
+            isLawyer={isLawyer}
+          />
         )}
       </div>
 

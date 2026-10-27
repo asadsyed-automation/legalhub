@@ -16,7 +16,9 @@ import {
   CalendarIcon,
   MenuIcon,
   CloseIcon,
+  BellIcon,
 } from './Icons';
+import notificationApi from '../api/notification.api';
 import './DashboardLayout.css';
 
 export const DashboardLayout = ({ children }) => {
@@ -26,6 +28,31 @@ export const DashboardLayout = ({ children }) => {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Background 60s poll for unread notifications
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUnread = async () => {
+      if (!user) return;
+      try {
+        const res = await notificationApi.getUnreadCount();
+        if (isMounted) {
+          setUnreadCount(res?.count || 0);
+        }
+      } catch (err) {
+        // Silently pass in background polling
+        console.debug('Failed to poll notification count:', err?.message);
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 60000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [user, location.pathname]);
 
   // Close mobile drawer upon navigating
   useEffect(() => {
@@ -53,6 +80,7 @@ export const DashboardLayout = ({ children }) => {
   const getNavLinks = () => {
     const commonLinks = [
       { to: '/dashboard', label: 'Dashboard', icon: <DashboardIcon size={18} /> },
+      { to: '/notifications', label: 'Notifications', icon: <BellIcon size={18} /> },
     ];
 
     if (user?.role === ROLES.CLIENT) {
@@ -122,6 +150,21 @@ export const DashboardLayout = ({ children }) => {
         </div>
 
         <div className="dash-topbar__right">
+          {/* Notification Bell */}
+          <NavLink
+            to="/notifications"
+            className="dash-topbar__bell-btn"
+            title={unreadCount > 0 ? `${unreadCount} unread notifications` : 'Notifications'}
+            aria-label="View notifications"
+          >
+            <BellIcon size={18} />
+            {unreadCount > 0 && (
+              <span className="dash-topbar__bell-badge">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </NavLink>
+
           <div className="dash-topbar__user-capsule">
             <span className="dash-topbar__user-name" title={user?.email}>
               {user?.name}

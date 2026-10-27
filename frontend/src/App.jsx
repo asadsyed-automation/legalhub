@@ -19,6 +19,7 @@ import CasesList from './pages/CasesList';
 import NewCase from './pages/NewCase';
 import CaseDetail from './pages/CaseDetail';
 import HearingsCalendar from './pages/HearingsCalendar';
+import Notifications from './pages/Notifications';
 import { ROLES } from './constants';
 
 function App() {
@@ -28,7 +29,8 @@ function App() {
     location.pathname.startsWith('/lawyer/profile') ||
     location.pathname.startsWith('/bookings') ||
     location.pathname.startsWith('/cases') ||
-    location.pathname.startsWith('/calendar');
+    location.pathname.startsWith('/calendar') ||
+    location.pathname.startsWith('/notifications');
 
   return (
     <>
@@ -155,6 +157,16 @@ function App() {
               <ProtectedRoute>
                 <DashboardLayout>
                   <HearingsCalendar />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Notifications />
                 </DashboardLayout>
               </ProtectedRoute>
             }

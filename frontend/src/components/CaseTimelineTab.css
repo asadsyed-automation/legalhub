@@ -1,0 +1,310 @@
+/* CaseTimelineTab.css - Unified 4-Way Chronological Case Timeline */
+
+.timeline-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  width: 100%;
+}
+
+/* ==========================================================================
+   Filter Pills Bar
+   ========================================================================== */
+.timeline-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  overflow-x: auto;
+  padding-bottom: var(--spacing-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.timeline-filter-btn {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.timeline-filter-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text-main);
+  background-color: #f8fafc;
+}
+
+.timeline-filter-btn--active {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border-color: var(--color-primary);
+}
+
+.timeline-filter-btn--active:hover {
+  background-color: var(--color-primary-dark);
+  color: #ffffff;
+}
+
+.timeline-filter-btn__count {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.timeline-filter-btn:not(.timeline-filter-btn--active) .timeline-filter-btn__count {
+  background-color: #f1f5f9;
+  color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   Timeline Vertical Stream & Spine
+   ========================================================================== */
+.timeline-stream {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+  padding-left: 28px;
+}
+
+/* The vertical connecting spine */
+.timeline-stream::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 13px;
+  width: 2px;
+  background-color: #e2e8f0;
+}
+
+/* Individual timeline item row */
+.timeline-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Node circle anchored on the spine */
+.timeline-item__node {
+  position: absolute;
+  left: -28px;
+  top: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  z-index: 2;
+  box-shadow: 0 0 0 3px var(--color-surface);
+}
+
+.timeline-item__node--entry {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+.timeline-item__node--hearing {
+  border-color: #f59e0b;
+  background-color: #fffbeb;
+  color: #d97706;
+}
+
+.timeline-item__node--document {
+  border-color: #10b981;
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.timeline-item__node--status_change {
+  border-color: #8b5cf6;
+  background-color: #f5f3ff;
+  color: #7c3aed;
+}
+
+/* Timeline Card Content */
+.timeline-item__card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4) var(--spacing-5);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.timeline-item__card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.timeline-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.timeline-item__badges-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+/* Kind Badges */
+.timeline-kind-badge {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.timeline-kind-badge--entry {
+  background-color: #eff6ff;
+  color: #1e40af;
+}
+
+.timeline-kind-badge--hearing {
+  background-color: #fffbeb;
+  color: #92400e;
+}
+
+.timeline-kind-badge--document {
+  background-color: #ecfdf5;
+  color: #065f46;
+}
+
+.timeline-kind-badge--status_change {
+  background-color: #f5f3ff;
+  color: #5b21b6;
+}
+
+/* Visibility Pills */
+.timeline-visibility-pill {
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.timeline-visibility-pill--private {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.timeline-visibility-pill--shared {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.timeline-item__timestamp {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.timeline-item__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-main);
+  margin: 0;
+}
+
+.timeline-item__summary {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-main);
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* Specific Metadata Details */
+.timeline-metadata-box {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3) var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-xs);
+}
+
+.timeline-metadata-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  color: var(--color-text-muted);
+}
+
+.timeline-metadata-row strong {
+  color: var(--color-text-main);
+}
+
+.timeline-outcome-pill {
+  background-color: #ecfdf5;
+  border-left: 3px solid #10b981;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  font-size: var(--font-size-xs);
+  color: #065f46;
+}
+
+/* Pagination Controls */
+.timeline-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ==========================================================================
+   Responsive Adaptations (375px+)
+   ========================================================================== */
+@media (max-width: 640px) {
+  .timeline-stream {
+    padding-left: 22px;
+  }
+
+  .timeline-stream::before {
+    left: 10px;
+  }
+
+  .timeline-item__node {
+    left: -22px;
+    width: 22px;
+    height: 22px;
+    top: 16px;
+  }
+
+  .timeline-item__node svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .timeline-item__card {
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+
+  .timeline-item__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

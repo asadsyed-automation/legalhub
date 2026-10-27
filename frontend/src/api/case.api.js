@@ -109,6 +109,42 @@ export const caseApi = {
       responseType: 'blob',
     });
   },
+
+  // ==========================================
+  // Case Fees & Ledger (/cases/:id/fees, /cases/:id/fee-agreement, /cases/:id/payments)
+  // ==========================================
+
+  getFees: async (caseId) => {
+    return apiClient.get(`/cases/${caseId}/fees`);
+  },
+
+  upsertFeeAgreement: async (caseId, payload) => {
+    return apiClient.put(`/cases/${caseId}/fee-agreement`, payload);
+  },
+
+  recordPayment: async (caseId, payload) => {
+    return apiClient.post(`/cases/${caseId}/payments`, payload);
+  },
+
+  // ==========================================
+  // Case Timeline (/cases/:id/timeline)
+  // ==========================================
+
+  getTimeline: async (caseId, params = {}) => {
+    return apiClient.get(`/cases/${caseId}/timeline`, { params });
+  },
+
+  // ==========================================
+  // Direct Case Messages (/cases/:id/messages)
+  // ==========================================
+
+  getCaseMessages: async (caseId, params = {}) => {
+    return apiClient.get(`/cases/${caseId}/messages`, { params });
+  },
+
+  sendCaseMessage: async (caseId, payload) => {
+    return apiClient.post(`/cases/${caseId}/messages`, payload);
+  },
 };
 
 export default caseApi;

@@ -1,0 +1,136 @@
+/* Notifications.css - Notifications Inbox */
+
+.notifications-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  width: 100%;
+}
+
+.notifications-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+}
+
+.notifications-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  padding-bottom: var(--spacing-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.notifications-filter-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.notification-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4) var(--spacing-5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+.notification-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.notification-card--unread {
+  background-color: #f8fafc;
+  border-left: 4px solid var(--color-primary);
+}
+
+.notification-card__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  flex: 1;
+}
+
+.notification-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.notification-type-pill {
+  font-weight: var(--font-weight-semibold);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  background-color: #f1f5f9;
+  color: var(--color-text-main);
+}
+
+.notification-type-pill--system {
+  background-color: #eff6ff;
+  color: #1e40af;
+}
+
+.notification-type-pill--booking {
+  background-color: #ecfdf5;
+  color: #065f46;
+}
+
+.notification-type-pill--case {
+  background-color: #f5f3ff;
+  color: #5b21b6;
+}
+
+.notification-card__title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-main);
+  margin: 0;
+}
+
+.notification-card__body {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.notification-card__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-2);
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .notification-card {
+    flex-direction: column;
+  }
+
+  .notification-card__actions {
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
+    padding-top: var(--spacing-2);
+    border-top: 1px solid var(--color-border);
+  }
+}

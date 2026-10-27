@@ -1,0 +1,472 @@
+/* CaseFeesTab.css - Case Fee Agreements, Chamber Ledger & Client Payments */
+
+.fees-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  width: 100%;
+}
+
+/* ==========================================================================
+   Top 3 Metric Cards (Agreed, Paid, Chamber Balance Due)
+   ========================================================================== */
+.fees-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-4);
+}
+
+.fees-metric-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.fees-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.fees-metric-card--agreed::before {
+  background-color: var(--color-primary);
+}
+
+.fees-metric-card--paid::before {
+  background-color: #10b981; /* Green */
+}
+
+.fees-metric-card--settled::before {
+  background-color: #059669; /* Deep Green */
+}
+
+.fees-metric-card--pending::before {
+  background-color: #f59e0b; /* Amber */
+}
+
+.fees-metric-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fees-metric-card__label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.fees-metric-card__icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f1f5f9;
+}
+
+.fees-metric-card--agreed .fees-metric-card__icon-wrapper {
+  background-color: #eff6ff;
+  color: var(--color-primary);
+}
+
+.fees-metric-card--paid .fees-metric-card__icon-wrapper {
+  background-color: #ecfdf5;
+  color: #10b981;
+}
+
+.fees-metric-card--settled .fees-metric-card__icon-wrapper {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.fees-metric-card--pending .fees-metric-card__icon-wrapper {
+  background-color: #fffbeb;
+  color: #d97706;
+}
+
+.fees-metric-card__value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-main);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.fees-metric-card__status-pill {
+  align-self: flex-start;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  margin-top: var(--spacing-1);
+}
+
+.fees-metric-card__status-pill--settled {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.fees-metric-card__status-pill--pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* ==========================================================================
+   Fee Agreement Terms Panel
+   ========================================================================== */
+.fees-agreement-panel {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.fees-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  padding-bottom: var(--spacing-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.fees-panel-header__title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.fees-panel-header__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-main);
+  margin: 0;
+}
+
+.fees-panel-header__badge {
+  font-size: var(--font-size-xs);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background-color: #f1f5f9;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Agreement Display View */
+.fees-agreement-display {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--spacing-4);
+}
+
+.fees-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.fees-info-block__label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.fees-info-block__value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-main);
+  font-weight: var(--font-weight-medium);
+}
+
+.fees-info-block__notes {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-main);
+  line-height: 1.6;
+  background-color: var(--color-bg);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  white-space: pre-wrap;
+}
+
+/* Agreement Edit Form */
+.fees-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-4);
+}
+
+.fees-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.fees-form-group--full {
+  grid-column: 1 / -1;
+}
+
+.fees-form-group label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-main);
+}
+
+.fees-input-prefix-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.fees-input-prefix {
+  position: absolute;
+  left: var(--spacing-3);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.fees-input-prefix-wrapper input {
+  padding-left: 48px;
+  width: 100%;
+}
+
+.fees-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-2);
+}
+
+/* ==========================================================================
+   Payments Ledger Table Section
+   ========================================================================== */
+.fees-ledger-panel {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.fees-ledger-header {
+  padding: var(--spacing-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.fees-ledger-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.fees-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--font-size-sm);
+}
+
+.fees-table th {
+  background-color: #f8fafc;
+  padding: var(--spacing-3) var(--spacing-4);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.fees-table td {
+  padding: var(--spacing-4);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  vertical-align: middle;
+}
+
+.fees-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.fees-table tbody tr:hover {
+  background-color: #fbfcfe;
+}
+
+.fees-table__amount {
+  font-weight: var(--font-weight-bold);
+  color: #065f46; /* Deep green */
+  white-space: nowrap;
+}
+
+.fees-table__ref {
+  font-family: monospace;
+  font-size: var(--font-size-xs);
+  background-color: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-main);
+  display: inline-block;
+}
+
+/* Payment Method Badges */
+.fees-method-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+.fees-method-badge--cash {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.fees-method-badge--bank {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+}
+
+.fees-method-badge--jazzcash {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.fees-method-badge--easypaisa {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.fees-method-badge--cheque {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+/* ==========================================================================
+   Record Payment Modal
+   ========================================================================== */
+.fees-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4);
+  animation: feesFadeIn 0.15s ease-out;
+}
+
+.fees-modal {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: feesSlideUp 0.2s ease-out;
+}
+
+.fees-modal__header {
+  padding: var(--spacing-4) var(--spacing-5);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fees-modal__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-main);
+  margin: 0;
+}
+
+.fees-modal__body {
+  padding: var(--spacing-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.fees-modal__footer {
+  padding: var(--spacing-4) var(--spacing-5);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-3);
+  background-color: #f8fafc;
+}
+
+@keyframes feesFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes feesSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ==========================================================================
+   Responsive Adaptations (375px+)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .fees-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fees-agreement-display {
+    grid-template-columns: 1fr;
+  }
+
+  .fees-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
