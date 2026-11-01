@@ -27,6 +27,23 @@ export const adminApi = {
    */
   rejectApplication: (id, rejectionReason) =>
     apiClient.patch(`/admin/applications/${id}/reject`, { rejectionReason }),
+
+  /**
+   * List users with pagination, role/status filtering, and search
+   * @param {object} [params] - { page, limit, role, status, search }
+   * @returns {Promise<{ users: Array<object>, pagination: { total: number, page: number, limit: number, totalPages: number } }>}
+   */
+  getUsers: (params) =>
+    apiClient.get('/admin/users', { params }),
+
+  /**
+   * Update user status (suspend or reinstate)
+   * @param {string} id - User UUID
+   * @param {{ status: 'active'|'suspended', reason?: string }} payload
+   * @returns {Promise<{ user: object, message: string }>}
+   */
+  updateUserStatus: (id, payload) =>
+    apiClient.patch(`/admin/users/${id}/status`, payload),
 };
 
 export default adminApi;

@@ -29,8 +29,29 @@ const rejectApplication = asyncHandler(async (req, res) => {
   res.status(200).json({ application });
 });
 
+/**
+ * Handle listing users with pagination, filtering, and search.
+ */
+const listUsers = asyncHandler(async (req, res) => {
+  const result = await adminService.listUsers(req.query);
+  res.status(200).json(result);
+});
+
+/**
+ * Handle updating user status (suspend or reinstate).
+ */
+const updateUserStatus = asyncHandler(async (req, res) => {
+  const user = await adminService.updateUserStatus(req.params.id, req.body, req.user.id);
+  res.status(200).json({
+    user,
+    message: `User status successfully updated to ${req.body.status}`
+  });
+});
+
 module.exports = {
   listApplications,
   approveApplication,
-  rejectApplication
+  rejectApplication,
+  listUsers,
+  updateUserStatus
 };

@@ -5,7 +5,9 @@ const requireRole = require('../../middleware/requireRole');
 const validate = require('../../middleware/validate');
 const {
   rejectApplicationSchema,
-  listApplicationsQuerySchema
+  listApplicationsQuerySchema,
+  listUsersQuerySchema,
+  updateUserStatusSchema
 } = require('./admin.schemas');
 const { ROLES } = require('../../constants/roles');
 
@@ -39,6 +41,19 @@ router.patch(
   '/bookings/:id/refund',
   validate(refundBookingSchema),
   bookingController.refundBooking
+);
+
+// Part Q: Admin user management & suspension
+router.get(
+  '/users',
+  validate(listUsersQuerySchema, 'query'),
+  adminController.listUsers
+);
+
+router.patch(
+  '/users/:id/status',
+  validate(updateUserStatusSchema),
+  adminController.updateUserStatus
 );
 
 module.exports = router;
