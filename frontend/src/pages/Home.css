@@ -1,0 +1,646 @@
+/* ==========================================================================
+   Homepage Styles — LegalHub Pakistan
+   Final Year Project — Emerson University Multan
+   Design System: Pakistan Legal Green (#0F5C3C)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Hero Section
+   -------------------------------------------------------------------------- */
+.home-hero {
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--color-bg, #F8FAFC) 100%);
+  border-bottom: 1px solid var(--color-border, #E2E8F0);
+  padding: 4rem 1.5rem 4.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-primary-light, #E8F4EE);
+  color: var(--color-primary, #0F5C3C);
+  padding: 0.45rem 1.15rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(15, 92, 60, 0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.home-hero__title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--color-text, #0F172A);
+  line-height: 1.18;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.025em;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.home-hero__title-accent {
+  color: var(--color-primary, #0F5C3C);
+  position: relative;
+  display: inline-block;
+}
+
+.home-hero__subtitle {
+  font-size: 1.1rem;
+  color: var(--color-text-muted, #64748B);
+  margin-bottom: 2.25rem;
+  line-height: 1.7;
+  max-width: 740px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Search Box & Quick Pills
+   -------------------------------------------------------------------------- */
+.home-search-box {
+  max-width: 840px;
+  margin: 0 auto 1.5rem auto;
+  background-color: var(--color-surface, #FFFFFF);
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 25px -5px rgba(15, 92, 60, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+}
+
+.home-search-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.home-search-field label {
+  display: block;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted, #64748B);
+  margin-bottom: 0.35rem;
+}
+
+.home-search-field select {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #CBD5E1);
+  font-size: 0.875rem;
+  background-color: var(--color-surface, #FFFFFF);
+  color: var(--color-text, #0F172A);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.home-search-field select:focus {
+  border-color: var(--color-primary, #0F5C3C);
+  box-shadow: 0 0 0 3px rgba(15, 92, 60, 0.12);
+}
+
+.home-search-btn {
+  align-self: flex-end;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0 1.5rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.home-pills-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.home-pills-label {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--color-text-muted, #64748B);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 0.25rem;
+}
+
+.home-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text, #334155);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.home-pill:hover {
+  border-color: var(--color-primary, #0F5C3C);
+  color: var(--color-primary, #0F5C3C);
+  background-color: var(--color-primary-light, #E8F4EE);
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   Trust Metrics Strip
+   -------------------------------------------------------------------------- */
+.home-stats-strip {
+  background-color: var(--color-surface, #FFFFFF);
+  border-bottom: 1px solid var(--color-border, #E2E8F0);
+  padding: 2.25rem 1.5rem;
+}
+
+.home-stats-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  text-align: center;
+}
+
+.home-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-right: 1px solid var(--color-border, #E2E8F0);
+  padding: 0 1rem;
+}
+
+.home-stat-item:last-child {
+  border-right: none;
+}
+
+.home-stat-num {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--color-primary, #0F5C3C);
+  line-height: 1;
+}
+
+.home-stat-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text, #0F172A);
+}
+
+.home-stat-sub {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #64748B);
+}
+
+/* --------------------------------------------------------------------------
+   Community Q&A Feed Highlight (Hook Section)
+   -------------------------------------------------------------------------- */
+.home-feed-section {
+  padding: 4.5rem 1.5rem;
+  background-color: var(--color-bg, #F8FAFC);
+}
+
+.home-feed-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.home-section-header {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 3rem auto;
+}
+
+.home-section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary, #0F5C3C);
+  background-color: var(--color-primary-light, #E8F4EE);
+  padding: 0.3rem 0.85rem;
+  border-radius: 9999px;
+  margin-bottom: 0.75rem;
+  border: 1px solid rgba(15, 92, 60, 0.2);
+}
+
+.home-section-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--color-text, #0F172A);
+  margin-bottom: 0.75rem;
+  line-height: 1.25;
+}
+
+.home-section-subtitle {
+  font-size: 1rem;
+  color: var(--color-text-muted, #64748B);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.home-feed-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.home-feed-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 14px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.home-feed-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px -5px rgba(15, 92, 60, 0.08);
+  border-color: var(--color-primary, #0F5C3C);
+}
+
+.home-feed-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  font-size: 0.775rem;
+}
+
+.home-feed-card__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text, #0F172A);
+  line-height: 1.45;
+  margin-bottom: 0.75rem;
+  text-decoration: none;
+}
+
+.home-feed-card__title:hover {
+  color: var(--color-primary, #0F5C3C);
+}
+
+.home-feed-card__snippet {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #64748B);
+  line-height: 1.55;
+  margin-bottom: 1.25rem;
+}
+
+.home-feed-card__answer-box {
+  background-color: var(--color-bg, #F8FAFC);
+  border-left: 3px solid var(--color-primary, #0F5C3C);
+  border-radius: 0 8px 8px 0;
+  padding: 0.75rem 1rem;
+  margin-top: auto;
+}
+
+.home-feed-card__lawyer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--color-text, #0F172A);
+  margin-bottom: 0.35rem;
+}
+
+.home-feed-card__answer-text {
+  font-size: 0.8rem;
+  color: #334155;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Practice Disciplines Grid
+   -------------------------------------------------------------------------- */
+.home-disciplines-section {
+  padding: 4.5rem 1.5rem;
+  background-color: var(--color-surface, #FFFFFF);
+  border-top: 1px solid var(--color-border, #E2E8F0);
+}
+
+.home-disciplines-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+.home-discipline-card {
+  background-color: var(--color-surface, #FFFFFF);
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.25s ease;
+}
+
+.home-discipline-card:hover {
+  border-color: var(--color-primary, #0F5C3C);
+  background-color: #F8FAF9;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px -4px rgba(15, 92, 60, 0.08);
+}
+
+.home-discipline-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background-color: var(--color-primary-light, #E8F4EE);
+  color: var(--color-primary, #0F5C3C);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-discipline-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text, #0F172A);
+  margin: 0;
+}
+
+.home-discipline-desc {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #64748B);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.home-discipline-link {
+  margin-top: auto;
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--color-primary, #0F5C3C);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* --------------------------------------------------------------------------
+   Dual Value Proposition Cards (WakeelDesk Inspiration)
+   -------------------------------------------------------------------------- */
+.home-dual-section {
+  padding: 4.5rem 1.5rem;
+  background-color: var(--color-bg, #F8FAFC);
+  border-top: 1px solid var(--color-border, #E2E8F0);
+}
+
+.home-dual-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.home-dual-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 16px;
+  padding: 2.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.home-dual-card--primary {
+  border-top: 5px solid var(--color-primary, #0F5C3C);
+}
+
+.home-dual-card--secondary {
+  border-top: 5px solid #2563EB;
+}
+
+.home-dual-card__header {
+  margin-bottom: 1.5rem;
+}
+
+.home-dual-card__audience {
+  font-size: 0.775rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary, #0F5C3C);
+  margin-bottom: 0.35rem;
+  display: block;
+}
+
+.home-dual-card--secondary .home-dual-card__audience {
+  color: #2563EB;
+}
+
+.home-dual-card__title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-text, #0F172A);
+  margin: 0 0 0.5rem 0;
+}
+
+.home-dual-card__desc {
+  font-size: 0.9rem;
+  color: var(--color-text-muted, #64748B);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.home-dual-card__features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.home-dual-card__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.875rem;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.home-dual-card__feature-icon {
+  color: var(--color-primary, #0F5C3C);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.home-dual-card--secondary .home-dual-card__feature-icon {
+  color: #2563EB;
+}
+
+/* --------------------------------------------------------------------------
+   4-Step Procedural Workflow
+   -------------------------------------------------------------------------- */
+.home-steps-section {
+  padding: 4.5rem 1.5rem;
+  background-color: var(--color-surface, #FFFFFF);
+  border-top: 1px solid var(--color-border, #E2E8F0);
+}
+
+.home-steps-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.home-step-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.home-step-number {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--color-primary-light, #E8F4EE);
+  color: var(--color-primary, #0F5C3C);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+.home-step-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text, #0F172A);
+  margin: 0;
+}
+
+.home-step-desc {
+  font-size: 0.825rem;
+  color: var(--color-text-muted, #64748B);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Regulatory Banner
+   -------------------------------------------------------------------------- */
+.home-compliance-banner {
+  max-width: 1100px;
+  margin: 2rem auto 4rem auto;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  background-color: var(--color-bg, #F8FAFC);
+  border: 1px solid var(--color-border, #E2E8F0);
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--color-text-subtle, #475569);
+  line-height: 1.65;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .home-search-form {
+    grid-template-columns: 1fr 1fr;
+  }
+  .home-search-btn {
+    grid-column: span 2;
+  }
+  .home-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+  .home-stat-item:nth-child(2) {
+    border-right: none;
+  }
+  .home-disciplines-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .home-feed-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-hero {
+    padding: 3rem 1rem 3.5rem;
+  }
+  .home-hero__title {
+    font-size: 2.15rem;
+  }
+  .home-search-form {
+    grid-template-columns: 1fr;
+  }
+  .home-search-btn {
+    grid-column: span 1;
+  }
+  .home-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .home-stat-item {
+    border-right: none;
+    border-bottom: 1px solid var(--color-border, #E2E8F0);
+    padding-bottom: 1.25rem;
+  }
+  .home-stat-item:last-child {
+    border-bottom: none;
+  }
+  .home-dual-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-disciplines-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-steps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
