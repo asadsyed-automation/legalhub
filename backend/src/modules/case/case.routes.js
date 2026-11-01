@@ -140,6 +140,17 @@ router.get(
   documentController.getCaseDocuments
 );
 
+// Part R: AI Summarization & Bilingual Search
+router.post(
+  '/:id/documents/:documentId/summarize',
+  documentController.summarizeDocument
+);
+
+router.get(
+  '/:id/search-documents',
+  documentController.searchCaseDocuments
+);
+
 // ==========================================
 // Case Fees & Payments (/cases/:id/fee-agreement, /cases/:id/payments, /cases/:id/fees)
 // ==========================================

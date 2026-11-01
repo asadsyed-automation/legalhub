@@ -22,9 +22,15 @@ const { initFeeAgreementModel } = require('./feeAgreement.model');
 const { initFeePaymentModel } = require('./feePayment.model');
 const { initNotificationModel } = require('./notification.model');
 const { initMessageModel } = require('./message.model');
+const { initEmailOtpModel, OTP_PURPOSES } = require('./emailOtp.model');
+const { initCommunityQuestionModel } = require('./communityQuestion.model');
+const { initCommunityAnswerModel } = require('./communityAnswer.model');
 
 // Initialize models
 const User = initUserModel(sequelize);
+const EmailOtp = initEmailOtpModel(sequelize);
+const CommunityQuestion = initCommunityQuestionModel(sequelize);
+const CommunityAnswer = initCommunityAnswerModel(sequelize);
 const LawyerApplication = initLawyerApplicationModel(sequelize);
 const LawyerProfile = initLawyerProfileModel(sequelize);
 const LawyerService = initLawyerServiceModel(sequelize);
@@ -570,9 +576,59 @@ Message.belongsTo(Case, {
   as: 'case'
 });
 
+// User <-> EmailOtp (1-to-many)
+User.hasMany(EmailOtp, {
+  foreignKey: 'userId',
+  as: 'otps',
+  onDelete: 'CASCADE'
+});
+
+EmailOtp.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user'
+});
+
+// Community Q&A Feed Associations
+CommunityQuestion.belongsTo(User, {
+  foreignKey: 'clientId',
+  as: 'client'
+});
+
+User.hasMany(CommunityQuestion, {
+  foreignKey: 'clientId',
+  as: 'communityQuestions',
+  onDelete: 'CASCADE'
+});
+
+CommunityQuestion.hasMany(CommunityAnswer, {
+  foreignKey: 'questionId',
+  as: 'answers',
+  onDelete: 'CASCADE'
+});
+
+CommunityAnswer.belongsTo(CommunityQuestion, {
+  foreignKey: 'questionId',
+  as: 'question'
+});
+
+CommunityAnswer.belongsTo(User, {
+  foreignKey: 'lawyerId',
+  as: 'lawyer'
+});
+
+User.hasMany(CommunityAnswer, {
+  foreignKey: 'lawyerId',
+  as: 'communityAnswers',
+  onDelete: 'CASCADE'
+});
+
 const db = {
   sequelize,
   User,
+  EmailOtp,
+  OTP_PURPOSES,
+  CommunityQuestion,
+  CommunityAnswer,
   LawyerApplication,
   LawyerProfile,
   LawyerService,

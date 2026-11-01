@@ -12,6 +12,10 @@ export const caseApi = {
     return apiClient.get('/cases', { params });
   },
 
+  listCases: async (params = {}) => {
+    return apiClient.get('/cases', { params });
+  },
+
   /**
    * Retrieves a single case file by UUID.
    *
@@ -108,6 +112,14 @@ export const caseApi = {
     return apiClient.get(`/documents/${documentId}/file`, {
       responseType: 'blob',
     });
+  },
+
+  summarizeDocument: async (caseId, documentId, payload = {}) => {
+    return apiClient.post(`/cases/${caseId}/documents/${documentId}/summarize`, payload);
+  },
+
+  searchDocuments: async (caseId, params = {}) => {
+    return apiClient.get(`/cases/${caseId}/search-documents`, { params });
   },
 
   // ==========================================

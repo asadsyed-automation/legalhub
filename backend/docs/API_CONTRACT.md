@@ -135,6 +135,7 @@ All 4xx and 5xx errors strictly adhere to this standardized JSON shape:
     "name": "Ahmed Khan",
     "email": "ahmed.lawyer@example.pk",
     "role": "lawyer",
+    "emailVerifiedAt": "2026-10-18T08:00:00.000Z",
     "failedLoginAttempts": 0,
     "lockedUntil": null,
     "createdAt": "2026-10-18T08:00:00.000Z",
@@ -142,6 +143,115 @@ All 4xx and 5xx errors strictly adhere to this standardized JSON shape:
   }
 }
 ```
+
+---
+
+### 2.4 Forgot Password (Request OTP)
+* **Method & Path:** `POST /auth/forgot-password`
+* **Access:** Public (Rate limited: 10 requests / 15 min per IP)
+* **Request Body:**
+```json
+{
+  "email": "user@example.pk"
+}
+```
+* **Security & Enumeration Safety:** Always returns an identical 200 message regardless of whether the email exists in the database. Dispatches a 6-digit cryptographic OTP valid for 10 minutes if the user exists.
+* **Success Response (200 OK):**
+```json
+{
+  "message": "If that email address is in our system, we have sent a 6-digit verification code to it."
+}
+```
+* **Common Errors:**
+  * `400 Bad Request`: Invalid email format.
+  * `429 Too Many Requests`: `{"error": "Please wait 60 seconds before requesting a new code"}` if requested within 60-second cooldown window.
+
+---
+
+### 2.5 Reset Password (Verify OTP & Update Password)
+* **Method & Path:** `POST /auth/reset-password`
+* **Access:** Public (Rate limited: 10 requests / 15 min per IP)
+* **Request Body:**
+```json
+{
+  "email": "user@example.pk",
+  "code": "123456",
+  "newPassword": "BrandNewSecurePassword123!"
+}
+```
+* **Validation Rules:**
+  * `email`: String, valid email.
+  * `code`: String, exactly 6 digits (`/^\d{6}$/`).
+  * `newPassword`: String, minimum 8 characters.
+* **Security Behavior:**
+  * Verifies against SHA-256 hashed code.
+  * Rejects if expired (>10 minutes).
+  * Enforces max 5 wrong attempts before locking out the code permanently (Dead Code rule).
+  * Automatically marks code as consumed (`consumedAt`) upon first successful use to prevent replay.
+  * Resets `failedLoginAttempts` to 0 and clears `lockedUntil` if the account was previously locked out.
+* **Success Response (200 OK):**
+```json
+{
+  "message": "Password has been successfully reset. You may now log in with your new password."
+}
+```
+* **Common Errors:**
+  * `400 Bad Request`: `{"error": "Invalid or expired verification code"}` (wrong code or consumed).
+  * `400 Bad Request`: `{"error": "Verification code has expired. Please request a new one."}`.
+  * `429 Too Many Requests`: `{"error": "Too many failed attempts. This verification code has been invalidated. Please request a new code."}`.
+
+---
+
+### 2.6 Verify Email (Registration Confirmation)
+* **Method & Path:** `POST /auth/verify-email`
+* **Access:** Public (Rate limited)
+* **Request Body:**
+```json
+{
+  "email": "user@example.pk",
+  "code": "123456"
+}
+```
+* **Success Response (200 OK):** Returns JWT token and user profile just like login:
+```json
+{
+  "message": "Email verified successfully",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "e6a21359-25bc-4f70-b992-6f29df5a0241",
+    "name": "Ahmed Khan",
+    "email": "ahmed.lawyer@example.pk",
+    "role": "lawyer",
+    "emailVerifiedAt": "2026-10-29T06:50:00.000Z",
+    "failedLoginAttempts": 0,
+    "lockedUntil": null
+  }
+}
+```
+* **Common Errors:**
+  * `400 Bad Request`: `{"error": "Email is already verified"}`.
+  * `400 Bad Request`: `{"error": "Invalid or expired verification code"}`.
+
+---
+
+### 2.7 Resend Email Verification Code
+* **Method & Path:** `POST /auth/resend-code`
+* **Access:** Public (Rate limited)
+* **Request Body:**
+```json
+{
+  "email": "user@example.pk"
+}
+```
+* **Success Response (200 OK):**
+```json
+{
+  "message": "Verification code sent to your email address."
+}
+```
+* **Common Errors:**
+  * `400 Bad Request`: `{"error": "Email is already verified"}`.
+  * `429 Too Many Requests`: `{"error": "Please wait 60 seconds before requesting a new code"}`.
 
 ---
 
@@ -428,6 +538,99 @@ All 4xx and 5xx errors strictly adhere to this standardized JSON shape:
 ```
 * **Validation Rule:** `rejectionReason` must be at least 10 characters.
 * **Success Response (200 OK):** Returns `{ "application": { "status": "rejected", "rejectionReason": "...", "reviewedBy": "...", "reviewedAt": "..." } }`.
+
+---
+
+### 4.4 List Users (Admin Directory)
+* **Method & Path:** `GET /admin/users`
+* **Access:** Private (`role: admin`)
+* **Query Parameters:**
+  * `page`: Integer (Default: 1, Min: 1)
+  * `limit`: Integer (Default: 10, Min: 1, Max: 50)
+  * `role`: Enum (Optional: `"client"`, `"lawyer"`, `"law_firm"`, `"admin"`)
+  * `status`: Enum (Optional: `"active"`, `"suspended"`, `"all"`, Default: `"all"`)
+  * `search`: String (Optional, matches name or email)
+* **Security & Privacy Guarantee:** Sensitive `passwordHash` is strictly excluded from output.
+* **Success Response (200 OK):**
+```json
+{
+  "users": [
+    {
+      "id": "e6a21359-25bc-4f70-b992-6f29df5a0241",
+      "name": "Ahmed Khan",
+      "email": "ahmed.lawyer@example.pk",
+      "role": "lawyer",
+      "isActive": true,
+      "suspensionReason": null,
+      "suspendedAt": null,
+      "failedLoginAttempts": 0,
+      "lockedUntil": null,
+      "emailVerifiedAt": "2026-10-18T08:00:00.000Z",
+      "createdAt": "2026-10-18T08:00:00.000Z",
+      "updatedAt": "2026-10-18T08:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 1,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1
+  }
+}
+```
+* **Common Errors:**
+  * `401 Unauthorized`: Missing or invalid token.
+  * `403 Forbidden`: User is not an administrator.
+
+---
+
+### 4.5 Update User Status (Suspend or Reinstate)
+* **Method & Path:** `PATCH /admin/users/:id/status`
+* **Access:** Private (`role: admin`)
+* **Request Body (Suspension):**
+```json
+{
+  "status": "suspended",
+  "reason": "Repeated non-appearance for confirmed consultations"
+}
+```
+* **Request Body (Reinstatement):**
+```json
+{
+  "status": "active"
+}
+```
+* **Validation Rules:**
+  * `status`: Strictly `"active"` or `"suspended"`.
+  * `reason`: Required with minimum 5 characters when `status === "suspended"`.
+* **Security Enforcement:**
+  * Administrators cannot suspend their own admin account (returns `400 Bad Request`).
+  * When suspended (`isActive: false`), the user is immediately rejected from logging in with `403 Forbidden` (`ACCOUNT_SUSPENDED`).
+  * Any pre-existing active JWT session belonging to a suspended user is immediately revoked on subsequent API requests.
+* **Success Response (200 OK):**
+```json
+{
+  "user": {
+    "id": "e6a21359-25bc-4f70-b992-6f29df5a0241",
+    "name": "Ahmed Khan",
+    "email": "ahmed.lawyer@example.pk",
+    "role": "lawyer",
+    "isActive": false,
+    "suspensionReason": "Repeated non-appearance for confirmed consultations",
+    "suspendedAt": "2026-10-29T07:45:00.000Z",
+    "failedLoginAttempts": 0,
+    "lockedUntil": null,
+    "emailVerifiedAt": "2026-10-18T08:00:00.000Z",
+    "createdAt": "2026-10-18T08:00:00.000Z",
+    "updatedAt": "2026-10-29T07:45:00.000Z"
+  },
+  "message": "User status successfully updated to suspended"
+}
+```
+* **Common Errors:**
+  * `400 Bad Request`: Self-suspension attempted or missing/short suspension reason.
+  * `403 Forbidden`: Requesting user is not an administrator.
+  * `404 Not Found`: Target user does not exist.
 
 ---
 
@@ -2454,6 +2657,87 @@ Files are validated for authentic magic bytes (PDF, JPEG, PNG, DOC, DOCX), limit
 
 ---
 
+### 16.5 AI Summarize Document
+* **Method & Path:** `POST /cases/:id/documents/:documentId/summarize`
+* **Access:** Private (`role: lawyer` or `role: client`)
+* **Access Rules:**
+  * **Assigned Lawyer:** Can summarize any document in their case file.
+  * **Linked Client:** Can summarize **ONLY** if `visibility = 'shared'`. Attempting to summarize a `private` document returns `403 Forbidden` (`Clients cannot summarize private advocate work product`).
+  * **Unrelated Users / Administrator:** `403 Forbidden`.
+* **Request Body (Optional):**
+```json
+{
+  "text": "Full legal text if available (optional, defaults to document metadata)",
+  "language": "auto",
+  "maxLength": 200
+}
+```
+* **Success Response (200 OK):**
+```json
+{
+  "documentId": "4c94e022-7718-4da8-9646-608fe077e696",
+  "originalName": "certified_fir_copy_402.pdf",
+  "summary": "In the Lahore High Court, Multan Bench. Criminal Miscellaneous Petition under Section 497 CrPC for post-arrest bail...",
+  "key_clauses": [
+    "Criminal Miscellaneous Petition under Section 497 CrPC for post-arrest bail.",
+    "High Court directs release on bail subject to furnishing surety bonds."
+  ],
+  "entities": {
+    "courts": ["Lahore High Court", "Sessions Court"],
+    "statutes": ["Section 497 CrPC", "Section 302/34 PPC"],
+    "parties": ["Petitioner Tariq Mehmood"],
+    "dates": []
+  },
+  "language": "en",
+  "word_count": 58,
+  "reading_time_minutes": 0.29,
+  "source": "ai_service"
+}
+```
+* **Common Errors:**
+  * `403 Forbidden`: Unauthorized user, admin, or client attempting to summarize private advocate work product.
+  * `404 Not Found`: Case or document not found.
+
+---
+
+### 16.6 Bilingual Search Case Documents & Diary Entries
+* **Method & Path:** `GET /cases/:id/search-documents?q=bail&topK=10`
+* **Access:** Private (`role: lawyer` or `role: client`)
+* **Access Rules:**
+  * **Assigned Lawyer:** Searches across all case documents and diary entries (both private and shared).
+  * **Linked Client:** Searches **ONLY** across `visibility = 'shared'` documents and diary entries.
+* **Query Parameters:**
+  * `q`: String (Required, search term in English or Urdu, e.g. `"bail"` or `"ضمانت"`)
+  * `topK`: Integer (Optional, default: 10)
+* **Success Response (200 OK):**
+```json
+{
+  "caseId": "1a086ba0-6f01-4475-b9b5-4bfe230ee9bb",
+  "query": "bail Section 497",
+  "total_matches": 2,
+  "results": [
+    {
+      "id": "4c94e022-7718-4da8-9646-608fe077e696",
+      "title": "certified_fir_copy_402.pdf",
+      "score": 0.9,
+      "snippet": "...Petition under Section 497 CrPC for grant of post-arrest bail in FIR 402/24..."
+    },
+    {
+      "id": "e5b8d003-8829-4fb9-9757-719fe088f707",
+      "title": "Diary: Post-Arrest Bail Hearing Arguments",
+      "score": 0.8,
+      "snippet": "Learned counsel argued application under Section 497 CrPC for grant of bail..."
+    }
+  ],
+  "source": "ai_service"
+}
+```
+* **Common Errors:**
+  * `400 Bad Request`: Missing query parameter `"q"`.
+  * `403 Forbidden`: User not assigned/linked to this case file.
+
+---
+
 ## 17. Phase 3 Part K: Case Fees & Payment Ledger
 
 Case fees manage agreed legal representation terms (`fixed`, `per_appearance`, `stage_wise`) and track payments made by the client across various payment methods (`cash`, `bank`, `jazzcash`, `easypaisa`, `cheque`).
@@ -3035,5 +3319,144 @@ The ledger automatically computes total agreed, total paid, and the balance (dis
   }
 }
 ```
+
+---
+
+## 21. Public Legal Q&A Feed Module (`/feed`)
+
+The Community Legal Q&A Feed provides a public, pro bono platform where citizens can seek preliminary legal guidance from Admin-Reviewed advocates across Pakistan.
+
+### 21.1 List Public Questions
+* **Endpoint:** `GET /feed`
+* **Access:** Public (No authentication required)
+* **Query Parameters:**
+  * `page` (optional, default: 1): Integer $\ge 1$
+  * `limit` (optional, default: 10, max: 50): Integer
+  * `practiceArea` (optional): Filter by legal domain (e.g. `Family Law`, `Criminal Defense`, `Civil Litigation`)
+  * `city` (optional): Filter by city (e.g. `Multan`, `Lahore`, `Karachi`)
+  * `status` (optional): `open` or `closed`
+  * `search` (optional): Full-text keyword match against question title and description
+* **Success Response (200 OK):**
+```json
+{
+  "questions": [
+    {
+      "id": "q1111111-2222-3333-4444-555555555555",
+      "clientId": "u1111111-2222-3333-4444-555555555555",
+      "title": "Inheritance distribution under Islamic Law in Punjab",
+      "description": "My grandfather passed away leaving agricultural land in Multan. Need guidance on mutation procedure.",
+      "practiceArea": "Civil Litigation",
+      "city": "Multan",
+      "status": "open",
+      "answersCount": 2,
+      "clientName": "M. A*** (Citizen)",
+      "createdAt": "2026-11-01T04:00:00.000Z",
+      "updatedAt": "2026-11-01T04:10:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+### 21.2 Get Question Details with Advocate Answers
+* **Endpoint:** `GET /feed/:id`
+* **Access:** Public (No authentication required)
+* **Behavior:** Returns full question details, masked client identity, and all legal answers with verified advocate profile cards for 1-click consultation.
+* **Success Response (200 OK):**
+```json
+{
+  "question": {
+    "id": "q1111111-2222-3333-4444-555555555555",
+    "clientId": "u1111111-2222-3333-4444-555555555555",
+    "title": "Inheritance distribution under Islamic Law in Punjab",
+    "description": "My grandfather passed away leaving agricultural land in Multan. Need guidance on mutation procedure.",
+    "practiceArea": "Civil Litigation",
+    "city": "Multan",
+    "status": "open",
+    "answersCount": 1,
+    "clientName": "M. A*** (Citizen)",
+    "createdAt": "2026-11-01T04:00:00.000Z",
+    "updatedAt": "2026-11-01T04:10:00.000Z",
+    "answers": [
+      {
+        "id": "ans-2222222-3333-4444-5555-666666666666",
+        "questionId": "q1111111-2222-3333-4444-555555555555",
+        "lawyerUserId": "u-lawyer-3333-4444-5555-666666666666",
+        "content": "Under Section 42 of the Specific Relief Act and Land Revenue Act 1967, you should first apply for an Inheritance Mutation (Intiqal Wirasat) at the Arazi Record Center (PLRA).",
+        "createdAt": "2026-11-01T04:15:00.000Z",
+        "updatedAt": "2026-11-01T04:15:00.000Z",
+        "lawyer": {
+          "id": "u-lawyer-3333-4444-5555-666666666666",
+          "name": "Adv. Tariq Mahmood Chohan",
+          "email": "tariq.chohan@testlegalhub.pk",
+          "application": {
+            "id": "app-4444-5555-6666-777777777777",
+            "status": "APPROVED",
+            "courtLevel": "HIGH_COURT",
+            "barCouncil": "Punjab Bar Council",
+            "city": "Multan",
+            "practiceAreas": ["Civil Litigation", "Property Law"]
+          },
+          "profile": {
+            "id": "prof-5555-6666-7777-888888888888",
+            "headline": "Advocate High Court | Civil & Revenue Law Specialist",
+            "experienceYears": 14,
+            "consultationFee": 3000,
+            "rating": 4.9,
+            "totalReviews": 28
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+### 21.3 Create Legal Question
+* **Endpoint:** `POST /feed`
+* **Access:** Protected (Client only: `Authorization: Bearer <client_jwt>`)
+* **Request Body:**
+```json
+{
+  "title": "Need legal opinion on child custody (Hizanat) under Guardians and Wards Act",
+  "description": "Mother seeking guidance on minor child custody jurisdiction in Family Court Rawalpindi.",
+  "practiceArea": "Family Law",
+  "city": "Rawalpindi"
+}
+```
+* **Success Response (201 Created):** Returns created question object with `status: "open"`, `answersCount: 0`.
+
+### 21.4 Post Legal Answer
+* **Endpoint:** `POST /feed/:id/answers`
+* **Access:** Protected (Admin-Reviewed Advocate only: `Authorization: Bearer <lawyer_jwt>`)
+* **Constraint:** The lawyer must have an `APPROVED` `LawyerApplication`. The question must not be closed.
+* **Request Body:**
+```json
+{
+  "content": "Under Section 17 & 25 of the Guardians and Wards Act 1890, the paramount consideration is always the welfare of the minor. File an application in the Family Court having territorial jurisdiction where the minor ordinarily resides."
+}
+```
+* **Success Response (201 Created):** Returns created answer object with lawyer details and automatically increments question's `answersCount`.
+
+### 21.5 Close Question
+* **Endpoint:** `PATCH /feed/:id/close`
+* **Access:** Protected (Client owner only: `Authorization: Bearer <client_jwt>`)
+* **Behavior:** Marks the question `status` as `"closed"`. Prevents subsequent answers.
+* **Success Response (200 OK):**
+```json
+{
+  "message": "Question marked as resolved and closed successfully",
+  "question": {
+    "id": "q1111111-2222-3333-4444-555555555555",
+    "status": "closed"
+  }
+}
+```
+
 
 

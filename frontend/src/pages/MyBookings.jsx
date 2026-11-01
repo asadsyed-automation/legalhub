@@ -108,8 +108,8 @@ export const MyBookings = () => {
   const fetchCounts = useCallback(async () => {
     try {
       const res = isLawyer
-        ? await bookingApi.getLawyerAppointments({ page: 1, limit: 100 })
-        : await bookingApi.getClientBookings({ page: 1, limit: 100 });
+        ? await bookingApi.getLawyerAppointments({ page: 1, limit: 50 })
+        : await bookingApi.getClientBookings({ page: 1, limit: 50 });
 
       const items =
         res?.items ||

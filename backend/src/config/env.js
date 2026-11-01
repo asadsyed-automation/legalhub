@@ -84,7 +84,12 @@ const config = {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME || 'demo_cloud',
     apiKey: process.env.CLOUDINARY_API_KEY || 'demo_key',
     apiSecret: process.env.CLOUDINARY_API_SECRET || 'demo_secret'
-  }
+  },
+  mailProvider: process.env.MAIL_PROVIDER || (process.env.NODE_ENV === 'test' ? 'test' : 'console'),
+  mailFrom: process.env.MAIL_FROM || 'LegalHub <onboarding@resend.dev>',
+  resendApiKey: process.env.RESEND_API_KEY || '',
+  requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === 'true',
+  aiServiceUrl: process.env.AI_SERVICE_URL || 'http://localhost:8000'
 };
 
 module.exports = config;

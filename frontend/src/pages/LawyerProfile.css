@@ -1,0 +1,114 @@
+/* ==========================================================================
+   Advocate Chamber Profile Styles
+   LegalHub Pakistan — Final Year Project
+   ========================================================================== */
+
+.lp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: var(--spacing-6, 1.5rem);
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  padding-bottom: var(--spacing-6, 1.5rem);
+}
+
+.lp-header-info {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lp-header-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.lp-header-name {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--color-text, #0f172a);
+  line-height: 1.25;
+}
+
+.lp-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background-color: var(--color-primary-light, #e8f4ee);
+  color: var(--color-primary, #0f5c3c);
+  border: 1px solid rgba(15, 92, 60, 0.25);
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+}
+
+.lp-court-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-primary, #0f5c3c);
+}
+
+.lp-headline {
+  font-size: 0.975rem;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.lp-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.lp-cta-row {
+  margin-top: 0.75rem;
+}
+
+.lp-header-avatar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .lp-header {
+    flex-direction: column-reverse;
+    text-align: center;
+    gap: 1.25rem;
+  }
+
+  .lp-header-info {
+    align-items: center;
+  }
+
+  .lp-header-name-row {
+    justify-content: center;
+  }
+
+  .lp-badges-row {
+    justify-content: center;
+  }
+
+  .lp-cta-row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+}
+

@@ -5,6 +5,9 @@ import DashboardLayout from './components/DashboardLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
 import LawyersList from './pages/LawyersList';
@@ -12,6 +15,7 @@ import LawyerProfile from './pages/LawyerProfile';
 import LawyerApplication from './pages/LawyerApplication';
 import LawyerProfileEditor from './pages/LawyerProfileEditor';
 import AdminQueue from './pages/AdminQueue';
+import AdminUsers from './pages/AdminUsers';
 import BookConsultation from './pages/BookConsultation';
 import MyBookings from './pages/MyBookings';
 import BookingDetail from './pages/BookingDetail';
@@ -20,13 +24,24 @@ import NewCase from './pages/NewCase';
 import CaseDetail from './pages/CaseDetail';
 import HearingsCalendar from './pages/HearingsCalendar';
 import Notifications from './pages/Notifications';
+import About from './pages/About';
+import HowItWorks from './pages/HowItWorks';
+import Feed from './pages/Feed';
+import FeedDetail from './pages/FeedDetail';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import Disclaimer from './pages/Disclaimer';
+import RefundPolicy from './pages/RefundPolicy';
+import Contact from './pages/Contact';
+import Footer from './components/Footer';
 import { ROLES } from './constants';
 
 function App() {
   const location = useLocation();
   const isDashboardRoute =
     location.pathname.startsWith('/dashboard') ||
-    location.pathname.startsWith('/lawyer/profile') ||
+    location.pathname.startsWith('/lawyer/') ||
+    location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/bookings') ||
     location.pathname.startsWith('/cases') ||
     location.pathname.startsWith('/calendar') ||
@@ -37,12 +52,24 @@ function App() {
       {!isDashboardRoute && <Navbar />}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Routes>
-          {/* Public Routes */}
+          {/* Public Directory & Info Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/lawyers" element={<LawyersList />} />
           <Route path="/lawyers/:id" element={<LawyerProfile />} />
+          <Route path="/feed" element={<Feed />} />
+          <Route path="/feed/:id" element={<FeedDetail />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
+          <Route path="/refund-policy" element={<RefundPolicy />} />
+          <Route path="/contact" element={<Contact />} />
 
           {/* Authenticated Dashboard */}
           <Route
@@ -73,7 +100,9 @@ function App() {
             path="/lawyer/application"
             element={
               <ProtectedRoute allowedRoles={[ROLES.LAWYER]}>
-                <LawyerApplication />
+                <DashboardLayout>
+                  <LawyerApplication />
+                </DashboardLayout>
               </ProtectedRoute>
             }
           />
@@ -83,7 +112,19 @@ function App() {
             path="/admin/queue"
             element={
               <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-                <AdminQueue />
+                <DashboardLayout>
+                  <AdminQueue />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                <DashboardLayout>
+                  <AdminUsers />
+                </DashboardLayout>
               </ProtectedRoute>
             }
           />
@@ -177,23 +218,7 @@ function App() {
         </Routes>
       </main>
 
-      {!isDashboardRoute && (
-        <footer
-          style={{
-            backgroundColor: 'var(--color-surface)',
-            borderTop: '1px solid var(--color-border)',
-            padding: 'var(--spacing-6) var(--spacing-4)',
-            textAlign: 'center',
-            fontSize: 'var(--font-size-xs)',
-            color: 'var(--color-text-subtle)',
-            marginTop: 'auto',
-          }}
-        >
-          <p>
-            © 2026 LegalHub Pakistan — Empowering connected, transparent legal access across Pakistan.
-          </p>
-        </footer>
-      )}
+      {!isDashboardRoute && <Footer />}
     </>
   );
 }

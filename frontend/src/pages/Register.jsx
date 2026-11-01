@@ -52,12 +52,8 @@ export const Register = () => {
         role: formData.role,
       });
 
-      // Role-guided redirection
-      if (formData.role === ROLES.LAWYER) {
-        navigate('/lawyer/application');
-      } else {
-        navigate('/dashboard');
-      }
+      // Redirect to email verification screen as per FE-10
+      navigate(`/verify-email?email=${encodeURIComponent(formData.email.trim())}`);
     } catch (error) {
       setGeneralError(error.message || 'Registration failed. Please check your inputs.');
 

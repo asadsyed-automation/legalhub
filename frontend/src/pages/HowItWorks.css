@@ -1,0 +1,183 @@
+/* HowItWorks.css - Styles for How It Works Page */
+
+.how-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.how-hero {
+  background: linear-gradient(180deg, #ffffff 0%, var(--color-bg) 100%);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--spacing-16) var(--spacing-4) var(--spacing-12) var(--spacing-4);
+  text-align: center;
+}
+
+.how-hero__container {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.how-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-4);
+  border: 1px solid var(--color-border);
+}
+
+.how-hero h1 {
+  font-size: 2.75rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  line-height: 1.2;
+  margin-bottom: var(--spacing-4);
+  letter-spacing: -0.02em;
+}
+
+.how-hero p {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+  line-height: 1.65;
+  max-width: 700px;
+  margin: 0 auto var(--spacing-8) auto;
+}
+
+/* Tab Switcher */
+.how-tab-switcher {
+  display: inline-flex;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.how-tab-btn {
+  padding: 0.5rem 1.5rem;
+  border-radius: var(--radius-full);
+  border: none;
+  background: none;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms ease);
+}
+
+.how-tab-btn--active {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-weight: var(--font-weight-semibold);
+  box-shadow: 0 2px 6px rgba(15, 92, 60, 0.25);
+}
+
+/* Steps Timeline Layout */
+.how-steps-container {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: var(--spacing-16) var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.how-step-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl, 1rem);
+  padding: var(--spacing-6);
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: var(--spacing-6);
+  align-items: flex-start;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.how-step-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+.how-step-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+}
+
+.how-step-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.how-step-content h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.how-step-content p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.how-step-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-1);
+}
+
+/* Bottom CTA Banner */
+.how-cta-banner {
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--spacing-12) var(--spacing-4);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .how-step-card {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+  }
+
+  .how-step-badge {
+    width: 44px;
+    height: 44px;
+    font-size: var(--font-size-base);
+  }
+
+  .how-tab-switcher {
+    width: 100%;
+  }
+
+  .how-tab-btn {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: var(--font-size-xs);
+  }
+}
+

@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { EyeIcon, EyeOffIcon } from './Icons';
+
 export const FormField = ({
   label,
   id,
@@ -12,6 +15,7 @@ export const FormField = ({
   options = [],
   children,
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
   const isSelect = type === 'select';
   const isTextarea = type === 'textarea';
 
@@ -83,6 +87,51 @@ export const FormField = ({
             resize: 'vertical',
           }}
         />
+      ) : type === 'password' ? (
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
+          <input
+            id={id}
+            name={id}
+            type={showPassword ? 'text' : 'password'}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            disabled={disabled}
+            required={required}
+            style={{
+              width: '100%',
+              padding: 'var(--spacing-3)',
+              paddingRight: '40px',
+              borderRadius: 'var(--radius-md)',
+              border: `1px solid ${error ? 'var(--color-border-error)' : 'var(--color-border)'}`,
+              backgroundColor: disabled ? 'var(--color-surface-hover)' : 'var(--color-surface)',
+              color: 'var(--color-text)',
+              fontSize: 'var(--font-size-sm)',
+              outline: 'none',
+              fontFamily: 'inherit',
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            tabIndex={-1}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            style={{
+              position: 'absolute',
+              right: '10px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-text-subtle)',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+          </button>
+        </div>
       ) : (
         <input
           id={id}

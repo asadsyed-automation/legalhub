@@ -10,6 +10,7 @@ import bookingApi from '../api/booking.api';
 import engagementApi from '../api/engagement.api';
 import caseApi from '../api/case.api';
 import notificationApi from '../api/notification.api';
+import adminApi from '../api/admin.api';
 import { ROLES, APPLICATION_STATUS } from '../constants';
 
 export const Dashboard = () => {
@@ -31,6 +32,17 @@ export const Dashboard = () => {
     upcomingHearings: 0,
     unreadNotifications: 0,
   });
+
+  // Admin platform real metrics
+  const [adminStats, setAdminStats] = useState({
+    totalUsers: 0,
+    totalLawyers: 0,
+    totalClients: 0,
+    totalSuspended: 0,
+    pendingApplications: 0,
+  });
+  const [loadingAdminStats, setLoadingAdminStats] = useState(false);
+  const [adminStatsError, setAdminStatsError] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -63,8 +75,8 @@ export const Dashboard = () => {
       // Load appointments and engagements for advocate
       setLoadingAppointments(true);
       Promise.allSettled([
-        bookingApi.getLawyerAppointments({ page: 1, limit: 100 }),
-        engagementApi.getEngagements({ page: 1, limit: 100 }),
+        bookingApi.getLawyerAppointments({ page: 1, limit: 50 }),
+        engagementApi.getEngagements({ page: 1, limit: 50 }),
       ]).then(([aptsRes, engsRes]) => {
         if (!isMounted) return;
         if (aptsRes.status === 'fulfilled') {
@@ -93,8 +105,8 @@ export const Dashboard = () => {
       // Load appointments and engagements for citizen client
       setLoadingAppointments(true);
       Promise.allSettled([
-        bookingApi.getClientBookings({ page: 1, limit: 100 }),
-        engagementApi.getEngagements({ page: 1, limit: 100 }),
+        bookingApi.getClientBookings({ page: 1, limit: 50 }),
+        engagementApi.getEngagements({ page: 1, limit: 50 }),
       ]).then(([aptsRes, engsRes]) => {
         if (!isMounted) return;
         if (aptsRes.status === 'fulfilled') {
@@ -123,9 +135,12 @@ export const Dashboard = () => {
 
     // Load Phase 3 Case & Hearing statistics for authenticated advocate or client
     if (user?.role === ROLES.LAWYER || user?.role === ROLES.CLIENT) {
+      const fetchCases = caseApi.getCases ? caseApi.getCases({ page: 1, limit: 1 }) : Promise.resolve({ data: { total: 0 } });
+      const fetchHearings = caseApi.listHearingsAcrossCases ? caseApi.listHearingsAcrossCases({ from: new Date().toISOString() }) : Promise.resolve({ data: [] });
+
       Promise.allSettled([
-        caseApi.listCases({ page: 1, limit: 1 }),
-        caseApi.listHearingsAcrossCases({ from: new Date().toISOString() }),
+        fetchCases,
+        fetchHearings,
         notificationApi.getUnreadCount(),
       ]).then(([casesRes, hearingsRes, notifsRes]) => {
         if (!isMounted) return;
@@ -136,8 +151,10 @@ export const Dashboard = () => {
         if (casesRes.status === 'fulfilled') {
           const val = casesRes.value;
           totalCases =
-            val?.pagination?.total ||
             val?.data?.total ||
+            val?.total ||
+            val?.pagination?.total ||
+            (Array.isArray(val?.data?.items) ? val.data.items.length : 0) ||
             (Array.isArray(val?.items) ? val.items.length : 0);
         }
         if (hearingsRes.status === 'fulfilled') {
@@ -157,6 +174,54 @@ export const Dashboard = () => {
           upcomingHearings,
           unreadNotifications,
         });
+      });
+    }
+
+    // Load Admin statistics
+    if (user?.role === ROLES.ADMIN) {
+      setLoadingAdminStats(true);
+      setAdminStatsError(null);
+
+      Promise.allSettled([
+        adminApi.getUsers({ limit: 1 }),
+        adminApi.getUsers({ role: 'lawyer', limit: 1 }),
+        adminApi.getUsers({ role: 'client', limit: 1 }),
+        adminApi.getUsers({ status: 'suspended', limit: 1 }),
+        adminApi.getApplications('pending'),
+      ]).then(([usersRes, lawyersRes, clientsRes, suspendedRes, appsRes]) => {
+        if (!isMounted) return;
+
+        let totalUsers = 0;
+        let totalLawyers = 0;
+        let totalClients = 0;
+        let totalSuspended = 0;
+        let pendingApplications = 0;
+
+        if (usersRes.status === 'fulfilled') {
+          totalUsers = usersRes.value?.pagination?.total || 0;
+        }
+        if (lawyersRes.status === 'fulfilled') {
+          totalLawyers = lawyersRes.value?.pagination?.total || 0;
+        }
+        if (clientsRes.status === 'fulfilled') {
+          totalClients = clientsRes.value?.pagination?.total || 0;
+        }
+        if (suspendedRes.status === 'fulfilled') {
+          totalSuspended = suspendedRes.value?.pagination?.total || 0;
+        }
+        if (appsRes.status === 'fulfilled') {
+          const list = appsRes.value?.applications || appsRes.value?.data?.applications || [];
+          pendingApplications = Array.isArray(list) ? list.length : 0;
+        }
+
+        setAdminStats({
+          totalUsers,
+          totalLawyers,
+          totalClients,
+          totalSuspended,
+          pendingApplications,
+        });
+        setLoadingAdminStats(false);
       });
     }
 
@@ -830,10 +895,11 @@ export const Dashboard = () => {
       )}
 
       {/* =========================================================================
-          3. COURT ADMINISTRATOR PORTAL
+          3. COURT ADMINISTRATOR PORTAL (REAL API DRIVEN STATS & CONTROLS)
           ========================================================================= */}
       {user?.role === ROLES.ADMIN && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+          {/* Header Card */}
           <div
             className="card"
             style={{
@@ -846,11 +912,14 @@ export const Dashboard = () => {
               <h3 style={{ margin: 0 }}>Court Administrator Control Center</h3>
             </div>
             <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-4)', lineHeight: 1.5 }}>
-              Audit incoming advocate license applications against provincial Bar Council rosters. Approve or reject submissions with constructive explanations.
+              Audit incoming advocate license applications against provincial Bar Council rosters, manage user access, and enforce professional disciplinary suspensions.
             </p>
             <div style={{ display: 'flex', gap: 'var(--spacing-3)', flexWrap: 'wrap' }}>
-              <Link to="/admin/queue" className="btn btn-primary">
-                Open Verification Queue
+              <Link to="/admin/users" className="btn btn-primary">
+                Manage Users &amp; Discipline
+              </Link>
+              <Link to="/admin/queue" className="btn btn-secondary">
+                Verification Queue ({adminStats.pendingApplications})
               </Link>
               <Link to="/bookings" className="btn btn-secondary">
                 Audit Consultations
@@ -859,6 +928,149 @@ export const Dashboard = () => {
                 Audit Public Directory
               </Link>
             </div>
+          </div>
+
+          {/* Real Platform Stat Cards */}
+          <div className="card" style={{ backgroundColor: 'var(--color-surface)' }}>
+            <h4 style={{ margin: '0 0 var(--spacing-4) 0', fontSize: 'var(--font-size-md)' }}>
+              Platform Overview &amp; Registry Metrics
+            </h4>
+
+            {loadingAdminStats ? (
+              <div style={{ textAlign: 'center', padding: 'var(--spacing-6)' }}>
+                <span className="spinner" />
+                <p style={{ marginTop: 'var(--spacing-2)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+                  Loading real-time platform statistics...
+                </p>
+              </div>
+            ) : adminStatsError ? (
+              <div className="alert alert-danger">
+                <span>{adminStatsError}</span>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+                  gap: 'var(--spacing-3)',
+                }}
+              >
+                {/* Total Users */}
+                <Link
+                  to="/admin/users"
+                  style={{
+                    textDecoration: 'none',
+                    padding: 'var(--spacing-3)',
+                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    display: 'block',
+                  }}
+                >
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#334155', fontWeight: 600, display: 'block' }}>
+                    Total Registered Users
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#0f172a' }}>
+                    {adminStats.totalUsers}
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                    Across all roles
+                  </span>
+                </Link>
+
+                {/* Enrolled Advocates */}
+                <Link
+                  to="/admin/users?role=lawyer"
+                  style={{
+                    textDecoration: 'none',
+                    padding: 'var(--spacing-3)',
+                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    display: 'block',
+                  }}
+                >
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#1e40af', fontWeight: 600, display: 'block' }}>
+                    Enrolled Advocates
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#1d4ed8' }}>
+                    {adminStats.totalLawyers}
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#1e40af', display: 'block', marginTop: '4px' }}>
+                    Practicing counsel
+                  </span>
+                </Link>
+
+                {/* Pending Verification Applications */}
+                <Link
+                  to="/admin/queue"
+                  style={{
+                    textDecoration: 'none',
+                    padding: 'var(--spacing-3)',
+                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: '#fffbeb',
+                    border: '1px solid #fde68a',
+                    display: 'block',
+                  }}
+                >
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#92400e', fontWeight: 600, display: 'block' }}>
+                    Pending Applications
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#b45309' }}>
+                    {adminStats.pendingApplications}
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#92400e', display: 'block', marginTop: '4px' }}>
+                    Awaiting Bar Council audit
+                  </span>
+                </Link>
+
+                {/* Litigant Clients */}
+                <Link
+                  to="/admin/users?role=client"
+                  style={{
+                    textDecoration: 'none',
+                    padding: 'var(--spacing-3)',
+                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    display: 'block',
+                  }}
+                >
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#166534', fontWeight: 600, display: 'block' }}>
+                    Citizen Clients
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#15803d' }}>
+                    {adminStats.totalClients}
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#166534', display: 'block', marginTop: '4px' }}>
+                    Seeking representation
+                  </span>
+                </Link>
+
+                {/* Suspended Accounts */}
+                <Link
+                  to="/admin/users?status=suspended"
+                  style={{
+                    textDecoration: 'none',
+                    padding: 'var(--spacing-3)',
+                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    display: 'block',
+                  }}
+                >
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#991b1b', fontWeight: 600, display: 'block' }}>
+                    Suspended Accounts
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#dc2626' }}>
+                    {adminStats.totalSuspended}
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#991b1b', display: 'block', marginTop: '4px' }}>
+                    Disciplinary locks
+                  </span>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -20,6 +20,7 @@ const caseRoutes = require('./modules/case/case.routes');
 const hearingRoutes = require('./modules/case/hearing.routes');
 const documentRoutes = require('./modules/case/document.routes');
 const notificationRoutes = require('./modules/notification/notification.routes');
+const feedRoutes = require('./modules/feed/feed.routes');
 const { healthCheck } = require('./modules/auth/auth.controller');
 
 const app = express();
@@ -66,6 +67,7 @@ app.use('/api/v1/cases', caseRoutes);
 app.use('/api/v1/hearings', hearingRoutes);
 app.use('/api/v1/documents', documentRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/feed', feedRoutes);
 
 
 // 7. Catch-all for unhandled routes

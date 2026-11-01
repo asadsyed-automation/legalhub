@@ -1,4 +1,5 @@
 const { ROLES, ALLOWED_REGISTRATION_ROLES } = require('./roles');
+const { OTP_PURPOSES, OTP_CONFIG } = require('./auth');
 
 const APPLICATION_STATUS = Object.freeze({
   PENDING: 'pending',
@@ -170,7 +171,9 @@ module.exports = {
   CASE_FEE_LIMITS,
   NOTIFICATION_TYPES,
   EMAIL_STATUSES,
-  REMINDER_MILESTONES
+  REMINDER_MILESTONES,
+  OTP_PURPOSES,
+  OTP_CONFIG
 };
 
 

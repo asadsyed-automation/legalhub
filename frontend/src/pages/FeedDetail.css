@@ -1,0 +1,443 @@
+/* ==========================================================================
+   Community Legal Q&A Feed Detail Styles
+   LegalHub Pakistan — Final Year Project
+   ========================================================================== */
+
+.feed-detail-page {
+  min-height: calc(100vh - 72px);
+  background-color: #f8fafc;
+  color: #1e293b;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.feed-detail-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+   Breadcrumbs & Back Navigation
+   -------------------------------------------------------------------------- */
+.feed-detail__breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.feed-detail__breadcrumb-link {
+  color: var(--color-primary, #0f5c3c);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.feed-detail__breadcrumb-link:hover {
+  text-decoration: underline;
+}
+
+.feed-detail__breadcrumb-sep {
+  color: #cbd5e1;
+}
+
+/* --------------------------------------------------------------------------
+   Question Card
+   -------------------------------------------------------------------------- */
+.feed-detail__question-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 2rem;
+}
+
+.feed-detail__question-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.feed-detail__title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.3;
+  margin-bottom: 1.25rem;
+}
+
+.feed-detail__description {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #334155;
+  white-space: pre-wrap;
+  margin-bottom: 1.5rem;
+}
+
+.feed-detail__author-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 1.25rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.feed-detail__author {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.feed-detail__author-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.feed-detail__btn-resolve {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #059669;
+  background-color: #ecfdf5;
+  color: #065f46;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feed-detail__btn-resolve:hover {
+  background-color: #d1fae5;
+  border-color: #047857;
+}
+
+/* --------------------------------------------------------------------------
+   Answers Thread Section
+   -------------------------------------------------------------------------- */
+.feed-detail__answers-section {
+  margin-bottom: 3rem;
+}
+
+.feed-detail__answers-header {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.feed-detail__answers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Individual Answer Item Card */
+.feed-answer-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.75rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  border-left: 4px solid var(--color-primary, #0f5c3c);
+}
+
+.feed-answer-card__body {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #1e293b;
+  white-space: pre-wrap;
+}
+
+.feed-answer-card__time {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+}
+
+/* Verified Advocate Chamber Card (Beside / Inside Answer) */
+.feed-advocate-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.feed-advocate-card__identity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 250px;
+}
+
+.feed-advocate-card__avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.25rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.feed-advocate-card__details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.feed-advocate-card__name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.feed-advocate-card__name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.feed-advocate-card__name:hover {
+  color: var(--color-primary, #0f5c3c);
+}
+
+.feed-advocate-card__verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.725rem;
+  font-weight: 600;
+  background-color: var(--color-primary-light, #e8f4ee);
+  color: var(--color-primary, #0f5c3c);
+  border: 1px solid rgba(15, 92, 60, 0.2);
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.feed-advocate-card__court-sub {
+  font-size: 0.825rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.feed-advocate-card__headline {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Action Buttons inside Advocate Card */
+.feed-advocate-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.feed-btn-hire {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: var(--color-primary, #0f5c3c);
+  color: #ffffff;
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.feed-btn-hire:hover {
+  background-color: var(--color-primary-hover, #0b462d);
+  transform: translateY(-1px);
+}
+
+.feed-btn-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.feed-btn-profile:hover {
+  border-color: #94a3b8;
+  background-color: #f8fafc;
+}
+
+/* --------------------------------------------------------------------------
+   Advocate Answer Submission Form
+   -------------------------------------------------------------------------- */
+.feed-answer-form-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.feed-answer-form__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.feed-answer-form__subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 1.25rem;
+}
+
+.feed-answer-form__textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  min-height: 140px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.feed-answer-form__textarea:focus {
+  border-color: var(--color-primary, #0f5c3c);
+  box-shadow: 0 0 0 3px rgba(15, 92, 60, 0.15);
+}
+
+.feed-answer-form__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.feed-answer-form__notice {
+  font-size: 0.775rem;
+  color: #94a3b8;
+  max-width: 550px;
+  line-height: 1.4;
+}
+
+/* Closed Question Notice */
+.feed-closed-banner {
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  color: #475569;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+/* Guest / Client Notice */
+.feed-guest-banner {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  color: #1e40af;
+  font-size: 0.925rem;
+}
+
+.feed-guest-banner a {
+  color: #1d4ed8;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .feed-detail-page {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .feed-detail__question-card,
+  .feed-answer-card,
+  .feed-answer-form-card {
+    padding: 1.25rem;
+  }
+
+  .feed-detail__title {
+    font-size: 1.4rem;
+  }
+
+  .feed-advocate-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .feed-advocate-card__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .feed-btn-hire,
+  .feed-btn-profile {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
+}
+

@@ -12,6 +12,7 @@ import {
   BriefcaseIcon,
   ScalesIcon,
   ArrowRightIcon,
+  ShieldIcon,
   VideoIcon,
   PhoneIcon,
   ChatIcon,
@@ -33,17 +34,17 @@ export const LawyersList = () => {
   const currentCity = searchParams.get('city') || '';
   const currentPracticeArea = searchParams.get('practiceArea') || '';
   const currentCourtLevel = searchParams.get('courtLevel') || '';
+  const currentMode = searchParams.get('mode') || '';
   const currentSort = searchParams.get('sort') || 'experience';
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const currentSearch = searchParams.get('q') || '';
 
-  // Local search input
+  // Local state
   const [searchKeyword, setSearchKeyword] = useState(currentSearch);
-
-  // Directory Data
   const [lawyers, setLawyers] = useState([]);
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 9, totalPages: 1 });
   const [loading, setLoading] = useState(false);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   // Sync search keyword with URL
   useEffect(() => {
@@ -62,6 +63,7 @@ export const LawyersList = () => {
       if (currentCity) params.city = currentCity;
       if (currentPracticeArea) params.practiceArea = currentPracticeArea;
       if (currentCourtLevel) params.courtLevel = currentCourtLevel;
+      if (currentMode) params.mode = currentMode;
 
       const res = await directoryApi.getLawyers(params);
       let items = res?.items || res?.lawyers || res?.data?.items || res?.data?.lawyers || [];
@@ -90,7 +92,7 @@ export const LawyersList = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentCity, currentPracticeArea, currentCourtLevel, currentSort, currentPage, currentSearch, showToast]);
+  }, [currentCity, currentPracticeArea, currentCourtLevel, currentMode, currentSort, currentPage, currentSearch, showToast]);
 
   useEffect(() => {
     fetchDirectory();
@@ -118,119 +120,65 @@ export const LawyersList = () => {
   const handleClearFilters = () => {
     setSearchKeyword('');
     setSearchParams({ page: '1' });
+    setMobileFilterOpen(false);
   };
 
-  const hasActiveFilters = Boolean(
-    currentCity || currentPracticeArea || currentCourtLevel || currentSearch || currentSort !== 'experience'
-  );
+  const activeFiltersCount = [
+    currentCity,
+    currentPracticeArea,
+    currentCourtLevel,
+    currentMode,
+    currentSearch,
+  ].filter(Boolean).length;
 
   return (
-    <div className="ll-container">
-      {/* Directory Page Header */}
-      <div className="ll-header">
-        <div className="ll-header__text">
-          <h1 className="ll-header__title">Practicing Advocates Directory</h1>
-          <p className="ll-header__subtitle">
-            Browse and connect directly with enrolled advocates across High Court benches and District Courts in Pakistan. Transparent chamber fees and direct scheduling.
+    <div className="ll-page">
+      {/* Top Banner Header */}
+      <section className="ll-hero">
+        <div className="ll-hero__container">
+          <div className="ll-hero__badge">
+            <ScalesIcon size={16} color="#f59e0b" />
+            <span>Verified Pakistan Bar Directory</span>
+          </div>
+          <h1 className="ll-hero__title">
+            Find & Consult <span className="ll-hero__accent">Admin-Reviewed Advocates</span>
+          </h1>
+          <p className="ll-hero__subtitle">
+            Search verified advocates across Supreme Court, High Courts, and District Benches.
+            Objective legal profiles, certified credentials, transparent consultation fees, and direct chamber scheduling.
           </p>
-        </div>
 
-        {/* Rule 135 Regulatory Compliance Notice */}
-        <div className="ll-rule135-badge" role="note">
-          <ScalesIcon size={18} color="var(--color-primary)" />
-          <span>
-            <strong>Rule 135 Compliance:</strong> Neutral directory ordered by objective legal criteria without paid advertisements or sponsored rankings.
-          </span>
-        </div>
-      </div>
-
-      {/* Multi-Facet Filter Bar */}
-      <div className="ll-filters-card">
-        {/* Search Bar Row */}
-        <form onSubmit={handleSearchSubmit} className="ll-search-row">
-          <div className="ll-search-input-wrapper">
-            <SearchIcon size={18} className="ll-search-icon" color="var(--color-text-subtle)" />
-            <input
-              type="text"
-              placeholder="Search by advocate name, city, or legal issue (e.g. bail, property, khula)..."
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              className="ll-search-input"
-            />
+          <div className="ll-hero__rule135">
+            <ShieldIcon size={15} color="#10b981" />
+            <span>
+              <strong>Rule 135 Anti-Solicitation Compliance:</strong> Standardized directory ordered strictly by objective criteria without paid promotional rankings or sponsored endorsements.
+            </span>
           </div>
-          <button type="submit" className="btn btn-primary btn-sm ll-search-btn">
-            Search
+        </div>
+      </section>
+
+      {/* Main Two-Column Layout */}
+      <div className="ll-container">
+        {/* Mobile Filter Toggle Button */}
+        <div className="ll-mobile-toggle-bar">
+          <button
+            type="button"
+            className="ll-mobile-filter-btn"
+            onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
+          >
+            <FilterIcon size={16} />
+            <span>{mobileFilterOpen ? 'Hide Filters' : 'Filter Advocates'}</span>
+            {activeFiltersCount > 0 && (
+              <span className="ll-active-badge">{activeFiltersCount}</span>
+            )}
           </button>
-        </form>
 
-        {/* Facet Dropdowns */}
-        <div className="ll-filters-row">
-          <div className="ll-filter-group">
-            <label htmlFor="filterCity" className="ll-filter-label">
-              <LocationIcon size={14} /> Station / City
-            </label>
+          <div className="ll-mobile-sort">
             <select
-              id="filterCity"
-              value={currentCity}
-              onChange={(e) => updateFilter('city', e.target.value)}
-              className="ll-filter-select"
-            >
-              <option value="">All Pakistan Cities</option>
-              {CITIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="ll-filter-group">
-            <label htmlFor="filterPractice" className="ll-filter-label">
-              <BriefcaseIcon size={14} /> Practice Area
-            </label>
-            <select
-              id="filterPractice"
-              value={currentPracticeArea}
-              onChange={(e) => updateFilter('practiceArea', e.target.value)}
-              className="ll-filter-select"
-            >
-              <option value="">All Legal Specialities</option>
-              {PRACTICE_AREAS.map((p) => (
-                <option key={p} value={p}>
-                  {p} Law
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="ll-filter-group">
-            <label htmlFor="filterCourt" className="ll-filter-label">
-              <CourtIcon size={14} /> Court Standing
-            </label>
-            <select
-              id="filterCourt"
-              value={currentCourtLevel}
-              onChange={(e) => updateFilter('courtLevel', e.target.value)}
-              className="ll-filter-select"
-            >
-              <option value="">All Court Jurisdictions</option>
-              {COURT_LEVELS.map((cl) => (
-                <option key={cl} value={cl}>
-                  {cl}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="ll-filter-group">
-            <label htmlFor="filterSort" className="ll-filter-label">
-              <FilterIcon size={14} /> Sort Order
-            </label>
-            <select
-              id="filterSort"
               value={currentSort}
               onChange={(e) => updateFilter('sort', e.target.value)}
-              className="ll-filter-select"
+              className="ll-sort-select"
+              aria-label="Sort Advocates"
             >
               <option value="experience">Experience (Years at Bar)</option>
               <option value="fee_asc">Fee: Lowest to Highest</option>
@@ -238,171 +186,431 @@ export const LawyersList = () => {
               <option value="newest">Recently Enrolled</option>
             </select>
           </div>
+        </div>
 
-          {hasActiveFilters && (
-            <div className="ll-filter-group ll-filter-group--reset">
-              <button
-                type="button"
-                onClick={handleClearFilters}
-                className="btn btn-secondary btn-sm ll-reset-btn"
-                title="Reset all filters"
-              >
-                Clear Filters
-              </button>
+        <div className="ll-layout">
+          {/* LEFT SIDEBAR: Professional Faceted Search */}
+          <aside className={`ll-sidebar ${mobileFilterOpen ? 'll-sidebar--open' : ''}`}>
+            <div className="ll-sidebar__header">
+              <div className="ll-sidebar__title">
+                <FilterIcon size={18} color="#d97706" />
+                <span>Filters</span>
+                {activeFiltersCount > 0 && (
+                  <span className="ll-active-badge">{activeFiltersCount}</span>
+                )}
+              </div>
+              {activeFiltersCount > 0 && (
+                <button
+                  type="button"
+                  className="ll-sidebar__reset-btn"
+                  onClick={handleClearFilters}
+                >
+                  Reset All
+                </button>
+              )}
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* Results Header */}
-      <div className="ll-results-meta">
-        <span className="ll-results-count">
-          Showing <strong>{lawyers.length}</strong> advocate{lawyers.length === 1 ? '' : 's'}
-          {currentCity && ` in ${currentCity}`}
-          {currentPracticeArea && ` specializing in ${currentPracticeArea} Law`}
-        </span>
-        <span className="ll-results-sort-hint">
-          Standardized Bar Registry Listing
-        </span>
-      </div>
-
-      {/* Advocate Cards Grid */}
-      {loading ? (
-        <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-12)' }}>
-          <div className="ll-loader-spinner" />
-          <p style={{ color: 'var(--color-text-muted)', marginTop: 'var(--spacing-3)', marginBottom: 0 }}>
-            Loading advocates from the official registry...
-          </p>
-        </div>
-      ) : lawyers.length === 0 ? (
-        <EmptyState
-          icon={<ScalesIcon size={44} color="var(--color-text-subtle)" />}
-          title="No Advocates Found"
-          description="No advocates match the selected combination of city, practice area, or search keywords. Try clearing your filters."
-          action={
-            hasActiveFilters && (
-              <button type="button" className="btn btn-primary" onClick={handleClearFilters}>
-                Reset All Filters
-              </button>
-            )
-          }
-        />
-      ) : (
-        <>
-          <div className="ll-advocate-grid">
-            {lawyers.map((advocate) => (
-              <article key={advocate.id} className="ll-advocate-card">
-                {/* Header with Advocate Portrait Avatar */}
-                <div className="ll-card-header">
-                  <AdvocateAvatar
-                    name={advocate.name}
-                    courtLevel={advocate.courtLevel}
-                    size={58}
+            {/* Keyword Search Field */}
+            <div className="ll-facet-group">
+              <label className="ll-facet-label" htmlFor="sidebarSearch">
+                Keyword or Name
+              </label>
+              <form onSubmit={handleSearchSubmit} className="ll-facet-search-form">
+                <div className="ll-facet-search-box">
+                  <SearchIcon size={16} className="ll-facet-search-icon" />
+                  <input
+                    id="sidebarSearch"
+                    type="search"
+                    placeholder="Advocate name, law, city..."
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                    className="ll-facet-search-input"
                   />
-
-                  <div className="ll-card-header__info">
-                    <h2 className="ll-card-name">
-                      <Link to={`/lawyers/${advocate.id}`} className="ll-card-name-link">
-                        {advocate.name}
-                      </Link>
-                    </h2>
-                    <div className="ll-standing-pill">
-                      <CourtIcon size={13} color="var(--color-primary)" />
-                      <span>{advocate.courtLevel}</span>
-                    </div>
-                    <p className="ll-card-headline">
-                      {advocate.headline || `${advocate.courtLevel} practicing in ${advocate.city}`}
-                    </p>
-                  </div>
                 </div>
-
-                {/* Key Facts Badges */}
-                <div className="ll-card-meta">
-                  <span className="ll-meta-badge" title="Chamber Station">
-                    <LocationIcon size={13} color="var(--color-text-muted)" />
-                    <span>{advocate.city}</span>
-                  </span>
-                  <span className="ll-meta-badge" title="Years at Bar">
-                    <BriefcaseIcon size={13} color="var(--color-text-muted)" />
-                    <span>{advocate.experienceYears} Years Practice</span>
-                  </span>
-                  <span className="ll-meta-badge" title="Provincial Bar Council">
-                    <ScalesIcon size={13} color="var(--color-text-muted)" />
-                    <span>{advocate.barCouncil}</span>
-                  </span>
-                </div>
-
-                {/* Practice Areas Chips */}
-                {advocate.practiceAreas?.length > 0 && (
-                  <div className="ll-card-practice-areas">
-                    {advocate.practiceAreas.map((pa, idx) => (
-                      <span key={idx} className="ll-practice-chip">
-                        {pa}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Consultation Modes */}
-                {advocate.modes?.length > 0 && (
-                  <div className="ll-card-modes">
-                    <span className="ll-modes-label">Modes:</span>
-                    {advocate.modes.map((mode) => (
-                      <span key={mode} className="ll-mode-tag" title={SERVICE_MODE_LABELS[mode] || mode}>
-                        {mode === SERVICE_MODES.VIDEO && <VideoIcon size={12} />}
-                        {mode === SERVICE_MODES.PHONE && <PhoneIcon size={12} />}
-                        {mode === SERVICE_MODES.CHAT && <ChatIcon size={12} />}
-                        {mode === SERVICE_MODES.IN_CHAMBER && <BriefcaseIcon size={12} />}
-                        <span>{SERVICE_MODE_LABELS[mode] || mode}</span>
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Card Footer: Fee & Chamber Profile CTA */}
-                <div className="ll-advocate-card__footer">
-                  <div className="ll-fee-block">
-                    <span className="ll-fee-label">Consultation Rate</span>
-                    <span className="ll-fee-amount">
-                      {advocate.feeFrom ? `From PKR ${advocate.feeFrom.toLocaleString()}` : 'Fee on Enquiry'}
-                    </span>
-                  </div>
-
-                  <Link to={`/lawyers/${advocate.id}`} className="btn btn-primary btn-sm ll-profile-cta">
-                    <span>View Chamber Profile</span>
-                    <ArrowRightIcon size={14} />
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          {/* Pagination Controls */}
-          {pagination.totalPages > 1 && (
-            <div className="ll-pagination">
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                disabled={currentPage <= 1}
-                onClick={() => updateFilter('page', (currentPage - 1).toString())}
-              >
-                Previous
-              </button>
-              <span className="ll-pagination-info">
-                Page {currentPage} of {pagination.totalPages}
-              </span>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                disabled={currentPage >= pagination.totalPages}
-                onClick={() => updateFilter('page', (currentPage + 1).toString())}
-              >
-                Next
-              </button>
+              </form>
             </div>
-          )}
-        </>
-      )}
+
+            {/* Facet: Court Standing */}
+            <div className="ll-facet-group">
+              <div className="ll-facet-label">
+                <CourtIcon size={15} color="#64748b" />
+                <span>Court Standing</span>
+              </div>
+              <div className="ll-facet-options">
+                <label className="ll-facet-radio">
+                  <input
+                    type="radio"
+                    name="courtLevel"
+                    checked={!currentCourtLevel}
+                    onChange={() => updateFilter('courtLevel', '')}
+                  />
+                  <span>All Courts</span>
+                </label>
+                {COURT_LEVELS.map((cl) => (
+                  <label key={cl} className="ll-facet-radio">
+                    <input
+                      type="radio"
+                      name="courtLevel"
+                      checked={currentCourtLevel === cl}
+                      onChange={() => updateFilter('courtLevel', cl)}
+                    />
+                    <span>{cl}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Facet: Station / City */}
+            <div className="ll-facet-group">
+              <div className="ll-facet-label">
+                <LocationIcon size={15} color="#64748b" />
+                <span>Station / City</span>
+              </div>
+              <select
+                className="ll-facet-select"
+                value={currentCity}
+                onChange={(e) => updateFilter('city', e.target.value)}
+                aria-label="Filter by City"
+              >
+                <option value="">All Pakistan Cities</option>
+                {CITIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Facet: Practice Areas */}
+            <div className="ll-facet-group">
+              <div className="ll-facet-label">
+                <BriefcaseIcon size={15} color="#64748b" />
+                <span>Practice Area</span>
+              </div>
+              <div className="ll-facet-options ll-facet-options--scroll">
+                <label className="ll-facet-radio">
+                  <input
+                    type="radio"
+                    name="practiceArea"
+                    checked={!currentPracticeArea}
+                    onChange={() => updateFilter('practiceArea', '')}
+                  />
+                  <span>All Practice Areas</span>
+                </label>
+                {PRACTICE_AREAS.map((p) => (
+                  <label key={p} className="ll-facet-radio">
+                    <input
+                      type="radio"
+                      name="practiceArea"
+                      checked={currentPracticeArea === p}
+                      onChange={() => updateFilter('practiceArea', p)}
+                    />
+                    <span>{p} Law</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Facet: Consultation Mode */}
+            <div className="ll-facet-group">
+              <div className="ll-facet-label">
+                <VideoIcon size={15} color="#64748b" />
+                <span>Consultation Mode</span>
+              </div>
+              <div className="ll-facet-options">
+                <label className="ll-facet-radio">
+                  <input
+                    type="radio"
+                    name="serviceMode"
+                    checked={!currentMode}
+                    onChange={() => updateFilter('mode', '')}
+                  />
+                  <span>Any Mode</span>
+                </label>
+                {Object.values(SERVICE_MODES).map((mode) => (
+                  <label key={mode} className="ll-facet-radio">
+                    <input
+                      type="radio"
+                      name="serviceMode"
+                      checked={currentMode === mode}
+                      onChange={() => updateFilter('mode', mode)}
+                    />
+                    <span>{SERVICE_MODE_LABELS[mode] || mode}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Regulatory Footer inside sidebar */}
+            <div className="ll-sidebar__seal">
+              <ScalesIcon size={24} color="#d97706" />
+              <p>
+                Admin-Reviewed advocates enrolled with respective Provincial Bar Councils in Pakistan.
+              </p>
+            </div>
+          </aside>
+
+          {/* RIGHT COLUMN: Results Header & Grid */}
+          <main className="ll-main">
+            {/* Results Toolbar */}
+            <div className="ll-results-bar">
+              <div className="ll-results-left">
+                <h2 className="ll-results-title">
+                  {loading ? 'Searching Directory...' : `${pagination.total} Advocates Available`}
+                </h2>
+
+                {/* Active Filter Dismissal Chips */}
+                {activeFiltersCount > 0 && (
+                  <div className="ll-active-chips">
+                    {currentCity && (
+                      <button
+                        type="button"
+                        className="ll-active-chip"
+                        onClick={() => updateFilter('city', '')}
+                        title="Remove city filter"
+                      >
+                        <span>Station: {currentCity}</span>
+                        <span>✕</span>
+                      </button>
+                    )}
+                    {currentPracticeArea && (
+                      <button
+                        type="button"
+                        className="ll-active-chip"
+                        onClick={() => updateFilter('practiceArea', '')}
+                        title="Remove practice area filter"
+                      >
+                        <span>{currentPracticeArea} Law</span>
+                        <span>✕</span>
+                      </button>
+                    )}
+                    {currentCourtLevel && (
+                      <button
+                        type="button"
+                        className="ll-active-chip"
+                        onClick={() => updateFilter('courtLevel', '')}
+                        title="Remove court filter"
+                      >
+                        <span>{currentCourtLevel}</span>
+                        <span>✕</span>
+                      </button>
+                    )}
+                    {currentMode && (
+                      <button
+                        type="button"
+                        className="ll-active-chip"
+                        onClick={() => updateFilter('mode', '')}
+                        title="Remove mode filter"
+                      >
+                        <span>Mode: {SERVICE_MODE_LABELS[currentMode] || currentMode}</span>
+                        <span>✕</span>
+                      </button>
+                    )}
+                    {currentSearch && (
+                      <button
+                        type="button"
+                        className="ll-active-chip"
+                        onClick={() => {
+                          setSearchKeyword('');
+                          updateFilter('q', '');
+                        }}
+                        title="Clear search keyword"
+                      >
+                        <span>Keyword: "{currentSearch}"</span>
+                        <span>✕</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="ll-clear-all-link"
+                      onClick={handleClearFilters}
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop Sort Dropdown */}
+              <div className="ll-desktop-sort">
+                <label htmlFor="desktopSortSelect" className="ll-sort-label">
+                  Sort:
+                </label>
+                <select
+                  id="desktopSortSelect"
+                  value={currentSort}
+                  onChange={(e) => updateFilter('sort', e.target.value)}
+                  className="ll-sort-select"
+                >
+                  <option value="experience">Experience (Years at Bar)</option>
+                  <option value="fee_asc">Fee: Lowest to Highest</option>
+                  <option value="fee_desc">Fee: Highest to Lowest</option>
+                  <option value="newest">Recently Enrolled</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Results Grid */}
+            {loading ? (
+              <div className="ll-loading-state">
+                <div className="admin-users__spinner" style={{ margin: '0 auto 1rem' }} />
+                <p>Verifying credentials from the advocate directory...</p>
+              </div>
+            ) : lawyers.length === 0 ? (
+              <EmptyState
+                icon={<ScalesIcon size={44} color="#94a3b8" />}
+                title="No Advocates Found"
+                description="No advocates matched your current combination of city, court standing, or practice area. Try adjusting or clearing your filters."
+                actionLabel="Clear All Filters"
+                onAction={handleClearFilters}
+              />
+            ) : (
+              <div className="ll-advocate-grid">
+                {lawyers.map((advocate) => (
+                  <article key={advocate.id} className="ll-card">
+                    {/* Header Row: Circular Portrait Photo + Name & Standing */}
+                    <div className="ll-card__header">
+                      <AdvocateAvatar
+                        name={advocate.name}
+                        courtLevel={advocate.courtLevel}
+                        size={64}
+                        className="ll-card__avatar"
+                      />
+
+                      <div className="ll-card__info">
+                        <div className="ll-card__name-row">
+                          <Link to={`/lawyers/${advocate.id}`} className="ll-card__name">
+                            {advocate.name}
+                          </Link>
+                          <span className="ll-card__verified-badge" title="Credentials Admin-Reviewed">
+                            <ShieldIcon size={12} color="#059669" />
+                            <span>Admin-Reviewed</span>
+                          </span>
+                        </div>
+
+                        <div className="ll-card__standing-pill">
+                          <CourtIcon size={13} color="#d97706" />
+                          <span>{advocate.courtLevel}</span>
+                        </div>
+
+                        <p className="ll-card__headline">
+                          {advocate.headline || `${advocate.courtLevel} practicing in ${advocate.city}`}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Metadata Badges */}
+                    <div className="ll-card__meta">
+                      <span className="ll-card__meta-item" title="Chamber Station">
+                        <LocationIcon size={13} color="#64748b" />
+                        <span>{advocate.city}</span>
+                      </span>
+                      <span className="ll-card__meta-item" title="Years of Practice">
+                        <BriefcaseIcon size={13} color="#64748b" />
+                        <span>{advocate.experienceYears} Yrs Practice</span>
+                      </span>
+                      <span className="ll-card__meta-item" title="Provincial Bar Council">
+                        <ScalesIcon size={13} color="#64748b" />
+                        <span>{advocate.barCouncil}</span>
+                      </span>
+                    </div>
+
+                    {/* Practice Area Chips */}
+                    {advocate.practiceAreas?.length > 0 && (
+                      <div className="ll-card__practice-areas">
+                        {advocate.practiceAreas.slice(0, 3).map((pa, idx) => (
+                          <span key={idx} className="ll-card__practice-chip">
+                            {pa}
+                          </span>
+                        ))}
+                        {advocate.practiceAreas.length > 3 && (
+                          <span className="ll-card__practice-more">
+                            +{advocate.practiceAreas.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Consultation Modes */}
+                    {advocate.modes?.length > 0 && (
+                      <div className="ll-card__modes">
+                        <span className="ll-card__modes-label">Modes:</span>
+                        {advocate.modes.map((mode) => (
+                          <span
+                            key={mode}
+                            className="ll-card__mode-tag"
+                            title={SERVICE_MODE_LABELS[mode] || mode}
+                          >
+                            {mode === SERVICE_MODES.VIDEO && <VideoIcon size={12} />}
+                            {mode === SERVICE_MODES.PHONE && <PhoneIcon size={12} />}
+                            {mode === SERVICE_MODES.CHAT && <ChatIcon size={12} />}
+                            {mode === SERVICE_MODES.IN_CHAMBER && <BriefcaseIcon size={12} />}
+                            <span>{SERVICE_MODE_LABELS[mode] || mode}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Card Footer: Consultation Rate & Direct Booking CTAs */}
+                    <div className="ll-card__footer">
+                      <div className="ll-card__fee-block">
+                        <span className="ll-card__fee-label">Consultation Rate</span>
+                        <span className="ll-card__fee-amount">
+                          {advocate.feeFrom
+                            ? `From PKR ${advocate.feeFrom.toLocaleString()}`
+                            : 'Fee on Enquiry'}
+                        </span>
+                      </div>
+
+                      <div className="ll-card__actions">
+                        <Link
+                          to={`/book/${advocate.id}`}
+                          className="ll-btn ll-btn--primary"
+                        >
+                          <span>Consult</span>
+                        </Link>
+                        <Link
+                          to={`/lawyers/${advocate.id}`}
+                          className="ll-btn ll-btn--outline"
+                          title="View Profile and Bar Credentials"
+                        >
+                          <span>Profile</span>
+                          <ArrowRightIcon size={12} />
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {pagination.totalPages > 1 && (
+              <nav className="ll-pagination" aria-label="Advocates Pagination">
+                <button
+                  type="button"
+                  className="ll-pagination__btn"
+                  disabled={currentPage <= 1}
+                  onClick={() => updateFilter('page', (currentPage - 1).toString())}
+                >
+                  ← Previous
+                </button>
+                <span className="ll-pagination__info">
+                  Page {currentPage} of {pagination.totalPages}
+                </span>
+                <button
+                  type="button"
+                  className="ll-pagination__btn"
+                  disabled={currentPage >= pagination.totalPages}
+                  onClick={() => updateFilter('page', (currentPage + 1).toString())}
+                >
+                  Next →
+                </button>
+              </nav>
+            )}
+          </main>
+        </div>
+      </div>
     </div>
   );
 };

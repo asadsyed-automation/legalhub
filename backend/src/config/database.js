@@ -7,7 +7,8 @@ const sslOptions = process.env.DB_SSL === 'true' ? {
   ssl: {
     require: true,
     rejectUnauthorized: false
-  }
+  },
+  keepAlive: true
 } : {};
 
 module.exports = {

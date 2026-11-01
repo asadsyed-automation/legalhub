@@ -2,11 +2,27 @@ const app = require('./app');
 const config = require('./config/env');
 const { sequelize } = require('./models');
 
+const authenticateWithRetry = async (maxRetries = 5, delayMs = 2000) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await sequelize.authenticate();
+      console.log('✅ PostgreSQL database connection established successfully.');
+      return;
+    } catch (err) {
+      console.warn(`⚠️ Database connection attempt ${attempt}/${maxRetries} failed: ${err.message}`);
+      if (attempt === maxRetries) {
+        throw err;
+      }
+      console.log(`⏳ Retrying in ${delayMs / 1000}s...`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+};
+
 const startServer = async () => {
   try {
-    // Verify database connectivity
-    await sequelize.authenticate();
-    console.log('✅ PostgreSQL database connection established successfully.');
+    // Verify database connectivity with resilient retry
+    await authenticateWithRetry();
 
     // Start HTTP server listener
     const server = app.listen(config.port, () => {

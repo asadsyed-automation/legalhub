@@ -32,10 +32,12 @@ const STATUS_CONFIGS = {
   appealed: { label: 'Appealed', className: 'status-chip--info' },
   withdrawn: { label: 'Withdrawn', className: 'status-chip--neutral' },
 
-  // Roles
+  // Roles & Account Statuses
   client: { label: 'Client', className: 'status-chip--neutral' },
   lawyer: { label: 'Advocate', className: 'status-chip--primary' },
-  admin: { label: 'Court Administrator', className: 'status-chip--danger' },
+  law_firm: { label: 'Law Firm', className: 'status-chip--info' },
+  admin: { label: 'Administrator', className: 'status-chip--neutral' },
+  suspended: { label: 'Suspended', className: 'status-chip--danger' },
 };
 
 export const StatusChip = ({ status, customLabel = null, size = 'md' }) => {

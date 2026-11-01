@@ -48,11 +48,11 @@ In Pakistan, finding legal counsel and managing ongoing legal disputes is fragme
 * **Backend Phase 3 Part L (Case Timeline & Client View):** Polymorphic 4-source timeline merging (`GET /cases/:id/timeline`), role-based event visibility, confidential hearing note redaction, and single case `sharedDocumentsCount`.
 * **Backend Phase 3 Part M (Notifications, Email & Reminders):** In-app notification inbox (`notifications`), unread badge counter, zero-dependency mailer adapter with in-memory test outbox, and deterministic hearing reminder sweep (`runReminderSweep`) evaluating Pakistan Standard Time (PKT / UTC+5) alert windows.
 * **Backend Phase 3 Part N (Direct Messages):** Contextual dual-route messaging (`messages`) for booking consultations and active court cases, automatic bidirectional read receipts, counter-party in-app notification dispatch, and attorney-client privilege isolation.
-* **Testing Milestone:** Over **278 automated integration tests** passing with 100% pass rate across 18 test suites covering 23 PostgreSQL tables.
-
-### Upcoming Roadmap
-* **Phase 4:** Python FastAPI AI microservice for petition history summarization and legal draft extraction.
-
+* **Backend Phase 4 Part P (Email OTP & Password Reset):** 6-digit cryptographic OTPs with SHA-256 hashed storage, Resend REST API integration via Node 20 native `fetch` with console fallback, 10-minute expiry, 5-attempt dead code lockout, 60-second cooldown rate limit, and email verification login guard.
+* **Backend Phase 4 Part Q (Admin User Management & Suspension):** Master user directory with pagination, role/status filtering, case-insensitive search (`Op.iLike`), soft suspension (`isActive = false`, `suspensionReason`), admin self-suspension guard, and real-time stateless JWT session revocation.
+* **Backend Phase 4 Part R (AI Document Summarization & Bilingual Legal Search):** Dedicated Python FastAPI microservice on port 8000, Pakistani legal entity extraction (PPC, CrPC, CPC, High Courts), extractive summarization in English & Urdu, bilingual search with snippets, Express native Node 20 `fetch` integration, and heuristic fallback.
+* **Backend Phase 4 Part S (Performance & High-Concurrency Load Testing):** Autocannon load benchmarks under 100 concurrent connections achieving 1,942 requests/sec peak throughput, zero 500 server crashes, and active DDoS rate-limiting defense.
+* **Backend Phase 4 Part T (Comprehensive FYP Finalization):** 21 automated integration test suites passing cleanly, 100% contract-to-code alignment (`API_CONTRACT.md`), master viva defense guide (`PART_T_VIVA_GUIDE.md`), and zero secret leakage.
 
 ---
 
@@ -80,16 +80,16 @@ In Pakistan, finding legal counsel and managing ongoing legal disputes is fragme
                                        |  - Zod Fail-Fast Validation       |
                                        |  - Timing Attack & Lockout Guards |
                                        |  - Privacy Shielding Projections  |
-                                       +-----------------+-----------------+
-                                                         |
-                                                         | SSL Connection (PgBouncer)
-                                                         v
-                                       +-----------------------------------+
-                                       |  PostgreSQL Database (Supabase)   |
-                                       |  - Composite Unique Licensing     |
-                                       |  - Native Array Containment (@>)  |
-                                       |  - Cascading Foreign Keys         |
-                                       +-----------------+-----------------+
+                                       +--------+-----------------+--------+
+                                                |                 |
+                            Native fetch (8000ms)                 | SSL Connection (PgBouncer)
+                                                v                 v
+            +-------------------------------------+   +-----------------------------+
+            |      Python FastAPI (Port 8000)     |   |    PostgreSQL (Supabase)    |
+            |   - Pakistani Legal Regex NLP       |   | - 24 Relational Domain Tables|
+            |   - English & Urdu Summarization    |   | - Composite Indexing         |
+            |   - Bilingual Search & Snippets     |   | - Foreign Key Integrity      |
+            +-------------------------------------+   +-----------------------------+
 ```
 
 ---

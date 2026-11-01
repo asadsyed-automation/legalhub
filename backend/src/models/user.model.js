@@ -62,6 +62,26 @@ const initUserModel = (sequelize) => {
         type: DataTypes.DATE,
         allowNull: true,
         defaultValue: null
+      },
+      emailVerifiedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null
+      },
+      isActive: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
+      },
+      suspensionReason: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: null
+      },
+      suspendedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null
       }
     },
     {

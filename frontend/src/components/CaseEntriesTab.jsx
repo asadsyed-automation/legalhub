@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import caseApi from '../api/case.api';
+import aiApi from '../api/ai.api';
 import EmptyState from './EmptyState';
 import {
   PlusIcon,
   DocumentIcon,
   CloseIcon,
   CalendarIcon,
+  SparklesIcon,
 } from './Icons';
 import {
   CASE_ENTRY_TYPES,
@@ -37,6 +39,12 @@ export const CaseEntriesTab = ({ caseId, isLawyer }) => {
   const [formVisibility, setFormVisibility] = useState('private');
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
+
+  // AI Assistant State (FE-12)
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiAvailable, setAiAvailable] = useState(null);
+  const [aiSummary, setAiSummary] = useState(null);
+  const [aiDismissed, setAiDismissed] = useState(false);
 
   const fetchEntries = useCallback(async () => {
     setLoading(true);
@@ -81,6 +89,38 @@ export const CaseEntriesTab = ({ caseId, isLawyer }) => {
     setFormVisibility('private');
     setFormError(null);
     setIsModalOpen(true);
+
+    // AI Analysis (FE-12):
+    // Only if lawyer, new entry, and case already has previous entries.
+    // The form never waits for AI (non-blocking background call).
+    if (isLawyer && entries.length > 0) {
+      setAiLoading(true);
+      setAiAvailable(null);
+      setAiSummary(null);
+      setAiDismissed(false);
+
+      aiApi
+        .summarizePreviousEntries(entries)
+        .then((result) => {
+          if (result && result.available && result.summary) {
+            setAiSummary(result.summary);
+            setAiAvailable(true);
+          } else {
+            setAiAvailable(false);
+          }
+        })
+        .catch(() => {
+          setAiAvailable(false);
+        })
+        .finally(() => {
+          setAiLoading(false);
+        });
+    } else {
+      setAiLoading(false);
+      setAiAvailable(null);
+      setAiSummary(null);
+      setAiDismissed(true);
+    }
   };
 
   const handleOpenEditModal = (entry) => {
@@ -92,12 +132,36 @@ export const CaseEntriesTab = ({ caseId, isLawyer }) => {
     setFormVisibility(entry.visibility || 'private');
     setFormError(null);
     setIsModalOpen(true);
+
+    // Editing existing entries never triggers or shows AI box
+    setAiLoading(false);
+    setAiAvailable(null);
+    setAiSummary(null);
+    setAiDismissed(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingEntry(null);
     setFormError(null);
+    setAiLoading(false);
+    setAiAvailable(null);
+    setAiSummary(null);
+    setAiDismissed(false);
+  };
+
+  const handleUseAiAsNote = () => {
+    if (!aiSummary) return;
+    setFormBody((prev) => {
+      const cleanPrev = (prev || '').trim();
+      if (!cleanPrev) return aiSummary;
+      return `${cleanPrev}\n\n${aiSummary}`;
+    });
+    setAiDismissed(true);
+  };
+
+  const handleIgnoreAi = () => {
+    setAiDismissed(true);
   };
 
   const handleFormSubmit = async (e) => {
@@ -360,6 +424,70 @@ export const CaseEntriesTab = ({ caseId, isLawyer }) => {
                     }}
                   >
                     {formError}
+                  </div>
+                )}
+
+                {/* AI Summary Box (FE-12) */}
+                {isLawyer && !editingEntry && entries.length > 0 && !aiDismissed && (
+                  <div className="ai-summary-container">
+                    {aiLoading && (
+                      <div className="ai-summary-box--loading ai-summary-pulse">
+                        <SparklesIcon size={16} color="var(--color-primary, #2563eb)" />
+                        <span>AI is analyzing previous entries...</span>
+                      </div>
+                    )}
+
+                    {!aiLoading && aiAvailable === false && (
+                      <div className="ai-summary-box--unavailable">
+                        <span>AI summary is not available right now. Enter the entry manually.</span>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={handleIgnoreAi}
+                          aria-label="Dismiss notice"
+                          style={{ padding: '2px 8px', fontSize: '11px' }}
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    )}
+
+                    {!aiLoading && aiAvailable === true && aiSummary && (
+                      <div className="ai-summary-box" aria-live="polite">
+                        <div className="ai-summary-box__header">
+                          <div className="ai-summary-box__title-row">
+                            <SparklesIcon size={16} color="#1e3a8a" />
+                            <h4 className="ai-summary-box__title">Last Hearing Summary (AI Generated)</h4>
+                            <span className="ai-summary-box__badge">AI generated, please verify</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleIgnoreAi}
+                            aria-label="Close summary box"
+                            style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}
+                          >
+                            <CloseIcon size={14} />
+                          </button>
+                        </div>
+                        <p className="ai-summary-box__body">{aiSummary}</p>
+                        <div className="ai-summary-box__actions">
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            onClick={handleUseAiAsNote}
+                          >
+                            Use as note
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={handleIgnoreAi}
+                          >
+                            Ignore
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

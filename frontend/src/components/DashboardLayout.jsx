@@ -108,8 +108,9 @@ export const DashboardLayout = ({ children }) => {
     if (user?.role === ROLES.ADMIN) {
       return [
         ...commonLinks,
-        { to: '/bookings', label: 'Consultation Audits', icon: <CalendarIcon size={18} /> },
+        { to: '/admin/users', label: 'User Management', icon: <BriefcaseIcon size={18} /> },
         { to: '/admin/queue', label: 'Verification Queue', icon: <ShieldIcon size={18} /> },
+        { to: '/bookings', label: 'Consultation Audits', icon: <CalendarIcon size={18} /> },
         { to: '/lawyers', label: 'Advocate Directory', icon: <ScalesIcon size={18} /> },
       ];
     }

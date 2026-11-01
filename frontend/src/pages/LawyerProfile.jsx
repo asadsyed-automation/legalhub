@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import directoryApi from '../api/directory.api';
 import AdvocateAvatar from '../components/AdvocateAvatar';
+import './LawyerProfile.css';
 import {
   CourtIcon,
   LocationIcon,
@@ -194,72 +195,64 @@ export const LawyerProfile = () => {
       {/* Main Profile Card */}
       <div className="card" style={{ borderTop: '5px solid var(--color-primary)', padding: 'var(--spacing-6)' }}>
         {/* Profile Header */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            flexWrap: 'wrap',
-            gap: 'var(--spacing-4)',
-            marginBottom: 'var(--spacing-6)',
-            borderBottom: '1px solid var(--color-border)',
-            paddingBottom: 'var(--spacing-6)',
-          }}
-        >
-          <div style={{ display: 'flex', gap: 'var(--spacing-4)', alignItems: 'center' }}>
-            {/* Advocate Portrait Avatar */}
-            <AdvocateAvatar
-              name={lawyer.name}
-              courtLevel={lawyer.courtLevel}
-              size={76}
-            />
-
-            <div>
-              <h1 style={{ fontSize: '1.875rem', margin: '0 0 var(--spacing-1) 0', color: 'var(--color-text)' }}>
+        <div className="lp-header">
+          {/* Left Column: Information, Badges & Consultation CTA */}
+          <div className="lp-header-info">
+            <div className="lp-header-name-row">
+              <h1 className="lp-header-name">
                 {lawyer.name}
               </h1>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: 'var(--font-size-sm)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-primary)',
-                  marginBottom: 'var(--spacing-2)',
-                }}
+              <span className="lp-verified-badge" title="Credentials Admin-Reviewed">
+                <ShieldIcon size={14} color="#0f5c3c" />
+                <span>Admin-Reviewed Advocate</span>
+              </span>
+            </div>
+
+            <div className="lp-court-tag">
+              <CourtIcon size={17} color="var(--color-primary)" />
+              <span>{lawyer.courtLevel}</span>
+            </div>
+
+            <p className="lp-headline">
+              {lawyer.headline || `${lawyer.courtLevel} based in ${lawyer.city}`}
+            </p>
+
+            <div className="lp-badges-row">
+              <span className="badge badge-info" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <LocationIcon size={12} /> {lawyer.city}, Pakistan
+              </span>
+              <span className="badge badge-info" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <ScalesIcon size={12} /> {lawyer.barCouncil}
+              </span>
+              {ratingAvg !== null && (
+                <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Verified client review average">
+                  <StarIcon size={12} color="#15803d" fill="#15803d" />
+                  <span>{ratingAvg.toFixed(1)} ({reviewCount} verified review{reviewCount === 1 ? '' : 's'})</span>
+                </span>
+              )}
+            </div>
+
+            <div className="lp-cta-row">
+              <Link
+                to={`/book/${lawyer.id}`}
+                className="btn btn-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '0.65rem 1.35rem', fontSize: '0.95rem' }}
               >
-                <CourtIcon size={16} color="var(--color-primary)" />
-                <span>{lawyer.courtLevel}</span>
-              </div>
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', margin: '0 0 var(--spacing-2) 0' }}>
-                {lawyer.headline || `${lawyer.courtLevel} based in ${lawyer.city}`}
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', flexWrap: 'wrap' }}>
-                <span className="badge badge-info" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  <LocationIcon size={12} /> {lawyer.city}, Pakistan
-                </span>
-                <span className="badge badge-info" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  <ScalesIcon size={12} /> {lawyer.barCouncil}
-                </span>
-                {ratingAvg !== null && (
-                  <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Verified client review average">
-                    <StarIcon size={12} color="#15803d" fill="#15803d" />
-                    <span>{ratingAvg.toFixed(1)} ({reviewCount} verified review{reviewCount === 1 ? '' : 's'})</span>
-                  </span>
-                )}
-              </div>
+                <CalendarIcon size={18} />
+                <span>Book Consultation</span>
+              </Link>
             </div>
           </div>
 
-          <Link
-            to={`/book/${lawyer.id}`}
-            className="btn btn-primary"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '0.625rem 1.25rem' }}
-          >
-            <CalendarIcon size={18} />
-            <span>Book Consultation</span>
-          </Link>
+          {/* Right Column: Enlarged Advocate Courtroom Portrait */}
+          <div className="lp-header-avatar">
+            <AdvocateAvatar
+              name={lawyer.name}
+              imageUrl={lawyer.profilePictureUrl || lawyer.avatarUrl}
+              courtLevel={lawyer.courtLevel}
+              size={148}
+            />
+          </div>
         </div>
 
         {/* Credentials Grid */}

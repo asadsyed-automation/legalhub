@@ -84,9 +84,46 @@ const downloadDocumentFile = async (req, res, next) => {
   }
 };
 
+/**
+ * Handles AI summarization of a case document.
+ */
+const summarizeDocument = async (req, res, next) => {
+  try {
+    const result = await documentService.summarizeCaseDocument(
+      req.params.id,
+      req.params.documentId,
+      req.user,
+      req.body
+    );
+
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Handles bilingual search across case documents and diary entries.
+ */
+const searchCaseDocuments = async (req, res, next) => {
+  try {
+    const result = await documentService.searchCaseDocuments(
+      req.params.id,
+      req.user,
+      req.query
+    );
+
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   uploadDocument,
   getCaseDocuments,
   updateDocument,
-  downloadDocumentFile
+  downloadDocumentFile,
+  summarizeDocument,
+  searchCaseDocuments
 };

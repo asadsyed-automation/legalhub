@@ -1,9 +1,10 @@
 const { Op } = require('sequelize');
-const { Case, Document, User } = require('../../models');
+const { Case, Document, CaseEntry, User } = require('../../models');
 const { ROLES } = require('../../constants');
 const AppError = require('../../utils/AppError');
 const { validateFileSignature } = require('../../utils/fileSignature');
 const { uploadFile, getFileStream, deleteFile } = require('../../services/storage/cloudinaryStorage');
+const aiService = require('../../services/ai.service');
 
 /**
  * Whitelist projection function to shield internal storage IDs (publicId, resourceType)
@@ -235,10 +236,142 @@ const streamDocumentFile = async (documentId, user) => {
   };
 };
 
+/**
+ * Summarize a case document using AI.
+ * Role-aware:
+ * - Assigned advocate: can summarize all documents in their cases.
+ * - Linked client: can summarize ONLY IF visibility is 'shared'.
+ * - Admin or others: 403 Forbidden.
+ *
+ * @param {string} caseId
+ * @param {string} documentId
+ * @param {object} user - Authenticated user
+ * @param {object} [options] - { text?: string, language?: string, maxLength?: number }
+ * @returns {Promise<object>} Summary result with entity extraction
+ */
+const summarizeCaseDocument = async (caseId, documentId, user, { text, language = 'auto', maxLength = 250 } = {}) => {
+  if (user.role === ROLES.ADMIN) {
+    throw new AppError('Forbidden: Administrators have no access to confidential case files', 403);
+  }
+
+  const caseRecord = await Case.findByPk(caseId);
+  if (!caseRecord) {
+    throw new AppError('Case file not found', 404);
+  }
+
+  if (user.role === ROLES.LAWYER && caseRecord.lawyerId !== user.id) {
+    throw new AppError('Forbidden: You can only summarize documents in your own case files', 403);
+  }
+
+  if (user.role === ROLES.CLIENT && caseRecord.clientId !== user.id) {
+    throw new AppError('Forbidden: You can only summarize documents for a case linked to your account', 403);
+  }
+
+  const doc = await Document.findOne({
+    where: { id: documentId, caseId }
+  });
+
+  if (!doc) {
+    throw new AppError('Document not found in this case file', 404);
+  }
+
+  if (user.role === ROLES.CLIENT && doc.visibility !== 'shared') {
+    throw new AppError('Forbidden: Clients cannot summarize private advocate work product', 403);
+  }
+
+  // Determine text content to summarize
+  const contentToSummarize = (text && text.trim().length >= 10)
+    ? text.trim()
+    : `${doc.originalName}. Type: ${doc.docType}. Case Title: ${caseRecord.title}. Court: ${caseRecord.courtName || 'District Court'}. Tags: ${(doc.tags || []).join(', ')}. This document forms part of the judicial record in case number ${caseRecord.caseNumber || 'N/A'}.`;
+
+  const aiResult = await aiService.summarizeDocument({
+    text: contentToSummarize,
+    language,
+    maxLength
+  });
+
+  return {
+    documentId: doc.id,
+    originalName: doc.originalName,
+    ...aiResult
+  };
+};
+
+/**
+ * Perform bilingual search across case documents and diary entries.
+ *
+ * @param {string} caseId
+ * @param {object} user - Authenticated user
+ * @param {object} query - { q: string, topK?: number }
+ * @returns {Promise<object>} Search results
+ */
+const searchCaseDocuments = async (caseId, user, { q, topK = 10 } = {}) => {
+  if (user.role === ROLES.ADMIN) {
+    throw new AppError('Forbidden: Administrators have no access to confidential case files', 403);
+  }
+
+  if (!q || typeof q !== 'string' || !q.trim()) {
+    throw new AppError('Search query parameter "q" is required', 400);
+  }
+
+  const caseRecord = await Case.findByPk(caseId);
+  if (!caseRecord) {
+    throw new AppError('Case file not found', 404);
+  }
+
+  if (user.role === ROLES.LAWYER && caseRecord.lawyerId !== user.id) {
+    throw new AppError('Forbidden: You can only search within your own case files', 403);
+  }
+
+  if (user.role === ROLES.CLIENT && caseRecord.clientId !== user.id) {
+    throw new AppError('Forbidden: You can only search within cases linked to your account', 403);
+  }
+
+  // Gather documents
+  const docWhere = { caseId };
+  if (user.role === ROLES.CLIENT) {
+    docWhere.visibility = 'shared';
+  }
+  const documents = await Document.findAll({ where: docWhere });
+
+  // Gather diary entries
+  const entryWhere = { caseId };
+  if (user.role === ROLES.CLIENT) {
+    entryWhere.visibility = 'shared';
+  }
+  const entries = await CaseEntry.findAll({ where: entryWhere });
+
+  const corpus = [
+    ...documents.map((d) => ({
+      id: d.id,
+      title: d.originalName,
+      text: `${d.originalName} ${d.docType} ${(d.tags || []).join(' ')}`
+    })),
+    ...entries.map((e) => ({
+      id: e.id,
+      title: `Diary: ${e.title}`,
+      text: `${e.title} ${e.body || ''} ${e.entryType || ''}`
+    }))
+  ];
+
+  const searchResult = await aiService.searchDocuments({
+    query: q.trim(),
+    documents: corpus,
+    topK: Number(topK) || 10
+  });
+
+  return {
+    caseId,
+    ...searchResult
+  };
+};
+
 module.exports = {
   projectDocument,
   uploadDocument,
   getCaseDocuments,
   updateDocument,
-  streamDocumentFile
+  streamDocumentFile,
+  summarizeCaseDocument,
+  searchCaseDocuments
 };

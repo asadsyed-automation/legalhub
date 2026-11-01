@@ -57,20 +57,26 @@ export const AuthProvider = ({ children }) => {
     return response;
   };
 
-  // Register user and persist token
+  // Register user (does not expect or require immediate session token)
   const register = async (payload) => {
     const response = await authApi.register(payload);
     const registeredUser = response?.user || response?.data?.user;
-    const authToken = response?.token || response?.data?.token;
 
-    if (!authToken || !registeredUser) {
+    if (!registeredUser) {
       throw new Error('Invalid registration response from server');
     }
 
-    localStorage.setItem(STORAGE_KEYS.TOKEN, authToken);
-    setUser(registeredUser);
-    setToken(authToken);
     return response;
+  };
+
+  // Set authenticated session manually from a token and user (e.g. after email OTP verification)
+  const setSessionFromToken = (authToken, authUser) => {
+    if (!authToken || !authUser) {
+      throw new Error('Token and user payload required to initialize session');
+    }
+    localStorage.setItem(STORAGE_KEYS.TOKEN, authToken);
+    setUser(authUser);
+    setToken(authToken);
   };
 
   // Log out user and wipe local token
@@ -100,6 +106,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: Boolean(user && token),
     login,
     register,
+    setSessionFromToken,
     logout,
     refreshUser,
   };

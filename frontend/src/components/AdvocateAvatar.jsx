@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { getAdvocatePhoto } from '../utils/advocatePhotos';
 
 // Palette of dignified legal chambers color schemes
 const PALETTES = [
@@ -39,6 +40,7 @@ export const AdvocateAvatar = ({
   const [imgError, setImgError] = useState(false);
   const palette = getPalette(name);
   const initials = getInitials(name);
+  const resolvedPhoto = imageUrl || getAdvocatePhoto(name);
 
   // Supreme Court gets gold border, High Court gets silver-blue
   const isSupreme = courtLevel?.toLowerCase().includes('supreme');
@@ -46,11 +48,21 @@ export const AdvocateAvatar = ({
 
   const borderColor = isSupreme ? '#eab308' : isHighCourt ? '#60a5fa' : 'rgba(255, 255, 255, 0.2)';
 
-  const avatarStyle = {
+  const wrapperStyle = {
+    position: 'relative',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     width: `${size}px`,
     height: `${size}px`,
     minWidth: `${size}px`,
     minHeight: `${size}px`,
+    flexShrink: 0,
+  };
+
+  const innerCircleStyle = {
+    width: '100%',
+    height: '100%',
     borderRadius: '50%',
     overflow: 'hidden',
     position: 'relative',
@@ -65,70 +77,73 @@ export const AdvocateAvatar = ({
     fontWeight: '700',
     letterSpacing: '0.04em',
     userSelect: 'none',
-    flexShrink: 0,
   };
 
   return (
-    <div className={`advocate-avatar ${className}`} style={avatarStyle} title={name}>
-      {imageUrl && !imgError ? (
-        <img
-          src={imageUrl}
-          alt={name}
-          onError={() => setImgError(true)}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          }}
-        />
-      ) : (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-            height: '100%',
-            position: 'relative',
-          }}
-        >
-          {/* Subtle lawyer collar / neckband watermark */}
-          <svg
-            viewBox="0 0 100 100"
+    <div className={`advocate-avatar-wrapper ${className}`} style={wrapperStyle} title={name}>
+      <div className="advocate-avatar-circle" style={innerCircleStyle}>
+        {resolvedPhoto && !imgError ? (
+          <img
+            src={resolvedPhoto}
+            alt={name}
+            onError={() => setImgError(true)}
             style={{
-              position: 'absolute',
-              bottom: '-8%',
-              width: '85%',
-              opacity: 0.18,
-              fill: '#ffffff',
-              pointerEvents: 'none',
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
             }}
-            aria-hidden="true"
+          />
+        ) : (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              height: '100%',
+              position: 'relative',
+            }}
           >
-            {/* Traditional advocate black coat and white bands */}
-            <path d="M 15 100 L 35 45 L 50 65 L 65 45 L 85 100 Z" />
-            <rect x="44" y="65" width="5" height="30" fill="#ffffff" />
-            <rect x="51" y="65" width="5" height="30" fill="#ffffff" />
-          </svg>
-          <span style={{ position: 'relative', zIndex: 1 }}>{initials}</span>
-        </div>
-      )}
+            {/* Subtle lawyer collar / neckband watermark */}
+            <svg
+              viewBox="0 0 100 100"
+              style={{
+                position: 'absolute',
+                bottom: '-8%',
+                width: '85%',
+                opacity: 0.18,
+                fill: '#ffffff',
+                pointerEvents: 'none',
+              }}
+              aria-hidden="true"
+            >
+              {/* Traditional advocate black coat and white bands */}
+              <path d="M 15 100 L 35 45 L 50 65 L 65 45 L 85 100 Z" />
+              <rect x="44" y="65" width="5" height="30" fill="#ffffff" />
+              <rect x="51" y="65" width="5" height="30" fill="#ffffff" />
+            </svg>
+            <span style={{ position: 'relative', zIndex: 1 }}>{initials}</span>
+          </div>
+        )}
+      </div>
 
-      {/* Tiny Court Level Indicator Dot */}
+      {/* Tiny Court Level Indicator Dot - Stacks above the circle with z-index 20 */}
       {showBadge && (isSupreme || isHighCourt) && (
         <span
           title={isSupreme ? 'Advocate Supreme Court' : 'Advocate High Court'}
           style={{
             position: 'absolute',
-            bottom: '2px',
-            right: '2px',
-            width: `${Math.max(10, Math.round(size * 0.22))}px`,
-            height: `${Math.max(10, Math.round(size * 0.22))}px`,
+            bottom: '0px',
+            right: '0px',
+            width: `${Math.max(12, Math.round(size * 0.24))}px`,
+            height: `${Math.max(12, Math.round(size * 0.24))}px`,
             borderRadius: '50%',
             backgroundColor: isSupreme ? '#eab308' : '#2563eb',
-            border: '2px solid #ffffff',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            border: '2.5px solid #ffffff',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.25)',
+            zIndex: 20,
+            pointerEvents: 'none',
           }}
         />
       )}
