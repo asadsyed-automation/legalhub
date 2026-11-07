@@ -1,14 +1,17 @@
 import axios from 'axios';
 import { STORAGE_KEYS } from '../constants';
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+const rawApiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1').trim();
+const baseURL = rawApiUrl.endsWith('/api/v1')
+  ? rawApiUrl
+  : `${rawApiUrl.replace(/\/+$/, '')}/api/v1`;
 
 export const apiClient = axios.create({
   baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000,
+  timeout: 60000,
 });
 
 // Request Interceptor: Automatically attach JWT token from localStorage

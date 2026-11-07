@@ -28,12 +28,14 @@ const app = express();
 // 1. Security HTTP Headers
 app.use(helmet());
 
-// 2. CORS - restrict strictly to allowed FRONTEND_URLS
+// 2. CORS - restrict strictly to allowed FRONTEND_URLS (normalized to handle trailing slashes)
+const normalizedAllowedOrigins = (config.frontendUrls || []).map((url) => url.replace(/\/+$/, ''));
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow non-browser agents (Supertest, curl, server-to-server) without Origin header
     if (!origin) return callback(null, true);
-    if (config.frontendUrls.includes(origin)) {
+    const normalizedOrigin = origin.replace(/\/+$/, '');
+    if (normalizedAllowedOrigins.includes(normalizedOrigin)) {
       return callback(null, true);
     }
     return callback(new AppError('CORS error: Request origin is not permitted', 403));

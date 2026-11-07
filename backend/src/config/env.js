@@ -76,7 +76,7 @@ const config = {
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '2h',
   frontendUrls: process.env.FRONTEND_URLS
-    ? process.env.FRONTEND_URLS.split(',').map(url => url.trim()).filter(Boolean)
+    ? process.env.FRONTEND_URLS.split(',').map(url => url.trim().replace(/\/+$/, '')).filter(Boolean)
     : ['http://localhost:3000', 'http://localhost:5173'],
   adminEmail: (process.env.ADMIN_EMAIL || '').trim().toLowerCase(),
   adminPassword: process.env.ADMIN_PASSWORD,
