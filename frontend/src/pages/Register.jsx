@@ -105,12 +105,12 @@ export const Register = () => {
 
         <form onSubmit={handleSubmit} noValidate>
           <FormField
-            label="Full Name"
+            label={formData.role === ROLES.LAW_FIRM ? 'Firm / Chamber Name' : 'Full Name'}
             id="name"
             type="text"
             value={formData.name}
             onChange={handleChange}
-            placeholder="e.g. Advocate Tariq Hassan or Fatima Noor"
+            placeholder={formData.role === ROLES.LAW_FIRM ? 'e.g. Asad & Associates Legal Chambers' : 'e.g. Advocate Tariq Hassan or Fatima Noor'}
             required
             error={fieldErrors.name}
             disabled={loading}
@@ -122,7 +122,7 @@ export const Register = () => {
             type="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="name@example.com"
+            placeholder={formData.role === ROLES.LAW_FIRM ? 'contact@firmchambers.pk' : 'name@example.com'}
             required
             error={fieldErrors.email}
             disabled={loading}
@@ -149,7 +149,13 @@ export const Register = () => {
             onChange={handleChange}
             options={roleOptions}
             required
-            helpText="Lawyer accounts must verify Bar Council credentials before public listing."
+            helpText={
+              formData.role === ROLES.LAW_FIRM
+                ? 'Law firms and legal chambers must verify lead partner Bar Council credentials before public listing.'
+                : formData.role === ROLES.LAWYER
+                ? 'Lawyer accounts must verify Bar Council credentials before public listing.'
+                : 'Citizen accounts can search advocates, book consultations, and track case progress.'
+            }
             error={fieldErrors.role}
             disabled={loading}
           />

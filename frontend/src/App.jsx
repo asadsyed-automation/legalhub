@@ -83,11 +83,11 @@ function App() {
             }
           />
 
-          {/* Lawyer-Only Role-Guarded Profile & Services */}
+          {/* Lawyer & Law Firm Role-Guarded Profile & Services */}
           <Route
             path="/lawyer/profile"
             element={
-              <ProtectedRoute allowedRoles={[ROLES.LAWYER]}>
+              <ProtectedRoute allowedRoles={[ROLES.LAWYER, ROLES.LAW_FIRM]}>
                 <DashboardLayout>
                   <LawyerProfileEditor />
                 </DashboardLayout>
@@ -95,11 +95,11 @@ function App() {
             }
           />
 
-          {/* Lawyer-Only Role-Guarded Route */}
+          {/* Lawyer & Law Firm Role-Guarded Route */}
           <Route
             path="/lawyer/application"
             element={
-              <ProtectedRoute allowedRoles={[ROLES.LAWYER]}>
+              <ProtectedRoute allowedRoles={[ROLES.LAWYER, ROLES.LAW_FIRM]}>
                 <DashboardLayout>
                   <LawyerApplication />
                 </DashboardLayout>

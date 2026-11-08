@@ -78,7 +78,7 @@ export const BookingDetail = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
 
-  const isLawyer = user?.role === ROLES.LAWYER;
+  const isLawyer = user?.role === ROLES.LAWYER || user?.role === ROLES.LAW_FIRM;
   const isAdmin = user?.role === ROLES.ADMIN;
 
   // Appointment Data State

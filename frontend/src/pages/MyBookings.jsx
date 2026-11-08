@@ -71,7 +71,7 @@ export const MyBookings = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
 
-  const isLawyer = user?.role === ROLES.LAWYER;
+  const isLawyer = user?.role === ROLES.LAWYER || user?.role === ROLES.LAW_FIRM;
 
   // Data State
   const [bookings, setBookings] = useState([]);

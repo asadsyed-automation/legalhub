@@ -93,13 +93,13 @@ export const DashboardLayout = ({ children }) => {
       ];
     }
 
-    if (user?.role === ROLES.LAWYER) {
+    if (user?.role === ROLES.LAWYER || user?.role === ROLES.LAW_FIRM) {
       return [
         ...commonLinks,
         { to: '/cases', label: 'Case Files & Diary', icon: <BriefcaseIcon size={18} /> },
         { to: '/calendar', label: 'Court Cause List & Calendar', icon: <CalendarIcon size={18} /> },
         { to: '/bookings', label: 'Client Appointments', icon: <CalendarIcon size={18} /> },
-        { to: '/lawyer/profile', label: 'Chamber Profile & Fees', icon: <BriefcaseIcon size={18} /> },
+        { to: '/lawyer/profile', label: user?.role === ROLES.LAW_FIRM ? 'Firm Profile & Fees' : 'Chamber Profile & Fees', icon: <BriefcaseIcon size={18} /> },
         { to: '/lawyer/application', label: 'Licensing Verification', icon: <DocumentIcon size={18} /> },
         { to: '/lawyers', label: 'Public Directory', icon: <ScalesIcon size={18} /> },
       ];

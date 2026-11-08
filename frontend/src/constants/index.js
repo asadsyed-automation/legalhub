@@ -2,17 +2,20 @@ export const ROLES = Object.freeze({
   CLIENT: 'client',
   LAWYER: 'lawyer',
   ADMIN: 'admin',
+  LAW_FIRM: 'law_firm',
 });
 
 export const ALLOWED_REGISTRATION_ROLES = Object.freeze([
   ROLES.CLIENT,
   ROLES.LAWYER,
+  ROLES.LAW_FIRM,
 ]);
 
 export const ROLE_LABELS = Object.freeze({
   [ROLES.CLIENT]: 'Client / Citizen',
   [ROLES.LAWYER]: 'Advocate / Lawyer',
   [ROLES.ADMIN]: 'Court Administrator',
+  [ROLES.LAW_FIRM]: 'Law Firm / Legal Chamber',
 });
 
 export const APPLICATION_STATUS = Object.freeze({

@@ -23,7 +23,7 @@ export const CasesList = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const isLawyer = user?.role === ROLES.LAWYER;
+  const isLawyer = user?.role === ROLES.LAWYER || user?.role === ROLES.LAW_FIRM;
 
   // Query & Filter State
   const [statusFilter, setStatusFilter] = useState('');

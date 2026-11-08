@@ -112,8 +112,8 @@ export const Feed = () => {
       navigate('/login?redirect=/feed');
       return;
     }
-    if (user.role === ROLES.LAWYER) {
-      showToast('Advocate accounts can provide legal opinions on open questions below', 'info');
+    if (user.role === ROLES.LAWYER || user.role === ROLES.LAW_FIRM) {
+      showToast('Advocates and Law Firms can provide legal opinions on open questions below', 'info');
       return;
     }
     setIsModalOpen(true);

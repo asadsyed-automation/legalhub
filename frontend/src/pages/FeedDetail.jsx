@@ -122,7 +122,7 @@ export const FeedDetail = () => {
 
   const isOpen = question.status === 'open';
   const isOwner = user && user.id === question.clientId;
-  const isLawyer = user && user.role === ROLES.LAWYER;
+  const isLawyer = user && (user.role === ROLES.LAWYER || user.role === ROLES.LAW_FIRM);
   const answers = question.answers || [];
   const formattedDate = new Date(question.createdAt).toLocaleDateString('en-PK', {
     year: 'numeric',

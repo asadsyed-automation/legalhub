@@ -136,8 +136,8 @@ export const BookConsultation = () => {
       return;
     }
 
-    if (user?.role === ROLES.LAWYER) {
-      showToast('Advocates cannot book consultations with other advocates. Please use a client account.', 'warning');
+    if (user?.role === ROLES.LAWYER || user?.role === ROLES.LAW_FIRM) {
+      showToast('Advocates and Law Firms cannot book consultations. Please use a client account to consult.', 'warning');
       return;
     }
 

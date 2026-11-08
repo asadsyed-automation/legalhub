@@ -80,7 +80,7 @@ export const VerifyEmail = () => {
       setSessionFromToken(authToken, verifiedUser);
 
       // Role-guided navigation
-      if (verifiedUser.role === ROLES.LAWYER) {
+      if (verifiedUser.role === ROLES.LAWYER || verifiedUser.role === ROLES.LAW_FIRM) {
         navigate('/lawyer/application', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });

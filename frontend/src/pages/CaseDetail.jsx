@@ -39,7 +39,7 @@ export const CaseDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const isLawyer = user?.role === ROLES.LAWYER;
+  const isLawyer = user?.role === ROLES.LAWYER || user?.role === ROLES.LAW_FIRM;
 
   // Case Data State
   const [caseData, setCaseData] = useState(null);

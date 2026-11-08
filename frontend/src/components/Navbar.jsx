@@ -113,7 +113,7 @@ export const Navbar = () => {
                   Consultations
                 </Link>
 
-                {user?.role === ROLES.LAWYER && (
+                {(user?.role === ROLES.LAWYER || user?.role === ROLES.LAW_FIRM) && (
                   <Link
                     to="/lawyer/application"
                     className={`navbar-link ${isActive('/lawyer/application') ? 'navbar-link--active' : ''}`}

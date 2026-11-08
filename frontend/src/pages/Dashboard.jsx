@@ -47,7 +47,7 @@ export const Dashboard = () => {
   useEffect(() => {
     let isMounted = true;
 
-    if (user?.role === ROLES.LAWYER) {
+    if (user?.role === ROLES.LAWYER || user?.role === ROLES.LAW_FIRM) {
       setAppLoading(true);
       setAppError(null);
 
@@ -133,8 +133,8 @@ export const Dashboard = () => {
       });
     }
 
-    // Load Phase 3 Case & Hearing statistics for authenticated advocate or client
-    if (user?.role === ROLES.LAWYER || user?.role === ROLES.CLIENT) {
+    // Load Phase 3 Case & Hearing statistics for authenticated advocate, law firm, or client
+    if (user?.role === ROLES.LAWYER || user?.role === ROLES.LAW_FIRM || user?.role === ROLES.CLIENT) {
       const fetchCases = caseApi.getCases ? caseApi.getCases({ page: 1, limit: 1 }) : Promise.resolve({ data: { total: 0 } });
       const fetchHearings = caseApi.listHearingsAcrossCases ? caseApi.listHearingsAcrossCases({ from: new Date().toISOString() }) : Promise.resolve({ data: [] });
 
@@ -263,9 +263,9 @@ export const Dashboard = () => {
       />
 
       {/* =========================================================================
-          1. ADVOCATE PORTAL (REAL API DRIVEN DATA)
+          1. ADVOCATE & LAW FIRM PORTAL (REAL API DRIVEN DATA)
           ========================================================================= */}
-      {user?.role === ROLES.LAWYER && (
+      {(user?.role === ROLES.LAWYER || user?.role === ROLES.LAW_FIRM) && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
           {appLoading ? (
             <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-8)' }}>
