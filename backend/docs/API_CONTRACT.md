@@ -3458,5 +3458,17 @@ The Community Legal Q&A Feed provides a public, pro bono platform where citizens
 }
 ```
 
+### 21.6 Delete Question
+* **Endpoint:** `DELETE /feed/:id`
+* **Access:** Protected (Admin moderation OR Author Client: `Authorization: Bearer <jwt>`)
+* **Behavior:** Deletes the specified question and all associated answers. Returns 403 Forbidden if attempted by an unauthorized user.
+* **Success Response (200 OK):**
+```json
+{
+  "id": "q1111111-2222-3333-4444-555555555555",
+  "message": "Question deleted successfully by author"
+}
+```
+
 
 

@@ -89,6 +89,7 @@ export const DashboardLayout = ({ children }) => {
         { to: '/cases', label: 'My Case Files', icon: <BriefcaseIcon size={18} /> },
         { to: '/calendar', label: 'Court Hearing Calendar', icon: <CalendarIcon size={18} /> },
         { to: '/bookings', label: 'My Consultations', icon: <CalendarIcon size={18} /> },
+        { to: '/feed', label: 'Community Legal Q&A', icon: <ScalesIcon size={18} /> },
         { to: '/lawyers', label: 'Find Advocates', icon: <SearchIcon size={18} /> },
       ];
     }
@@ -99,6 +100,7 @@ export const DashboardLayout = ({ children }) => {
         { to: '/cases', label: 'Case Files & Diary', icon: <BriefcaseIcon size={18} /> },
         { to: '/calendar', label: 'Court Cause List & Calendar', icon: <CalendarIcon size={18} /> },
         { to: '/bookings', label: 'Client Appointments', icon: <CalendarIcon size={18} /> },
+        { to: '/feed', label: 'Community Legal Q&A', icon: <ScalesIcon size={18} /> },
         { to: '/lawyer/profile', label: user?.role === ROLES.LAW_FIRM ? 'Firm Profile & Fees' : 'Chamber Profile & Fees', icon: <BriefcaseIcon size={18} /> },
         { to: '/lawyer/application', label: 'Licensing Verification', icon: <DocumentIcon size={18} /> },
         { to: '/lawyers', label: 'Public Directory', icon: <ScalesIcon size={18} /> },
@@ -110,6 +112,7 @@ export const DashboardLayout = ({ children }) => {
         ...commonLinks,
         { to: '/admin/users', label: 'User Management', icon: <BriefcaseIcon size={18} /> },
         { to: '/admin/queue', label: 'Verification Queue', icon: <ShieldIcon size={18} /> },
+        { to: '/feed', label: 'Legal Q&A Moderation', icon: <ScalesIcon size={18} /> },
         { to: '/bookings', label: 'Consultation Audits', icon: <CalendarIcon size={18} /> },
         { to: '/lawyers', label: 'Advocate Directory', icon: <ScalesIcon size={18} /> },
       ];

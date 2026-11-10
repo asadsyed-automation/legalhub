@@ -35,11 +35,11 @@ router.post(
   feedController.createQuestion
 );
 
-// Protected Lawyer response to question
+// Protected Lawyer response to question (Advocates & Law Firms)
 router.post(
   '/:id/answers',
   verifyToken,
-  requireRole(ROLES.LAWYER),
+  requireRole(ROLES.LAWYER, ROLES.LAW_FIRM),
   validate(createAnswerSchema),
   feedController.createAnswer
 );
@@ -51,6 +51,14 @@ router.patch(
   requireRole(ROLES.CLIENT),
   validate(idParamSchema, 'params'),
   feedController.closeQuestion
+);
+
+// Protected Deletion (Admin moderation or Author Client)
+router.delete(
+  '/:id',
+  verifyToken,
+  validate(idParamSchema, 'params'),
+  feedController.deleteQuestion
 );
 
 module.exports = router;

@@ -17,6 +17,7 @@ describe('Public Legal Q&A Feed Module Integration Tests', () => {
   let clientToken, otherClientToken;
   let approvedLawyerUser, unapprovedLawyerUser;
   let approvedLawyerToken, unapprovedLawyerToken;
+  let adminUser, adminToken;
   let testQuestion;
 
   beforeAll(async () => {
@@ -98,6 +99,17 @@ describe('Public Legal Q&A Feed Module Integration Tests', () => {
       chamberAddress: 'Chamber 5, Sessions Court Lahore',
       status: APPLICATION_STATUS.PENDING
     });
+
+    // 5. Admin User
+    adminUser = await User.create({
+      name: 'System Admin',
+      email: `admin_feed_${ts}${TEST_EMAIL_SUFFIX}`,
+      passwordHash: 'dummyhash',
+      role: ROLES.ADMIN,
+      isActive: true,
+      emailVerifiedAt: new Date()
+    });
+    adminToken = generateToken(adminUser);
   });
 
   describe('1. GET /api/v1/feed (Public listing)', () => {
@@ -249,6 +261,68 @@ describe('Public Legal Q&A Feed Module Integration Tests', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error).toContain('closed');
+    });
+  });
+
+  describe('6. DELETE /api/v1/feed/:id (Admin moderation & Owner deletion)', () => {
+    let questionToDelete;
+
+    beforeEach(async () => {
+      questionToDelete = await CommunityQuestion.create({
+        clientId: clientUser.id,
+        title: 'Temporary question for deletion tests',
+        practiceArea: 'Civil',
+        city: 'Lahore',
+        content: 'This question will be deleted in the test suite.',
+        status: 'open',
+        answersCount: 0
+      });
+    });
+
+    it('should reject unauthenticated deletion with 401', async () => {
+      const res = await request(app).delete(`/api/v1/feed/${questionToDelete.id}`);
+      expect(res.status).toBe(401);
+    });
+
+    it('should reject non-owner client attempting to delete with 403', async () => {
+      const res = await request(app)
+        .delete(`/api/v1/feed/${questionToDelete.id}`)
+        .set('Authorization', `Bearer ${otherClientToken}`);
+
+      expect(res.status).toBe(403);
+    });
+
+    it('should allow author client to delete their own question with 200', async () => {
+      const res = await request(app)
+        .delete(`/api/v1/feed/${questionToDelete.id}`)
+        .set('Authorization', `Bearer ${clientToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toContain('deleted');
+
+      const found = await CommunityQuestion.findByPk(questionToDelete.id);
+      expect(found).toBeNull();
+    });
+
+    it('should allow administrator to delete suspicious question under moderation with 200', async () => {
+      const res = await request(app)
+        .delete(`/api/v1/feed/${questionToDelete.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toContain('moderation');
+
+      const found = await CommunityQuestion.findByPk(questionToDelete.id);
+      expect(found).toBeNull();
+    });
+
+    it('should return 404 when deleting a non-existent question', async () => {
+      const fakeUuid = '00000000-0000-0000-0000-000000000000';
+      const res = await request(app)
+        .delete(`/api/v1/feed/${fakeUuid}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(404);
     });
   });
 });

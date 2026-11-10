@@ -7,6 +7,7 @@ const {
   LawyerProfile
 } = require('../../models');
 const { APPLICATION_STATUS } = require('../../constants');
+const { ROLES } = require('../../constants/roles');
 const AppError = require('../../utils/AppError');
 
 /**
@@ -47,6 +48,10 @@ const listQuestions = async (params = {}) => {
 
   if (params.city) {
     where.city = { [Op.iLike]: `%${params.city.trim()}%` };
+  }
+
+  if (params.clientId) {
+    where.clientId = params.clientId;
   }
 
   if (params.q && params.q.trim()) {
@@ -266,11 +271,47 @@ const closeQuestion = async (clientId, questionId) => {
   return question;
 };
 
+/**
+ * Deletes a community question and its associated answers.
+ * Permitted for:
+ * 1. Admin (disciplinary / moderation oversight)
+ * 2. Author citizen who submitted the question
+ *
+ * @param {object} user - Authenticated user object from req.user
+ * @param {string} questionId
+ * @returns {Promise<{ id: string, message: string }>}
+ */
+const deleteQuestion = async (user, questionId) => {
+  const question = await CommunityQuestion.findByPk(questionId);
+  if (!question) {
+    throw new AppError('Question not found', 404);
+  }
+
+  const isAdmin = user && user.role === ROLES.ADMIN;
+  const isOwner = user && user.id === question.clientId;
+
+  if (!isAdmin && !isOwner) {
+    throw new AppError('Forbidden: Only an administrator or the question author may delete this inquiry', 403);
+  }
+
+  // Delete associated answers first, then question
+  await CommunityAnswer.destroy({ where: { questionId } });
+  await question.destroy();
+
+  return {
+    id: questionId,
+    message: isAdmin
+      ? 'Question and all associated answers removed by administrator moderation'
+      : 'Question deleted successfully by author'
+  };
+};
+
 module.exports = {
   listQuestions,
   getQuestionById,
   createQuestion,
   createAnswer,
   closeQuestion,
+  deleteQuestion,
   maskClientName
 };

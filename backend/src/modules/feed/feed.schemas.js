@@ -28,6 +28,7 @@ const queryQuestionsSchema = z.object({
   city: z.string().optional(),
   status: z.enum(['open', 'closed', 'all']).optional(),
   q: z.string().optional(),
+  clientId: z.string().uuid().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20)
 });

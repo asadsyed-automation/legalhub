@@ -54,11 +54,21 @@ const closeQuestion = async (req, res, next) => {
   }
 };
 
+const deleteQuestion = async (req, res, next) => {
+  try {
+    const result = await feedService.deleteQuestion(req.user, req.params.id);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   listQuestions,
   getQuestionById,
   createQuestion,
   createAnswer,
-  closeQuestion
+  closeQuestion,
+  deleteQuestion
 };
 

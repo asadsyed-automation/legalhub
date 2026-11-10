@@ -126,7 +126,9 @@ export const AdminQueue = () => {
           marginBottom: 'var(--spacing-6)',
           borderBottom: '1px solid var(--color-border)',
           paddingBottom: 'var(--spacing-2)',
-          flexWrap: 'wrap',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          maxWidth: '100%',
         }}
       >
         <button

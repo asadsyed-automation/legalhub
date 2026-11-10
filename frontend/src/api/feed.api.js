@@ -35,7 +35,14 @@ export const feedApi = {
    * @param {string} questionId
    * @returns {Promise<{ message: string, question: object }>}
    */
-  closeQuestion: (questionId) => apiClient.patch(`/feed/${questionId}/close`)
+  closeQuestion: (questionId) => apiClient.patch(`/feed/${questionId}/close`),
+
+  /**
+   * Delete a question (Admin moderation or author Client)
+   * @param {string} questionId
+   * @returns {Promise<{ id: string, message: string }>}
+   */
+  deleteQuestion: (questionId) => apiClient.delete(`/feed/${questionId}`)
 };
 
 export default feedApi;

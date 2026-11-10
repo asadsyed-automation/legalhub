@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { feedApi } from '../api/feed.api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -11,6 +11,7 @@ import {
   ArrowRightIcon,
   ChatIcon,
   BriefcaseIcon,
+  TrashIcon,
 } from '../components/Icons';
 import { ROLES } from '../constants';
 import AdvocateAvatar from '../components/AdvocateAvatar';
@@ -20,6 +21,7 @@ export const FeedDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const [question, setQuestion] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,7 @@ export const FeedDetail = () => {
   const [answerContent, setAnswerContent] = useState('');
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
   const [resolving, setResolving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch question and answers
   const fetchQuestionDetails = useCallback(async () => {
@@ -68,6 +71,28 @@ export const FeedDetail = () => {
       showToast(err.message || 'Failed to resolve question', 'error');
     } finally {
       setResolving(false);
+    }
+  };
+
+  // Handle Question Deletion (Admin Moderation or Citizen Author)
+  const handleDeleteQuestion = async () => {
+    const isAdmin = user && user.role === ROLES.ADMIN;
+    const confirmPrompt = isAdmin
+      ? 'Are you sure you want to delete this question under administrative moderation? All associated advocate opinions will also be permanently removed.'
+      : 'Are you sure you want to delete your question? This action cannot be undone.';
+
+    if (!window.confirm(confirmPrompt)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await feedApi.deleteQuestion(id);
+      showToast(isAdmin ? 'Question removed under administrative moderation' : 'Your question has been deleted successfully', 'success');
+      navigate('/feed');
+    } catch (err) {
+      showToast(err.message || 'Failed to delete question', 'error');
+      setDeleting(false);
     }
   };
 
@@ -122,6 +147,7 @@ export const FeedDetail = () => {
 
   const isOpen = question.status === 'open';
   const isOwner = user && user.id === question.clientId;
+  const isAdmin = user && user.role === ROLES.ADMIN;
   const isLawyer = user && (user.role === ROLES.LAWYER || user.role === ROLES.LAW_FIRM);
   const answers = question.answers || [];
   const formattedDate = new Date(question.createdAt).toLocaleDateString('en-PK', {
@@ -153,9 +179,8 @@ export const FeedDetail = () => {
               {question.city}
             </span>
             <span
-              className={`feed-card__badge-status ${
-                isOpen ? 'feed-card__badge-status--open' : 'feed-card__badge-status--closed'
-              }`}
+              className={`feed-card__badge-status ${isOpen ? 'feed-card__badge-status--open' : 'feed-card__badge-status--closed'
+                }`}
             >
               {isOpen ? (
                 <>
@@ -174,7 +199,7 @@ export const FeedDetail = () => {
           <h1 className="feed-detail__title">{question.title}</h1>
           <div className="feed-detail__description">{question.content || question.description}</div>
 
-          <div className="feed-detail__author-bar">
+          <div className="feed-detail__author-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--spacing-3)' }}>
             <div className="feed-detail__author">
               <span className="feed-detail__author-avatar">
                 {(question.clientName || 'C').charAt(0)}
@@ -185,18 +210,33 @@ export const FeedDetail = () => {
               </div>
             </div>
 
-            {/* Owner Actions */}
-            {isOwner && isOpen && (
-              <button
-                type="button"
-                className="feed-detail__btn-resolve"
-                onClick={handleResolveQuestion}
-                disabled={resolving}
-              >
-                <CheckIcon size={15} />
-                <span>{resolving ? 'Closing...' : 'Mark as Resolved'}</span>
-              </button>
-            )}
+            {/* Owner & Admin Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', flexWrap: 'wrap' }}>
+              {isOwner && isOpen && (
+                <button
+                  type="button"
+                  className="feed-detail__btn-resolve"
+                  onClick={handleResolveQuestion}
+                  disabled={resolving || deleting}
+                >
+                  <CheckIcon size={15} />
+                  <span>{resolving ? 'Closing...' : 'Mark as Resolved'}</span>
+                </button>
+              )}
+
+              {(isOwner || isAdmin) && (
+                <button
+                  type="button"
+                  onClick={handleDeleteQuestion}
+                  disabled={deleting || resolving}
+                  className={`btn btn-sm ${isAdmin ? 'btn-danger' : 'btn-secondary'}`}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <TrashIcon size={14} />
+                  <span>{deleting ? 'Deleting...' : isAdmin ? 'Admin: Delete (Moderation)' : 'Delete Question'}</span>
+                </button>
+              )}
+            </div>
           </div>
         </article>
 

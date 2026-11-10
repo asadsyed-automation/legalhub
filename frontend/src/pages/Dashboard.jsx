@@ -4,13 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import PageHeader from '../components/PageHeader';
 import StatusChip from '../components/StatusChip';
 import EmptyState from '../components/EmptyState';
-import { DocumentIcon, BriefcaseIcon, SearchIcon, ShieldIcon, ClockIcon } from '../components/Icons';
+import { DocumentIcon, BriefcaseIcon, SearchIcon, ShieldIcon, ClockIcon, ChatIcon } from '../components/Icons';
 import lawyerApi from '../api/lawyer.api';
 import bookingApi from '../api/booking.api';
 import engagementApi from '../api/engagement.api';
 import caseApi from '../api/case.api';
 import notificationApi from '../api/notification.api';
 import adminApi from '../api/admin.api';
+import feedApi from '../api/feed.api';
 import { ROLES, APPLICATION_STATUS } from '../constants';
 
 export const Dashboard = () => {
@@ -43,6 +44,10 @@ export const Dashboard = () => {
   });
   const [loadingAdminStats, setLoadingAdminStats] = useState(false);
   const [adminStatsError, setAdminStatsError] = useState(null);
+
+  // Client community feed inquiries state
+  const [clientQuestions, setClientQuestions] = useState([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -131,6 +136,23 @@ export const Dashboard = () => {
         }
         setLoadingAppointments(false);
       });
+
+      // Load community feed inquiries posted by this citizen client
+      setLoadingQuestions(true);
+      feedApi
+        .getQuestions({ clientId: user.id, status: 'all', limit: 5 })
+        .then((res) => {
+          if (isMounted) {
+            const items = res?.items || res?.data?.items || (Array.isArray(res) ? res : []);
+            setClientQuestions(Array.isArray(items) ? items : []);
+          }
+        })
+        .catch((err) => {
+          console.debug('Failed to load citizen feed inquiries:', err?.message);
+        })
+        .finally(() => {
+          if (isMounted) setLoadingQuestions(false);
+        });
     }
 
     // Load Phase 3 Case & Hearing statistics for authenticated advocate, law firm, or client
@@ -228,7 +250,7 @@ export const Dashboard = () => {
     return () => {
       isMounted = false;
     };
-  }, [user?.role]);
+  }, [user?.role, user?.id]);
 
   // Derived metrics calculations
   const lawyerMetrics = {
@@ -870,6 +892,88 @@ export const Dashboard = () => {
             )}
           </div>
 
+          {/* Citizen Legal Q&A Inquiries Card */}
+          <div className="card" style={{ backgroundColor: 'var(--color-surface)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-3)', flexWrap: 'wrap', gap: 'var(--spacing-2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                <ChatIcon size={20} color="var(--color-primary)" />
+                <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)' }}>My Legal Q&amp;A Feed Inquiries</h3>
+              </div>
+              <Link to="/feed" className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                + Ask Question
+              </Link>
+            </div>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-3)' }}>
+              Track community questions seeking pro bono legal opinions from verified advocates across Pakistan.
+            </p>
+
+            {loadingQuestions ? (
+              <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>Loading your inquiries...</p>
+            ) : clientQuestions.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 'var(--spacing-6) 0' }}>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-3)' }}>
+                  You have not posted any legal questions on the community feed yet.
+                </p>
+                <Link to="/feed" className="btn btn-primary btn-sm">
+                  Post a Legal Question
+                </Link>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
+                {clientQuestions.map((q) => (
+                  <div
+                    key={q.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: 'var(--spacing-3)',
+                      backgroundColor: 'var(--color-bg)',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: 'var(--font-size-sm)',
+                      flexWrap: 'wrap',
+                      gap: 'var(--spacing-2)',
+                    }}
+                  >
+                    <div style={{ flex: '1 1 240px', minWidth: 0 }}>
+                      <strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {q.title}
+                      </strong>
+                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', display: 'flex', gap: 'var(--spacing-2)', marginTop: '2px', flexWrap: 'wrap' }}>
+                        <span>Domain: {q.practiceArea}</span>
+                        <span>•</span>
+                        <span>{q.city || 'Pakistan'}</span>
+                        <span>•</span>
+                        <span>{q.answersCount || 0} Advocate Opinions</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                      <span
+                        style={{
+                          fontSize: 'var(--font-size-xs)',
+                          padding: '2px 8px',
+                          borderRadius: 'var(--radius-sm)',
+                          backgroundColor: q.status === 'open' ? '#ecfdf5' : '#f1f5f9',
+                          color: q.status === 'open' ? '#059669' : '#64748b',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {q.status === 'open' ? 'Open' : 'Resolved'}
+                      </span>
+                      <Link
+                        to={`/feed/${q.id}`}
+                        className="btn btn-secondary btn-sm"
+                        style={{ padding: '4px 10px', fontSize: 'var(--font-size-xs)' }}
+                      >
+                        View &amp; Manage
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Find Legal Representation Discovery Card */}
           <div
             className="card"
@@ -920,6 +1024,9 @@ export const Dashboard = () => {
               </Link>
               <Link to="/admin/queue" className="btn btn-secondary">
                 Verification Queue ({adminStats.pendingApplications})
+              </Link>
+              <Link to="/feed" className="btn btn-secondary">
+                Moderate Legal Q&amp;A Feed
               </Link>
               <Link to="/bookings" className="btn btn-secondary">
                 Audit Consultations
