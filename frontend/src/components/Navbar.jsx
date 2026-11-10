@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from './StatusBadge';
 import { MenuIcon, CloseIcon } from './Icons';
-import { ROLES } from '../constants';
 import logo from '../assets/logo.png';
 import './Navbar.css';
 
@@ -73,26 +72,30 @@ export const Navbar = () => {
               Legal Q&amp;A Feed
             </Link>
 
-            <Link
-              to="/how-it-works"
-              className={`navbar-link ${isActive('/how-it-works') ? 'navbar-link--active' : ''}`}
-            >
-              How It Works
-            </Link>
+            {!isAuthenticated && (
+              <>
+                <Link
+                  to="/how-it-works"
+                  className={`navbar-link ${isActive('/how-it-works') ? 'navbar-link--active' : ''}`}
+                >
+                  How It Works
+                </Link>
 
-            <Link
-              to="/about"
-              className={`navbar-link ${isActive('/about') ? 'navbar-link--active' : ''}`}
-            >
-              About Us
-            </Link>
+                <Link
+                  to="/about"
+                  className={`navbar-link ${isActive('/about') ? 'navbar-link--active' : ''}`}
+                >
+                  About Us
+                </Link>
 
-            <Link
-              to="/contact"
-              className={`navbar-link ${isActive('/contact') ? 'navbar-link--active' : ''}`}
-            >
-              Contact
-            </Link>
+                <Link
+                  to="/contact"
+                  className={`navbar-link ${isActive('/contact') ? 'navbar-link--active' : ''}`}
+                >
+                  Contact
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Desktop Auth Controls */}
@@ -101,35 +104,11 @@ export const Navbar = () => {
               <>
                 <Link
                   to="/dashboard"
-                  className={`navbar-link ${isActive('/dashboard') ? 'navbar-link--active' : ''}`}
+                  className="btn btn-primary btn-sm"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 >
                   Dashboard
                 </Link>
-
-                <Link
-                  to="/bookings"
-                  className={`navbar-link ${isActive('/bookings') ? 'navbar-link--active' : ''}`}
-                >
-                  Consultations
-                </Link>
-
-                {(user?.role === ROLES.LAWYER || user?.role === ROLES.LAW_FIRM) && (
-                  <Link
-                    to="/lawyer/application"
-                    className={`navbar-link ${isActive('/lawyer/application') ? 'navbar-link--active' : ''}`}
-                  >
-                    My Application
-                  </Link>
-                )}
-
-                {user?.role === ROLES.ADMIN && (
-                  <Link
-                    to="/admin/queue"
-                    className={`navbar-link ${isActive('/admin/queue') ? 'navbar-link--active' : ''}`}
-                  >
-                    Admin Queue
-                  </Link>
-                )}
 
                 <div className="navbar-user-profile">
                   <div className="navbar-user-info">

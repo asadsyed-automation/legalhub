@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import PageHeader from '../components/PageHeader';
 import StatusChip from '../components/StatusChip';
 import EmptyState from '../components/EmptyState';
-import { DocumentIcon, BriefcaseIcon, SearchIcon, ShieldIcon, ClockIcon, ChatIcon } from '../components/Icons';
+import { DocumentIcon, BriefcaseIcon, SearchIcon, ShieldIcon, ClockIcon, ChatIcon, TrashIcon } from '../components/Icons';
 import lawyerApi from '../api/lawyer.api';
 import bookingApi from '../api/booking.api';
 import engagementApi from '../api/engagement.api';
@@ -16,6 +17,7 @@ import { ROLES, APPLICATION_STATUS } from '../constants';
 
 export const Dashboard = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   // Lawyer Application real data state
   const [application, setApplication] = useState(null);
@@ -44,6 +46,9 @@ export const Dashboard = () => {
   });
   const [loadingAdminStats, setLoadingAdminStats] = useState(false);
   const [adminStatsError, setAdminStatsError] = useState(null);
+  const [adminQuestions, setAdminQuestions] = useState([]);
+  const [loadingAdminFeed, setLoadingAdminFeed] = useState(false);
+  const [deletingAdminQId, setDeletingAdminQId] = useState(null);
 
   // Client community feed inquiries state
   const [clientQuestions, setClientQuestions] = useState([]);
@@ -245,12 +250,48 @@ export const Dashboard = () => {
         });
         setLoadingAdminStats(false);
       });
+
+      // Fetch recent community feed inquiries for Court Administrator moderation
+      setLoadingAdminFeed(true);
+      feedApi
+        .getQuestions({ status: 'all', limit: 5 })
+        .then((res) => {
+          if (isMounted) {
+            const items = res?.items || res?.data?.items || (Array.isArray(res) ? res : []);
+            setAdminQuestions(Array.isArray(items) ? items : []);
+          }
+        })
+        .catch((err) => {
+          console.debug('Failed to load admin feed inquiries:', err?.message);
+        })
+        .finally(() => {
+          if (isMounted) setLoadingAdminFeed(false);
+        });
     }
 
     return () => {
       isMounted = false;
     };
   }, [user?.role, user?.id]);
+
+  // Court Administrator Moderation Deletion Handler
+  const handleDeleteAdminQuestion = async (questionId, title) => {
+    const isConfirmed = window.confirm(
+      `[Court Administrator Moderation]\nAre you sure you want to permanently delete this legal enquiry?\n\n"${title}"`
+    );
+    if (!isConfirmed) return;
+
+    setDeletingAdminQId(questionId);
+    try {
+      await feedApi.deleteQuestion(questionId);
+      showToast('Enquiry removed via Court Administrator moderation', 'success');
+      setAdminQuestions((prev) => prev.filter((q) => q.id !== questionId));
+    } catch (err) {
+      showToast(err.message || 'Failed to delete question', 'error');
+    } finally {
+      setDeletingAdminQId(null);
+    }
+  };
 
   // Derived metrics calculations
   const lawyerMetrics = {
@@ -1176,6 +1217,117 @@ export const Dashboard = () => {
                     Disciplinary locks
                   </span>
                 </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Real Community Legal Q&A Feed Moderation Card */}
+          <div className="card" style={{ backgroundColor: 'var(--color-surface)', marginTop: 'var(--spacing-6)' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 'var(--spacing-4)',
+                flexWrap: 'wrap',
+                gap: 'var(--spacing-2)',
+              }}
+            >
+              <div>
+                <h4 style={{ margin: 0, fontSize: 'var(--font-size-md)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShieldIcon size={18} color="var(--color-danger)" />
+                  Community Legal Q&amp;A Feed Moderation
+                </h4>
+                <p style={{ margin: '4px 0 0 0', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                  Active public inquiries. Supervise and remove inappropriate, solicitous, or non-compliant posts.
+                </p>
+              </div>
+              <Link to="/feed" className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                Open Full Community Feed →
+              </Link>
+            </div>
+
+            {loadingAdminFeed ? (
+              <div style={{ textAlign: 'center', padding: 'var(--spacing-6)' }}>
+                <span className="spinner" />
+                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+                  Loading recent enquiries for moderation...
+                </p>
+              </div>
+            ) : adminQuestions.length === 0 ? (
+              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', margin: 0, padding: 'var(--spacing-4) 0' }}>
+                No active community enquiries pending moderation.
+              </p>
+            ) : (
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-size-xs)', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', color: 'var(--color-text-muted)' }}>
+                      <th style={{ padding: '8px 12px' }}>Topic / Enquiry</th>
+                      <th style={{ padding: '8px 12px' }}>Practice Area</th>
+                      <th style={{ padding: '8px 12px' }}>Station</th>
+                      <th style={{ padding: '8px 12px' }}>Status</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'right' }}>Moderation Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adminQuestions.map((q) => (
+                      <tr key={q.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                        <td style={{ padding: '10px 12px', fontWeight: 600 }}>
+                          <Link to={`/feed/${q.id}`} style={{ color: 'var(--color-text)', textDecoration: 'none' }}>
+                            {q.title}
+                          </Link>
+                          <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontWeight: 400 }}>
+                            By {q.clientName || 'Anonymous Citizen'} • {new Date(q.createdAt).toLocaleDateString()}
+                          </div>
+                        </td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <span style={{ padding: '2px 8px', borderRadius: '4px', backgroundColor: '#e0f2fe', color: '#0369a1', fontWeight: 600 }}>
+                            {q.practiceArea}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 12px', color: 'var(--color-text-muted)' }}>{q.city || 'Pakistan'}</td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <span
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              fontWeight: 600,
+                              backgroundColor: q.status === 'open' ? '#dcfce7' : '#f1f5f9',
+                              color: q.status === 'open' ? '#15803d' : '#475569',
+                            }}
+                          >
+                            {q.status === 'open' ? 'Open' : 'Resolved'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                          <button
+                            type="button"
+                            disabled={deletingAdminQId === q.id}
+                            onClick={() => handleDeleteAdminQuestion(q.id, q.title)}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              border: '1px solid #fecaca',
+                              backgroundColor: '#fff1f2',
+                              color: '#b91c1c',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                            title="Court Administrator Moderation Deletion"
+                          >
+                            <TrashIcon size={12} color="#b91c1c" />
+                            <span>{deletingAdminQId === q.id ? 'Removing...' : 'Delete'}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

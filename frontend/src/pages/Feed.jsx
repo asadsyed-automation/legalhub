@@ -11,6 +11,9 @@ import {
   ChatIcon,
   ArrowRightIcon,
   CheckIcon,
+  ShieldIcon,
+  BriefcaseIcon,
+  TrashIcon,
 } from '../components/Icons';
 import EmptyState from '../components/EmptyState';
 import { CITIES, PRACTICE_AREAS, ROLES } from '../constants';
@@ -38,6 +41,7 @@ export const Feed = () => {
   // Modal State for Asking a Question
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [newQuestion, setNewQuestion] = useState({
     title: '',
     description: '',
@@ -155,41 +159,120 @@ export const Feed = () => {
     }
   };
 
+  // Delete Question Handler (Admin moderation or Owner citizen deletion)
+  const handleDeleteQuestionCard = async (e, questionId, title) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isConfirmed = window.confirm(
+      user?.role === ROLES.ADMIN
+        ? `[Court Administrator Moderation]\nAre you sure you want to permanently delete this legal enquiry?\n\n"${title}"`
+        : `Are you sure you want to delete your legal enquiry?\n\n"${title}"`
+    );
+    if (!isConfirmed) return;
+
+    setDeletingId(questionId);
+    try {
+      await feedApi.deleteQuestion(questionId);
+      showToast(
+        user?.role === ROLES.ADMIN
+          ? 'Enquiry removed via Court Administrator moderation'
+          : 'Your enquiry was deleted successfully',
+        'success'
+      );
+      fetchQuestions();
+    } catch (err) {
+      showToast(err.message || 'Failed to delete question', 'error');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="feed-page">
-      {/* Hero Banner */}
+      {/* Hero Banner (Role-Aware) */}
       <section className="feed-hero">
         <div className="feed-hero__container">
-          <div className="feed-hero__badge">
-            <ScalesIcon size={16} color="#f59e0b" />
-            <span>Pro Bono Public Legal Aid & Advisory Feed</span>
-          </div>
-          <h1 className="feed-hero__title">
-            Ask Legal Questions. <span className="feed-hero__title-accent">Get Verified Advocate Guidance.</span>
-          </h1>
-          <p className="feed-hero__subtitle">
-            A public community platform where Pakistani citizens seek preliminary legal opinions from
-            Admin-Reviewed advocates, explore precedents, and connect directly with counsel across all courts.
-          </p>
-          <div className="feed-hero__actions">
-            <button
-              type="button"
-              className="feed-btn feed-btn--primary"
-              onClick={handleOpenAskModal}
-            >
-              <ChatIcon size={18} />
-              <span>Ask a Legal Question</span>
-            </button>
-            <Link to="/lawyers" className="feed-btn feed-btn--outline">
-              <ScalesIcon size={18} />
-              <span>Browse All Advocates</span>
-            </Link>
-          </div>
+          {user?.role === ROLES.ADMIN ? (
+            <>
+              <div className="feed-hero__badge">
+                <ShieldIcon size={16} color="#dc2626" />
+                <span>Court Administrator Moderation Center</span>
+              </div>
+              <h1 className="feed-hero__title">
+                Public Legal Feed. <span className="feed-hero__title-accent">Content Oversight &amp; Moderation.</span>
+              </h1>
+              <p className="feed-hero__subtitle">
+                Supervise citizen inquiries and advocate opinions across Pakistan. Remove abusive, solicitous,
+                or non-compliant content to uphold High Court and Bar Council ethical decorum.
+              </p>
+              <div className="feed-hero__actions">
+                <Link to="/admin" className="feed-btn feed-btn--primary">
+                  <ShieldIcon size={18} />
+                  <span>Admin Control Center</span>
+                </Link>
+                <Link to="/admin/queue" className="feed-btn feed-btn--outline">
+                  <span>Advocate Verification Queue</span>
+                </Link>
+              </div>
+            </>
+          ) : user?.role === ROLES.LAWYER || user?.role === ROLES.LAW_FIRM ? (
+            <>
+              <div className="feed-hero__badge">
+                <BriefcaseIcon size={16} color="#2563eb" />
+                <span>Advocate Pro Bono Advisory Roster</span>
+              </div>
+              <h1 className="feed-hero__title">
+                Legal Consultations. <span className="feed-hero__title-accent">Guide Citizens with Verified Opinions.</span>
+              </h1>
+              <p className="feed-hero__subtitle">
+                Browse open legal questions from Pakistani citizens across various jurisdictions and practice areas.
+                Provide initial legal insight in accordance with Bar Council ethical guidelines.
+              </p>
+              <div className="feed-hero__actions">
+                <a href="#feed-questions" className="feed-btn feed-btn--primary">
+                  <ChatIcon size={18} />
+                  <span>Review Open Questions Below</span>
+                </a>
+                <Link to="/dashboard" className="feed-btn feed-btn--outline">
+                  <BriefcaseIcon size={18} />
+                  <span>Advocate Dashboard</span>
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="feed-hero__badge">
+                <ScalesIcon size={16} color="#f59e0b" />
+                <span>Pro Bono Public Legal Aid & Advisory Feed</span>
+              </div>
+              <h1 className="feed-hero__title">
+                Ask Legal Questions. <span className="feed-hero__title-accent">Get Verified Advocate Guidance.</span>
+              </h1>
+              <p className="feed-hero__subtitle">
+                A public community platform where Pakistani citizens seek preliminary legal opinions from
+                Admin-Reviewed advocates, explore precedents, and connect directly with counsel across all courts.
+              </p>
+              <div className="feed-hero__actions">
+                <button
+                  type="button"
+                  className="feed-btn feed-btn--primary"
+                  onClick={handleOpenAskModal}
+                >
+                  <ChatIcon size={18} />
+                  <span>Ask a Legal Question</span>
+                </button>
+                <Link to="/lawyers" className="feed-btn feed-btn--outline">
+                  <ScalesIcon size={18} />
+                  <span>Browse All Advocates</span>
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
       {/* Main Content Area */}
-      <main className="feed-content">
+      <main className="feed-content" id="feed-questions">
         {/* Search & Filter Toolbar */}
         <section className="feed-toolbar" aria-label="Feed Filters">
           <form onSubmit={handleSearchSubmit} className="feed-toolbar__search-row">
@@ -352,10 +435,38 @@ export const Feed = () => {
                       {answersCount} {answersCount === 1 ? 'Legal Opinion' : 'Legal Opinions'}
                     </span>
 
-                    <Link to={`/feed/${q.id}`} className="feed-card__read-cta">
-                      <span>View Discussion</span>
-                      <ArrowRightIcon size={14} />
-                    </Link>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginLeft: 'auto' }}>
+                      {(user?.role === ROLES.ADMIN || (user && user.id === q.clientId)) && (
+                        <button
+                          type="button"
+                          className="feed-btn-delete-card"
+                          disabled={deletingId === q.id}
+                          onClick={(e) => handleDeleteQuestionCard(e, q.id, q.title)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '4px 10px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            borderRadius: '6px',
+                            border: '1px solid #fecaca',
+                            backgroundColor: '#fff1f2',
+                            color: '#b91c1c',
+                            cursor: 'pointer',
+                          }}
+                          title={user?.role === ROLES.ADMIN ? 'Delete enquiry as Court Administrator' : 'Delete my enquiry'}
+                        >
+                          <TrashIcon size={12} color="#b91c1c" />
+                          <span>{deletingId === q.id ? 'Deleting...' : user?.role === ROLES.ADMIN ? 'Delete (Moderation)' : 'Delete'}</span>
+                        </button>
+                      )}
+
+                      <Link to={`/feed/${q.id}`} className="feed-card__read-cta">
+                        <span>View Discussion</span>
+                        <ArrowRightIcon size={14} />
+                      </Link>
+                    </div>
                   </div>
                 </article>
               );

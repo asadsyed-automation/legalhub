@@ -55,6 +55,9 @@
   text-decoration: none;
   padding: 0.35rem 0.6rem;
   border-radius: var(--radius-md);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
   transition: color var(--transition-fast, 150ms ease), background-color var(--transition-fast, 150ms ease);
 }
 
