@@ -3,11 +3,17 @@ const path = require('path');
 
 // Determine which env file to attempt to load
 const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+
+// Load from backend directory first, then process.cwd() fallback
+dotenv.config({ path: path.resolve(__dirname, '../../', envFile) });
 dotenv.config({ path: path.resolve(process.cwd(), envFile) });
+dotenv.config({ path: path.resolve(process.cwd(), 'backend', envFile) });
 
 // In test mode, fallback to .env as well if .env.test does not exist or lacks variables
 if (process.env.NODE_ENV === 'test') {
+  dotenv.config({ path: path.resolve(__dirname, '../../.env') });
   dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+  dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env') });
 }
 
 // In test environment, ensure safe defaults if not explicitly set

@@ -83,6 +83,14 @@ const formatCaseForLawyer = (caseRecord, nextHearing = null) => {
   return {
     id: c.id,
     lawyerId: c.lawyerId,
+    assignedLawyerId: c.assignedLawyerId || null,
+    assignedLawyer: c.assignedLawyer
+      ? {
+          id: c.assignedLawyer.id,
+          name: c.assignedLawyer.name,
+          email: c.assignedLawyer.email
+        }
+      : null,
     clientId: c.clientId || null,
     bookingId: c.bookingId || null,
     title: c.title,
@@ -119,7 +127,7 @@ const formatCaseForLawyer = (caseRecord, nextHearing = null) => {
 };
 
 /**
- * Creates a new case for an approved advocate.
+ * Creates a new case for an approved advocate or registered law firm.
  *
  * @param {object} user - Authenticated user session
  * @param {object} payload - Validated case creation data
@@ -127,8 +135,8 @@ const formatCaseForLawyer = (caseRecord, nextHearing = null) => {
  * @returns {Promise<object>}
  */
 const createCase = async (user, payload, now = () => new Date()) => {
-  if (user.role !== ROLES.LAWYER) {
-    throw new AppError('Forbidden: Only approved advocates can create case files', 403);
+  if (user.role !== ROLES.LAWYER && user.role !== ROLES.LAW_FIRM) {
+    throw new AppError('Forbidden: Only approved advocates or law firms can create case files', 403);
   }
 
   let resolvedClientId = null;
@@ -169,6 +177,7 @@ const createCase = async (user, payload, now = () => new Date()) => {
     const newCase = await Case.create(
       {
         lawyerId: user.id,
+        assignedLawyerId: payload.assignedLawyerId || null,
         clientId: resolvedClientId,
         bookingId: payload.bookingId || null,
         title: payload.title,
@@ -237,8 +246,16 @@ const getCases = async (user, query = {}, now = () => new Date()) => {
 
   const whereClause = {};
 
-  if (user.role === ROLES.LAWYER) {
+  if (user.role === ROLES.LAW_FIRM) {
     whereClause.lawyerId = user.id;
+    if (query.assignedLawyerId) {
+      whereClause.assignedLawyerId = query.assignedLawyerId;
+    }
+  } else if (user.role === ROLES.LAWYER) {
+    whereClause[Op.or] = [
+      { lawyerId: user.id },
+      { assignedLawyerId: user.id }
+    ];
   } else if (user.role === ROLES.CLIENT) {
     whereClause.clientId = user.id;
   } else {
@@ -272,6 +289,11 @@ const getCases = async (user, query = {}, now = () => new Date()) => {
         model: User,
         as: 'client',
         attributes: ['id', 'name']
+      },
+      {
+        model: User,
+        as: 'assignedLawyer',
+        attributes: ['id', 'name', 'email']
       }
     ],
     order: [['createdAt', 'DESC']],
@@ -370,6 +392,11 @@ const getCaseById = async (caseId, user, now = () => new Date()) => {
         model: User,
         as: 'client',
         attributes: ['id', 'name']
+      },
+      {
+        model: User,
+        as: 'assignedLawyer',
+        attributes: ['id', 'name', 'email']
       }
     ]
   });
@@ -381,9 +408,11 @@ const getCaseById = async (caseId, user, now = () => new Date()) => {
   const nextHearing = await resolveNextHearingForCase(caseRecord.id, user.role === ROLES.CLIENT, now);
 
   // Permission boundary check
-  if (user.role === ROLES.LAWYER) {
-    if (caseRecord.lawyerId !== user.id) {
-      throw new AppError('Forbidden: Only the assigned advocate can access this case file', 403);
+  if (user.role === ROLES.LAWYER || user.role === ROLES.LAW_FIRM) {
+    const isOwner = caseRecord.lawyerId === user.id;
+    const isAssigned = caseRecord.assignedLawyerId === user.id;
+    if (!isOwner && !isAssigned) {
+      throw new AppError('Forbidden: Only the managing law firm or assigned advocate can access this case file', 403);
     }
     return formatCaseForLawyer(caseRecord, nextHearing);
   }
@@ -403,17 +432,17 @@ const getCaseById = async (caseId, user, now = () => new Date()) => {
 
 /**
  * Updates case fields, full replacement of parties, status/stage, and late client linking.
- * Lawyer only.
+ * Lawyer or Law Firm only.
  *
  * @param {string} caseId - Case UUID
- * @param {object} user - Authenticated advocate
+ * @param {object} user - Authenticated advocate or law firm
  * @param {object} payload - Update payload
  * @param {Function} [now] - Injectable clock for testability
  * @returns {Promise<object>}
  */
 const updateCase = async (caseId, user, payload, now = () => new Date()) => {
-  if (user.role !== ROLES.LAWYER) {
-    throw new AppError('Forbidden: Only advocates can modify case files', 403);
+  if (user.role !== ROLES.LAWYER && user.role !== ROLES.LAW_FIRM) {
+    throw new AppError('Forbidden: Only advocates or law firms can modify case files', 403);
   }
 
   const caseRecord = await Case.findByPk(caseId, {
@@ -430,6 +459,11 @@ const updateCase = async (caseId, user, payload, now = () => new Date()) => {
         model: User,
         as: 'client',
         attributes: ['id', 'name']
+      },
+      {
+        model: User,
+        as: 'assignedLawyer',
+        attributes: ['id', 'name', 'email']
       }
     ]
   });
@@ -438,13 +472,18 @@ const updateCase = async (caseId, user, payload, now = () => new Date()) => {
     throw new AppError('Case file not found', 404);
   }
 
-  if (caseRecord.lawyerId !== user.id) {
-    throw new AppError('Forbidden: Only the assigned advocate can modify this case file', 403);
+  const isOwner = caseRecord.lawyerId === user.id;
+  const isAssigned = caseRecord.assignedLawyerId === user.id;
+  if (!isOwner && !isAssigned) {
+    throw new AppError('Forbidden: Only the managing law firm or assigned advocate can modify this case file', 403);
   }
 
   const transaction = await sequelize.transaction();
 
   try {
+    if (payload.assignedLawyerId !== undefined && isOwner) {
+      caseRecord.assignedLawyerId = payload.assignedLawyerId;
+    }
     // 1. Linking booking/client later
     if (payload.bookingId !== undefined && payload.bookingId !== null) {
       if (caseRecord.clientId !== null) {

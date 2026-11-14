@@ -1,15 +1,17 @@
 const dotenv = require('dotenv');
 const path = require('path');
 
+// Ensure backend/.env is loaded whether run from root or backend directory
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env') });
 
-const sslOptions = process.env.DB_SSL === 'true' ? {
+const sslOptions = {
   ssl: {
     require: true,
     rejectUnauthorized: false
-  },
-  keepAlive: true
-} : {};
+  }
+};
 
 module.exports = {
   development: {

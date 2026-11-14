@@ -13,11 +13,16 @@ import caseApi from '../api/case.api';
 import notificationApi from '../api/notification.api';
 import adminApi from '../api/admin.api';
 import feedApi from '../api/feed.api';
+import firmApi from '../api/firm.api';
 import { ROLES, APPLICATION_STATUS } from '../constants';
 
 export const Dashboard = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
+
+  // Law Firm Chamber State
+  const [firmStats, setFirmStats] = useState(null);
+  const [firmMembers, setFirmMembers] = useState([]);
 
   // Lawyer Application real data state
   const [application, setApplication] = useState(null);
@@ -111,6 +116,19 @@ export const Dashboard = () => {
         }
         setLoadingAppointments(false);
       });
+
+      // Load Law Firm Chamber statistics and associates
+      if (user?.role === ROLES.LAW_FIRM) {
+        Promise.allSettled([firmApi.getFirmStats(), firmApi.getMembers()]).then(([statsRes, memRes]) => {
+          if (!isMounted) return;
+          if (statsRes.status === 'fulfilled') {
+            setFirmStats(statsRes.value?.stats || statsRes.value?.data?.stats || null);
+          }
+          if (memRes.status === 'fulfilled') {
+            setFirmMembers(memRes.value?.members || memRes.value?.data?.members || []);
+          }
+        });
+      }
     } else if (user?.role === ROLES.CLIENT) {
       // Load appointments and engagements for citizen client
       setLoadingAppointments(true);
@@ -518,6 +536,116 @@ export const Dashboard = () => {
                   View All Appointments
                 </Link>
               </div>
+            </div>
+          )}
+
+          {/* Law Firm Chamber Associates & Delegation Card */}
+          {user?.role === ROLES.LAW_FIRM && (
+            <div className="card" style={{ backgroundColor: 'var(--color-surface)', borderLeft: '4px solid #2563eb' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 'var(--spacing-4)',
+                  flexWrap: 'wrap',
+                  gap: 'var(--spacing-2)',
+                }}
+              >
+                <div>
+                  <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <BriefcaseIcon size={20} color="#2563eb" />
+                    Chamber Team &amp; Case Delegation
+                  </h3>
+                  <p style={{ margin: 'var(--spacing-1) 0 0 0', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
+                    Coordinate associate advocates, oversee file distribution, and manage chamber litigation workloads.
+                  </p>
+                </div>
+                <Link to="/firm/team" className="btn btn-primary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <BriefcaseIcon size={14} />
+                  <span>Manage Chamber Associates ({firmMembers.length}) →</span>
+                </Link>
+              </div>
+
+              {/* Quick Chamber Counters */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                  gap: 'var(--spacing-3)',
+                  marginBottom: 'var(--spacing-4)',
+                }}
+              >
+                <div style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#1e40af', fontWeight: 600, display: 'block' }}>
+                    Chamber Associates
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#1d4ed8' }}>
+                    {firmStats?.totalAssociates ?? firmMembers.length}
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#3b82f6', display: 'block', marginTop: '2px' }}>
+                    Enrolled Counsel
+                  </span>
+                </div>
+
+                <div style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#166534', fontWeight: 600, display: 'block' }}>
+                    Chamber Case Files
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#15803d' }}>
+                    {firmStats?.totalCases ?? 0}
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#22c55e', display: 'block', marginTop: '2px' }}>
+                    {firmStats?.assignedCases ?? 0} Delegated to Associates
+                  </span>
+                </div>
+
+                <div style={{ padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', backgroundColor: '#fffbeb', border: '1px solid #fde68a' }}>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#92400e', fontWeight: 600, display: 'block' }}>
+                    Unassigned Files
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: '#b45309' }}>
+                    {firmStats?.unassignedCases ?? 0}
+                  </span>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: '#d97706', display: 'block', marginTop: '2px' }}>
+                    Handled by Firm Admin
+                  </span>
+                </div>
+              </div>
+
+              {/* Roster Quick Preview */}
+              {firmMembers.length > 0 && (
+                <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--spacing-3)' }}>
+                  <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px' }}>
+                    Chamber Counsel Roster:
+                  </span>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {firmMembers.slice(0, 5).map((m) => (
+                      <span
+                        key={m.id}
+                        style={{
+                          fontSize: '11px',
+                          padding: '4px 10px',
+                          borderRadius: 'var(--radius-md)',
+                          backgroundColor: 'var(--color-bg)',
+                          border: '1px solid var(--color-border)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <strong>{m.name}</strong> ({m.designation})
+                        <span style={{ color: '#2563eb', fontWeight: 600 }}>• {m.activeCasesCount} active cases</span>
+                      </span>
+                    ))}
+                    {firmMembers.length > 5 && (
+                      <Link to="/firm/team" style={{ fontSize: '11px', padding: '4px 8px', color: 'var(--color-primary)' }}>
+                        +{firmMembers.length - 5} more
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

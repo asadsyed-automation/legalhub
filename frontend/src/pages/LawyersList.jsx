@@ -35,6 +35,7 @@ export const LawyersList = () => {
   const currentPracticeArea = searchParams.get('practiceArea') || '';
   const currentCourtLevel = searchParams.get('courtLevel') || '';
   const currentMode = searchParams.get('mode') || '';
+  const currentType = searchParams.get('practitionerType') || 'all';
   const currentSort = searchParams.get('sort') || 'experience';
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const currentSearch = searchParams.get('q') || '';
@@ -64,6 +65,7 @@ export const LawyersList = () => {
       if (currentPracticeArea) params.practiceArea = currentPracticeArea;
       if (currentCourtLevel) params.courtLevel = currentCourtLevel;
       if (currentMode) params.mode = currentMode;
+      if (currentType && currentType !== 'all') params.practitionerType = currentType;
 
       const res = await directoryApi.getLawyers(params);
       let items = res?.items || res?.lawyers || res?.data?.items || res?.data?.lawyers || [];
@@ -92,7 +94,7 @@ export const LawyersList = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentCity, currentPracticeArea, currentCourtLevel, currentMode, currentSort, currentPage, currentSearch, showToast]);
+  }, [currentCity, currentPracticeArea, currentCourtLevel, currentMode, currentType, currentSort, currentPage, currentSearch, showToast]);
 
   useEffect(() => {
     fetchDirectory();
@@ -128,6 +130,7 @@ export const LawyersList = () => {
     currentPracticeArea,
     currentCourtLevel,
     currentMode,
+    currentType && currentType !== 'all' ? currentType : '',
     currentSearch,
   ].filter(Boolean).length;
 
@@ -228,6 +231,43 @@ export const LawyersList = () => {
                   />
                 </div>
               </form>
+            </div>
+
+            {/* Facet: Practitioner Type (Fiverr Agency Pattern) */}
+            <div className="ll-facet-group">
+              <div className="ll-facet-label">
+                <BriefcaseIcon size={15} color="#64748b" />
+                <span>Practitioner Type</span>
+              </div>
+              <div className="ll-facet-options">
+                <label className="ll-facet-radio">
+                  <input
+                    type="radio"
+                    name="practitionerType"
+                    checked={!currentType || currentType === 'all'}
+                    onChange={() => updateFilter('practitionerType', 'all')}
+                  />
+                  <span>All Legal Counsel</span>
+                </label>
+                <label className="ll-facet-radio">
+                  <input
+                    type="radio"
+                    name="practitionerType"
+                    checked={currentType === 'lawyer'}
+                    onChange={() => updateFilter('practitionerType', 'lawyer')}
+                  />
+                  <span>Individual Advocates</span>
+                </label>
+                <label className="ll-facet-radio">
+                  <input
+                    type="radio"
+                    name="practitionerType"
+                    checked={currentType === 'law_firm'}
+                    onChange={() => updateFilter('practitionerType', 'law_firm')}
+                  />
+                  <span>Law Firms &amp; Chambers</span>
+                </label>
+              </div>
             </div>
 
             {/* Facet: Court Standing */}
@@ -406,6 +446,17 @@ export const LawyersList = () => {
                         <span>✕</span>
                       </button>
                     )}
+                    {currentType && currentType !== 'all' && (
+                      <button
+                        type="button"
+                        className="ll-active-chip"
+                        onClick={() => updateFilter('practitionerType', 'all')}
+                        title="Remove practitioner type filter"
+                      >
+                        <span>Type: {currentType === 'law_firm' ? 'Law Firms & Chambers' : 'Individual Advocates'}</span>
+                        <span>✕</span>
+                      </button>
+                    )}
                     {currentSearch && (
                       <button
                         type="button"
@@ -482,10 +533,30 @@ export const LawyersList = () => {
                           <Link to={`/lawyers/${advocate.id}`} className="ll-card__name">
                             {advocate.name}
                           </Link>
-                          <span className="ll-card__verified-badge" title="Credentials Admin-Reviewed">
-                            <ShieldIcon size={12} color="#059669" />
-                            <span>Admin-Reviewed</span>
-                          </span>
+                          {advocate.role === 'law_firm' ? (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                backgroundColor: '#eff6ff',
+                                color: '#1d4ed8',
+                                border: '1px solid #bfdbfe'
+                              }}
+                              title="Registered Law Firm / Legal Chamber"
+                            >
+                              🏛 Law Firm
+                            </span>
+                          ) : (
+                            <span className="ll-card__verified-badge" title="Credentials Admin-Reviewed">
+                              <ShieldIcon size={12} color="#059669" />
+                              <span>Admin-Reviewed</span>
+                            </span>
+                          )}
                         </div>
 
                         <div className="ll-card__standing-pill">

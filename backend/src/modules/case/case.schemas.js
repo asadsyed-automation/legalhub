@@ -59,6 +59,11 @@ const createCaseSchema = z.object({
     .uuid('Invalid booking UUID format')
     .optional()
     .nullable(),
+  assignedLawyerId: z
+    .string()
+    .uuid('Invalid assigned lawyer UUID format')
+    .optional()
+    .nullable(),
   parties: z
     .array(partyItemSchema)
     .max(CASE_LIMITS.MAX_PARTIES_PER_CASE, `Maximum ${CASE_LIMITS.MAX_PARTIES_PER_CASE} parties allowed per case`)
@@ -110,6 +115,11 @@ const updateCaseSchema = z
       .uuid('Invalid booking UUID format')
       .optional()
       .nullable(),
+    assignedLawyerId: z
+      .string()
+      .uuid('Invalid assigned lawyer UUID format')
+      .optional()
+      .nullable(),
     parties: z
       .array(partyItemSchema)
       .max(CASE_LIMITS.MAX_PARTIES_PER_CASE, `Maximum ${CASE_LIMITS.MAX_PARTIES_PER_CASE} parties allowed per case`)
@@ -123,6 +133,7 @@ const listCasesQuerySchema = z.object({
   status: z.enum(CASE_STATUSES).optional(),
   practiceArea: z.enum(PRACTICE_AREAS).optional(),
   court: z.string().trim().optional(),
+  assignedLawyerId: z.string().uuid().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(10)
 });

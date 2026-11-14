@@ -3,7 +3,7 @@
   flex-direction: column;
   min-height: 100vh;
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
   background-color: var(--color-bg, #f9fafb);
   font-family: var(--font-sans);
 }
@@ -157,7 +157,7 @@
   position: relative;
   min-width: 0;
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .dash-sidebar {
@@ -178,6 +178,8 @@
   position: sticky;
   top: 60px;
   padding: var(--spacing-4, 1rem) var(--spacing-3, 0.75rem);
+  overflow-y: auto;
+  justify-content: space-between;
 }
 
 .dash-sidebar__section-title {

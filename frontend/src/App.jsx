@@ -28,6 +28,7 @@ import About from './pages/About';
 import HowItWorks from './pages/HowItWorks';
 import Feed from './pages/Feed';
 import FeedDetail from './pages/FeedDetail';
+import FirmTeam from './pages/FirmTeam';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Disclaimer from './pages/Disclaimer';
@@ -41,6 +42,7 @@ function App() {
   const isDashboardRoute =
     location.pathname.startsWith('/dashboard') ||
     location.pathname.startsWith('/lawyer/') ||
+    location.pathname.startsWith('/firm/') ||
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/bookings') ||
     location.pathname.startsWith('/cases') ||
@@ -102,6 +104,18 @@ function App() {
               <ProtectedRoute allowedRoles={[ROLES.LAWYER, ROLES.LAW_FIRM]}>
                 <DashboardLayout>
                   <LawyerApplication />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Law Firm Chamber Associates Team Management */}
+          <Route
+            path="/firm/team"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.LAW_FIRM]}>
+                <DashboardLayout>
+                  <FirmTeam />
                 </DashboardLayout>
               </ProtectedRoute>
             }

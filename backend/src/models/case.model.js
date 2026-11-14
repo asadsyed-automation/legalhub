@@ -26,6 +26,14 @@ const initCaseModel = (sequelize) => {
           key: 'id'
         }
       },
+      assignedLawyerId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: 'users',
+          key: 'id'
+        }
+      },
       clientId: {
         type: DataTypes.UUID,
         allowNull: true,

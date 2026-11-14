@@ -306,6 +306,12 @@ export const CasesList = () => {
                       <span>Client: <strong>{caseItem.client.name}</strong></span>
                     </div>
                   )}
+
+                  {caseItem.assignedLawyer && (
+                    <div className="case-card__meta-item" style={{ color: '#0369a1' }}>
+                      <span>Assigned: <strong>{caseItem.assignedLawyer.name}</strong></span>
+                    </div>
+                  )}
                 </div>
 
                 {Array.isArray(caseItem.parties) && caseItem.parties.length > 0 && (

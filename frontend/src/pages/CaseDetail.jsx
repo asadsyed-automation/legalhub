@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import caseApi from '../api/case.api';
+import firmApi from '../api/firm.api';
 import StatusChip from '../components/StatusChip';
 import ConfirmDialog from '../components/ConfirmDialog';
 import {
   CourtIcon,
   CalendarIcon,
   ClockIcon,
+  BriefcaseIcon,
 } from '../components/Icons';
 import {
   ROLES,
@@ -57,6 +59,23 @@ export const CaseDetail = () => {
   const [updateMessage, setUpdateMessage] = useState(null);
   const [updateError, setUpdateError] = useState(null);
 
+  // Law Firm Delegation State
+  const [firmMembers, setFirmMembers] = useState([]);
+  const [selectedAssociate, setSelectedAssociate] = useState('');
+  const [assigningLawyer, setAssigningLawyer] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === ROLES.LAW_FIRM) {
+      firmApi
+        .getMembers()
+        .then((res) => {
+          const list = res?.members || res?.data?.members || [];
+          setFirmMembers(Array.isArray(list) ? list : []);
+        })
+        .catch((e) => console.debug('Failed to load firm members for assignment:', e?.message));
+    }
+  }, [user?.role]);
+
   const fetchCase = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -67,6 +86,7 @@ export const CaseDetail = () => {
       if (data) {
         setSelectedStatus(data.status || 'Prospect');
         setSelectedStage(data.stage || '');
+        setSelectedAssociate(data.assignedLawyerId || '');
       }
     } catch (err) {
       setError(err.message || 'Failed to retrieve case file. You may not have permission to view this file.');
@@ -78,6 +98,22 @@ export const CaseDetail = () => {
   useEffect(() => {
     fetchCase();
   }, [fetchCase]);
+
+  const handleAssignCase = async () => {
+    setAssigningLawyer(true);
+    setUpdateMessage(null);
+    setUpdateError(null);
+    try {
+      const val = selectedAssociate || null;
+      await firmApi.assignCase(caseData.id, val);
+      setUpdateMessage('Case file delegation updated successfully.');
+      fetchCase();
+    } catch (err) {
+      setUpdateError(err.message || 'Failed to delegate case');
+    } finally {
+      setAssigningLawyer(false);
+    }
+  };
 
   const handleStatusStageSubmit = (e) => {
     e.preventDefault();
@@ -350,6 +386,60 @@ export const CaseDetail = () => {
 
             {/* Right Column: Status / Stage Editor (Lawyer) & Audit History */}
             <div className="case-overview-col">
+              {/* Chamber Case Delegation (Law Firm Only) */}
+              {user?.role === ROLES.LAW_FIRM && (
+                <div className="case-card-panel" style={{ borderLeft: '4px solid var(--color-primary)' }}>
+                  <h2 className="case-card-panel__title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <BriefcaseIcon size={18} color="var(--color-primary)" />
+                    <span>Chamber Case Delegation</span>
+                  </h2>
+                  <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: '0 0 var(--spacing-3) 0' }}>
+                    Delegate this file to an associate advocate in your chamber. The assigned lawyer will be able to review pleadings and record diary entries.
+                  </p>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: 'var(--font-size-xs)', fontWeight: 600, marginBottom: 4 }}>
+                      Assigned Associate Advocate:
+                    </label>
+                    <div style={{ marginBottom: 'var(--spacing-3)' }}>
+                      {caseData.assignedLawyer ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '4px', backgroundColor: '#e0f2fe', color: '#0369a1', fontWeight: 600, fontSize: 'var(--font-size-xs)' }}>
+                          ⚖ {caseData.assignedLawyer.name} ({caseData.assignedLawyer.email})
+                        </span>
+                      ) : (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '4px', backgroundColor: '#f1f5f9', color: '#64748b', fontSize: 'var(--font-size-xs)' }}>
+                          Chamber Master File (Unassigned)
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <select
+                        className="form-control"
+                        value={selectedAssociate}
+                        onChange={(e) => setSelectedAssociate(e.target.value)}
+                        style={{ flex: 1, minWidth: '180px', fontSize: 'var(--font-size-xs)' }}
+                      >
+                        <option value="">Unassigned (Chamber Master File)</option>
+                        {firmMembers.filter((m) => m.status === 'active').map((m) => (
+                          <option key={m.lawyerId} value={m.lawyerId}>
+                            {m.name} ({m.designation})
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        disabled={assigningLawyer}
+                        onClick={handleAssignCase}
+                      >
+                        {assigningLawyer ? 'Saving...' : 'Update Assignment'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Status & Stage Editor (Lawyer Only) */}
               {isLawyer && (
                 <div className="case-card-panel">

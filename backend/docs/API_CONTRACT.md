@@ -3470,5 +3470,123 @@ The Community Legal Q&A Feed provides a public, pro bono platform where citizens
 }
 ```
 
+---
+
+## 22. Law Firm & Chamber Management Endpoints (`/api/v1/firm`)
+
+All endpoints in this section are protected by JWT and strictly restricted to accounts with `role: "law_firm"`.
+
+### 22.1 List Chamber Associate Members
+* **Endpoint:** `GET /firm/members`
+* **Access:** Protected (`Authorization: Bearer <firm_jwt>`)
+* **Success Response (200 OK):**
+```json
+{
+  "members": [
+    {
+      "id": "fmem-1111-2222-3333-444444444444",
+      "firmId": "firm-0000-1111-2222-333333333333",
+      "lawyerId": "usr-5555-6666-7777-888888888888",
+      "name": "Advocate Tariq Hassan",
+      "email": "tariq.hassan@example.com",
+      "designation": "Senior Associate",
+      "status": "active",
+      "joinedAt": "2026-11-13T04:00:00.000Z",
+      "barCouncil": "Punjab Bar Council",
+      "courtLevel": "High Court",
+      "experienceYears": 8,
+      "enrolmentNo": "PBC-19283",
+      "city": "Multan",
+      "practiceAreas": ["Civil", "Property"],
+      "activeCasesCount": 3
+    }
+  ]
+}
+```
+
+### 22.2 Add Associate Lawyer to Firm Roster
+* **Endpoint:** `POST /firm/members`
+* **Access:** Protected (`Authorization: Bearer <firm_jwt>`)
+* **Request Body:** (Provide `lawyerEmail` OR `enrolmentNo`)
+```json
+{
+  "lawyerEmail": "tariq.hassan@example.com",
+  "designation": "Associate Counsel"
+}
+```
+* **Success Response (201 Created):**
+```json
+{
+  "member": {
+    "id": "fmem-1111-2222-3333-444444444444",
+    "firmId": "firm-0000-1111-2222-333333333333",
+    "lawyerId": "usr-5555-6666-7777-888888888888",
+    "name": "Advocate Tariq Hassan",
+    "email": "tariq.hassan@example.com",
+    "designation": "Associate Counsel",
+    "status": "active",
+    "joinedAt": "2026-11-13T04:00:00.000Z"
+  }
+}
+```
+
+### 22.3 Update Chamber Member
+* **Endpoint:** `PATCH /firm/members/:id`
+* **Access:** Protected (`Authorization: Bearer <firm_jwt>`)
+* **Request Body:**
+```json
+{
+  "designation": "Partner",
+  "status": "active"
+}
+```
+* **Success Response (200 OK):** Returns updated member record.
+
+### 22.4 Remove Chamber Associate Member
+* **Endpoint:** `DELETE /firm/members/:id`
+* **Access:** Protected (`Authorization: Bearer <firm_jwt>`)
+* **Behavior:** Removes associate advocate from chamber roster and clears `assignedLawyerId` from active cases owned by this firm.
+* **Success Response (200 OK):**
+```json
+{
+  "message": "Associate advocate removed from firm chamber roster"
+}
+```
+
+### 22.5 Delegate / Assign Case to Associate Advocate
+* **Endpoint:** `PATCH /firm/cases/:caseId/assign`
+* **Access:** Protected (`Authorization: Bearer <firm_jwt>`)
+* **Request Body:** (Set UUID to assign; set `null` to unassign)
+```json
+{
+  "assignedLawyerId": "usr-5555-6666-7777-888888888888"
+}
+```
+* **Success Response (200 OK):** Returns updated case with `assignedLawyerId`.
+
+### 22.6 Get Chamber Aggregated Dashboard Metrics
+* **Endpoint:** `GET /firm/stats`
+* **Access:** Protected (`Authorization: Bearer <firm_jwt>`)
+* **Success Response (200 OK):**
+```json
+{
+  "stats": {
+    "totalAssociates": 4,
+    "activeAssociates": 4,
+    "totalCases": 12,
+    "activeCases": 9,
+    "assignedCases": 7,
+    "unassignedCases": 2,
+    "upcomingHearings": 5
+  }
+}
+```
+
+### 22.7 Search Available Advocates to Add
+* **Endpoint:** `GET /firm/lawyers/search?q=tariq`
+* **Access:** Protected (`Authorization: Bearer <firm_jwt>`)
+* **Success Response (200 OK):** Returns matching verified advocates.
+
+
 
 

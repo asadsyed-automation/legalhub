@@ -10,6 +10,7 @@ const { COURT_LEVELS, CITIES, PRACTICE_AREAS } = require('../../constants');
 const directoryQuerySchema = z.object({
   city: z.string().trim().optional(),
   practiceArea: z.string().trim().optional(),
+  practitionerType: z.enum(['all', 'lawyer', 'law_firm']).default('all').optional(),
   language: z.enum(LANGUAGES).optional(),
   mode: z.enum(ALLOWED_SERVICE_MODES).optional(),
   minFee: z

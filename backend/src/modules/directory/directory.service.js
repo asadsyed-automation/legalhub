@@ -25,6 +25,7 @@ const projectPublicDirectoryItem = (app) => {
   return {
     id: app.id,
     name: app.user ? app.user.name : '',
+    role: app.user ? app.user.role : 'lawyer',
     city: app.city,
     practiceAreas: app.practiceAreas || [],
     experienceYears: app.experienceYears,
@@ -76,6 +77,7 @@ const getPublicLawyers = async (queryParams = {}) => {
   const {
     city,
     practiceArea,
+    practitionerType = 'all',
     language,
     mode,
     minFee,
@@ -110,6 +112,17 @@ const getPublicLawyers = async (queryParams = {}) => {
   // Filter by City
   if (city && city.trim() !== '') {
     where.city = city.trim();
+  }
+
+  // Filter by Practitioner Type (all | lawyer | law_firm)
+  if (practitionerType && practitionerType !== 'all') {
+    where[Op.and].push(
+      sequelize.literal(`EXISTS (
+        SELECT 1 FROM users 
+        WHERE users."id" = "LawyerApplication"."userId" 
+        AND users."role" = ${sequelize.escape(practitionerType.trim())}
+      )`)
+    );
   }
 
   // Filter by Court Level
@@ -233,7 +246,7 @@ const getPublicLawyers = async (queryParams = {}) => {
       {
         model: User,
         as: 'user',
-        attributes: ['name']
+        attributes: ['name', 'role']
       },
       {
         model: LawyerProfile,
@@ -279,7 +292,7 @@ const getPublicLawyerById = async (id) => {
       {
         model: User,
         as: 'user',
-        attributes: ['name']
+        attributes: ['name', 'role']
       },
       {
         model: LawyerProfile,

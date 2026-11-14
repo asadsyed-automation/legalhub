@@ -25,9 +25,11 @@ const { initMessageModel } = require('./message.model');
 const { initEmailOtpModel, OTP_PURPOSES } = require('./emailOtp.model');
 const { initCommunityQuestionModel } = require('./communityQuestion.model');
 const { initCommunityAnswerModel } = require('./communityAnswer.model');
+const { initFirmMemberModel } = require('./firmMember.model');
 
 // Initialize models
 const User = initUserModel(sequelize);
+const FirmMember = initFirmMemberModel(sequelize);
 const EmailOtp = initEmailOtpModel(sequelize);
 const CommunityQuestion = initCommunityQuestionModel(sequelize);
 const CommunityAnswer = initCommunityAnswerModel(sequelize);
@@ -410,6 +412,40 @@ Case.belongsTo(User, {
 });
 
 User.hasMany(Case, {
+  foreignKey: 'assignedLawyerId',
+  as: 'assignedCases',
+  onDelete: 'SET NULL'
+});
+
+Case.belongsTo(User, {
+  foreignKey: 'assignedLawyerId',
+  as: 'assignedLawyer'
+});
+
+// Firm <-> FirmMember <-> Lawyer
+User.hasMany(FirmMember, {
+  foreignKey: 'firmId',
+  as: 'firmMembers',
+  onDelete: 'CASCADE'
+});
+
+FirmMember.belongsTo(User, {
+  foreignKey: 'firmId',
+  as: 'firm'
+});
+
+User.hasMany(FirmMember, {
+  foreignKey: 'lawyerId',
+  as: 'firmMemberships',
+  onDelete: 'CASCADE'
+});
+
+FirmMember.belongsTo(User, {
+  foreignKey: 'lawyerId',
+  as: 'lawyer'
+});
+
+User.hasMany(Case, {
   foreignKey: 'clientId',
   as: 'clientCases',
   onDelete: 'SET NULL'
@@ -650,7 +686,8 @@ const db = {
   FeeAgreement,
   FeePayment,
   Notification,
-  Message
+  Message,
+  FirmMember
 };
 
 module.exports = db;

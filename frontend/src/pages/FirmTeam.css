@@ -1,0 +1,221 @@
+.firm-team-page {
+  padding-bottom: var(--spacing-8, 2rem);
+}
+
+.firm-team-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-4, 1rem);
+  margin-bottom: var(--spacing-6, 1.5rem);
+}
+
+.firm-metric-card {
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-lg, 0.75rem);
+  padding: var(--spacing-4, 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.firm-metric-label {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-muted, #64748b);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.firm-metric-value {
+  font-size: var(--font-size-2xl, 1.75rem);
+  font-weight: 700;
+  color: var(--color-text, #0f172a);
+}
+
+.firm-metric-subtext {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-subtle, #94a3b8);
+}
+
+/* Associates Table Container */
+.firm-table-container {
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-lg, 0.75rem);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+
+.firm-table-header {
+  padding: var(--spacing-4, 1rem);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.firm-table-title {
+  margin: 0;
+  font-size: var(--font-size-md, 1rem);
+  font-weight: 700;
+  color: var(--color-text, #0f172a);
+}
+
+.firm-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.firm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm, 0.875rem);
+  min-width: 700px;
+}
+
+.firm-table th {
+  background-color: var(--color-bg, #f8fafc);
+  color: var(--color-text-muted, #64748b);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+}
+
+.firm-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  color: var(--color-text, #1e293b);
+  vertical-align: middle;
+}
+
+.firm-table tr:hover {
+  background-color: var(--color-surface-hover, #f8fafc);
+}
+
+.firm-designation-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 11px;
+  font-weight: 600;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.firm-status-badge--active {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #166534;
+  background-color: #dcfce7;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+.firm-status-badge--inactive {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  background-color: #f1f5f9;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+/* Modal Styles */
+.firm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.firm-modal {
+  background-color: var(--color-surface, #ffffff);
+  border-radius: var(--radius-xl, 1rem);
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  animation: firmFadeIn 0.15s ease-out;
+}
+
+@keyframes firmFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.firm-modal__header {
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.firm-modal__header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--color-text, #0f172a);
+}
+
+.firm-modal__body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.firm-modal__footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--color-border, #e2e8f0);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  background-color: #fafafa;
+}
+
+.firm-search-results {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-md, 0.5rem);
+  margin-top: 0.25rem;
+}
+
+.firm-search-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 12px;
+  transition: background-color 0.1s ease;
+}
+
+.firm-search-item:hover {
+  background-color: #f0fdf4;
+}
+
+.firm-search-item:last-child {
+  border-bottom: none;
+}
+
